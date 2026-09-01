@@ -1,0 +1,130 @@
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { redirect } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/stat-card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import { Briefcase, CheckCircle2, Clock, MapPin, IndianRupee, ShieldCheck } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
+
+export default async function WorkerHomePage() {
+  const session = await auth();
+  if (!session?.user) redirect('/login');
+  
+  const workerId = (session.user as any).workerId;
+  
+  const worker = workerId
+    ? await prisma.worker.findUnique({
+        where: { id: workerId },
+        include: {
+          cooperative: true,
+          earnings: {
+            where: {
+              date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+            },
+          },
+          bookings: {
+            where: {
+              status: { in: ['REQUESTED', 'ACCEPTED', 'TRAVELLING', 'ARRIVED', 'IN_PROGRESS'] },
+            },
+            include: {
+              category: true,
+              customer: { include: { user: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      })
+    : null;
+
+  const todayEarnings = worker?.earnings.reduce((sum, e) => sum + e.netAmount, 0) || 0;
+  const activeBookings = worker?.bookings || [];
+
+  return (
+    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6 pb-24 lg:pb-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border shadow-xs">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Welcome, {session.user.name || 'Worker'}!
+            </h1>
+            <Badge className="bg-green-100 text-green-800 hover:bg-green-100 flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Verified Worker
+            </Badge>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            {worker?.primaryTrade || 'Technician'} • {worker?.cooperative?.name || 'Ahmedabad Cooperative'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+            ● AVAILABLE FOR JOBS
+          </span>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard title="Today's Net Earnings" value={formatCurrency(todayEarnings)} />
+        <StatCard title="Active Jobs" value={activeBookings.length.toString()} />
+        <StatCard title="Overall Rating" value={`★ ${worker?.averageRating?.toFixed(1) || '4.8'}`} />
+        <StatCard title="Completed Jobs" value={(worker?.totalJobs || 0).toString()} />
+      </div>
+
+      {/* Active Jobs Queue */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-green-600" />
+            Assigned Work Orders
+          </h2>
+          <Link href="/worker/jobs" className="text-sm font-semibold text-green-600 hover:underline">
+            View All Jobs →
+          </Link>
+        </div>
+
+        {activeBookings.length === 0 ? (
+          <Card className="bg-white text-center p-8 border">
+            <CheckCircle2 className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-700">No active work orders right now</h3>
+            <p className="text-xs text-gray-400 mt-1">You are available. New requests from cooperative customers will appear here.</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {activeBookings.map((b) => (
+              <Card key={b.id} className="bg-white hover:border-green-300 transition-all border shadow-xs">
+                <CardContent className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-blue-100 text-blue-800">{b.category.name}</Badge>
+                      <span className="text-xs font-mono text-gray-400">#{b.id}</span>
+                      <span className="text-xs font-bold text-orange-600 px-2 py-0.5 bg-orange-50 rounded">
+                        {b.status}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-gray-900">{b.description || 'Household Service Request'}</h3>
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                      {b.address || 'Ahmedabad'} • Customer: {b.customer?.user?.name || 'Customer'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Link href={`/worker/jobs/${b.id}`} className="w-full sm:w-auto">
+                      <Button className="bg-green-600 hover:bg-green-700 text-white w-full">
+                        Open Job Console
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

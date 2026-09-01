@@ -1,0 +1,76 @@
+import { prisma } from "@/lib/prisma";
+import { createAuditLog } from "./audit";
+
+export async function submitForVerification(workerId: string) {
+  return prisma.worker.update({
+    where: { id: workerId },
+    data: {
+      verificationStatus: "UNDER_REVIEW",
+    },
+  });
+}
+
+export async function approveWorker(workerId: string, adminId: string) {
+  const updated = await prisma.worker.update({
+    where: { id: workerId },
+    data: {
+      verificationStatus: "VERIFIED",
+      identityVerified: true,
+    },
+  });
+
+  await createAuditLog(adminId, "APPROVE_WORKER", "WORKER", workerId, {
+    status: "VERIFIED",
+  });
+
+  return updated;
+}
+
+export async function rejectWorker(workerId: string, adminId: string, reason: string) {
+  const updated = await prisma.worker.update({
+    where: { id: workerId },
+    data: {
+      verificationStatus: "REJECTED",
+    },
+  });
+
+  await createAuditLog(adminId, "REJECT_WORKER", "WORKER", workerId, {
+    reason,
+    status: "REJECTED",
+  });
+
+  return updated;
+}
+
+export async function requestMoreInfo(workerId: string, adminId: string, note: string) {
+  const updated = await prisma.worker.update({
+    where: { id: workerId },
+    data: {
+      verificationStatus: "MORE_INFO_REQUIRED",
+    },
+  });
+
+  await createAuditLog(adminId, "REQUEST_INFO_WORKER", "WORKER", workerId, {
+    note,
+    status: "MORE_INFO_REQUIRED",
+  });
+
+  return updated;
+}
+
+export async function suspendWorker(workerId: string, adminId: string, reason: string) {
+  const updated = await prisma.worker.update({
+    where: { id: workerId },
+    data: {
+      verificationStatus: "SUSPENDED",
+      availabilityStatus: "OFFLINE",
+    },
+  });
+
+  await createAuditLog(adminId, "SUSPEND_WORKER", "WORKER", workerId, {
+    reason,
+    status: "SUSPENDED",
+  });
+
+  return updated;
+}
