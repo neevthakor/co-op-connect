@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 const ROUTE_PERMISSIONS: { prefix: string; roles: string[] }[] = [
   { prefix: "/customer", roles: ["CUSTOMER"] },
   { prefix: "/worker", roles: ["WORKER", "HELPER"] },
-  { prefix: "/admin", roles: ["COOPERATIVE_ADMIN", "FEDERATION_ADMIN"] },
+  { prefix: "/admin", roles: ["ADMIN", "COOPERATIVE_ADMIN", "FEDERATION_ADMIN"] },
   { prefix: "/society", roles: ["SOCIETY_ADMIN"] },
   { prefix: "/institution", roles: ["INSTITUTIONAL_CUSTOMER"] },
 ];
@@ -43,8 +43,9 @@ export default auth((req) => {
       const roleRedirects: Record<string, string> = {
         CUSTOMER: "/customer/home",
         WORKER: "/worker/home",
-        COOPERATIVE_ADMIN: "/admin/overview",
-        FEDERATION_ADMIN: "/admin/overview",
+        ADMIN: "/admin",
+        COOPERATIVE_ADMIN: "/admin",
+        FEDERATION_ADMIN: "/admin",
         SOCIETY_ADMIN: "/society/dashboard",
         INSTITUTIONAL_CUSTOMER: "/institution/dashboard",
       };

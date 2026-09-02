@@ -1,17 +1,15 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { DataTable } from '@/components/shared/data-table';
-import { Badge } from '@/components/ui/badge';
-import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { BookingsTable } from './bookings-table';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminBookingsPage() {
   const session = await auth();
-  if (!session?.user) redirect('/login');
+  const userRole = (session?.user as any)?.role;
+  if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
 
   const bookings = await prisma.booking.findMany({
     include: {
@@ -33,47 +31,6 @@ export default async function AdminBookingsPage() {
     amount: formatCurrency(b.finalPrice || b.estimatedPrice || b.category?.basePrice || 350),
   }));
 
-  const columns = [
-    {
-      header: 'Booking ID',
-      accessorKey: 'id',
-      cell: (row: any) => <span className="font-mono text-xs font-semibold text-gray-700">#{row.id.slice(0, 10)}</span>,
-    },
-    {
-      header: 'Customer',
-      accessorKey: 'customer',
-      cell: (row: any) => <span className="font-medium text-gray-900">{row.customer}</span>,
-    },
-    {
-      header: 'Assigned Worker',
-      accessorKey: 'worker',
-      cell: (row: any) => <span className="text-gray-700">{row.worker}</span>,
-    },
-    {
-      header: 'Service Category',
-      accessorKey: 'category',
-      cell: (row: any) => <Badge variant="outline" className="bg-gray-50">{row.category}</Badge>,
-    },
-    {
-      header: 'Status',
-      accessorKey: 'status',
-      cell: (row: any) => (
-        <Badge className={getStatusColor(row.status)}>
-          {row.status.replace(/_/g, ' ')}
-        </Badge>
-      ),
-    },
-    {
-      header: 'Booking Date',
-      accessorKey: 'date',
-    },
-    {
-      header: 'Amount',
-      accessorKey: 'amount',
-      cell: (row: any) => <span className="font-bold text-gray-900">{row.amount}</span>,
-    },
-  ];
-
   return (
     <div className="space-y-6">
       <div>
@@ -82,7 +39,7 @@ export default async function AdminBookingsPage() {
       </div>
 
       <div className="bg-white p-5 rounded-xl border shadow-xs">
-        <DataTable data={formattedData} columns={columns} searchable={true} filterable={true} />
+        <BookingsTable data={formattedData} />
       </div>
     </div>
   );

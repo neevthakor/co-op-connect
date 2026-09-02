@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+﻿import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import Link from 'next/link';
 export default async function AdminWorkersPage({ searchParams }: { searchParams: Promise<{ status?: string }> | { status?: string } }) {
   const session = await auth();
   const userRole = (session?.user as any)?.role;
-  if (!session?.user || (userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
+  if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
 
   const resolvedParams = await Promise.resolve(searchParams);
   const statusFilter = resolvedParams.status || 'PENDING';
@@ -57,8 +57,8 @@ export default async function AdminWorkersPage({ searchParams }: { searchParams:
                     </Badge>
                   </div>
                   <div className="text-sm text-gray-500 space-y-1">
-                    <p>{w.user.email} • {w.user.phone}</p>
-                    <p>Trade: {w.primaryTrade || 'Not specified'} • {w.cooperative?.name}</p>
+                    <p>{w.user.email} â€¢ {w.user.phone}</p>
+                    <p>Trade: {w.primaryTrade || 'Not specified'} â€¢ {w.cooperative?.name}</p>
                   </div>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
@@ -74,3 +74,4 @@ export default async function AdminWorkersPage({ searchParams }: { searchParams:
     </div>
   );
 }
+

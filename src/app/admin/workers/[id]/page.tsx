@@ -8,7 +8,7 @@ import { AdminWorkerActions } from './actions';
 export default async function AdminWorkerDetailsPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
   const session = await auth();
   const userRole = (session?.user as any)?.role;
-  if (!session?.user || (userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
+  if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
 
   const resolvedParams = await Promise.resolve(params);
   const workerId = resolvedParams.id;
