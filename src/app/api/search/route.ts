@@ -15,9 +15,9 @@ export async function GET(req: NextRequest) {
         where: {
           isActive: true,
           OR: [
-            { name: { contains: q } },
-            { description: { contains: q } },
-            { skills: { some: { name: { contains: q } } } },
+            { name: { contains: q, mode: 'insensitive' } },
+            { description: { contains: q, mode: 'insensitive' } },
+            { skills: { some: { name: { contains: q, mode: 'insensitive' } } } },
           ],
         },
         include: { skills: true },
@@ -27,9 +27,9 @@ export async function GET(req: NextRequest) {
         where: {
           verificationStatus: 'VERIFIED',
           OR: [
-            { primaryTrade: { contains: q } },
-            { user: { name: { contains: q } } },
-            { skills: { some: { skill: { name: { contains: q } } } } },
+            { primaryTrade: { contains: q, mode: 'insensitive' } },
+            { user: { name: { contains: q, mode: 'insensitive' } } },
+            { skills: { some: { skill: { name: { contains: q, mode: 'insensitive' } } } } },
           ],
         },
         include: {

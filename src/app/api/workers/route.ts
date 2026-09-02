@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       where: {
         ...(status !== 'ALL' ? { verificationStatus: status } : {}),
         ...(cooperativeId ? { cooperativeId } : {}),
-        ...(trade ? { primaryTrade: { contains: trade } } : {}),
+        ...(trade ? { primaryTrade: { contains: trade, mode: 'insensitive' } } : {}),
         ...(emergency === 'true' ? { isEmergencyAvailable: true } : {}),
         ...(categoryId
           ? {

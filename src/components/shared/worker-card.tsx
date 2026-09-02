@@ -19,37 +19,37 @@ export function WorkerCard({ worker, href, className }: { worker: any; href?: st
   const matchScore = worker.matchScore || worker.match_score;
 
   return (
-    <Card className={cn("overflow-hidden flex flex-col bg-white border hover:shadow-md transition-shadow", className)}>
+    <Card className={cn("overflow-hidden flex flex-col bg-card border-border/80 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5", className)}>
       <CardHeader className="flex flex-row gap-4 space-y-0 p-4">
-        <Avatar className="h-14 w-14">
+        <Avatar className="h-14 w-14 border border-border">
           <AvatarImage src={avatar} alt={name} />
-          <AvatarFallback className="font-bold text-gray-700 bg-gray-100">{name.charAt(0)}</AvatarFallback>
+          <AvatarFallback className="font-bold text-foreground bg-secondary">{name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex flex-1 flex-col justify-between">
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="font-bold text-base text-gray-900">{name}</h3>
+              <h3 className="font-bold text-base text-foreground">{name}</h3>
               {isVerified && (
-                <CheckCircle2 className="h-4 w-4 text-green-600 fill-green-50" />
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 fill-emerald-500/20" />
               )}
             </div>
-            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-              <Briefcase className="h-3 w-3 text-gray-400" />
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+              <Briefcase className="h-3 w-3 text-muted-foreground/70" />
               {trade} • {coopName}
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs mt-2">
             {rating !== null ? (
-              <span className="flex items-center text-amber-500 font-bold">
+              <span className="flex items-center text-amber-400 font-bold">
                 <Star className="h-3.5 w-3.5 fill-current mr-0.5" />
                 {rating.toFixed(1)}
               </span>
             ) : (
               <span className="text-xs text-muted-foreground font-medium">New Worker</span>
             )}
-            <span className="text-gray-400">({jobs} job{jobs === 1 ? '' : 's'})</span>
+            <span className="text-muted-foreground">({jobs} job{jobs === 1 ? '' : 's'})</span>
             {distance !== undefined && (
-              <span className="text-gray-500 flex items-center ml-auto">
+              <span className="text-muted-foreground flex items-center ml-auto">
                 <MapPin className="h-3 w-3 mr-0.5" />
                 {typeof distance === "number" ? `${distance.toFixed(1)} km` : distance}
               </span>
@@ -58,21 +58,21 @@ export function WorkerCard({ worker, href, className }: { worker: any; href?: st
         </div>
         {matchScore && (
           <div>
-            <Badge className="bg-green-100 text-green-800 font-bold text-xs">
+            <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold text-xs">
               {matchScore}% Match
             </Badge>
           </div>
         )}
       </CardHeader>
       
-      <CardFooter className="flex gap-2 p-3 bg-gray-50/70 border-t mt-auto">
+      <CardFooter className="flex gap-2 p-3 bg-secondary/40 border-t border-border mt-auto">
         <Link href={href || `/customer/workers/${worker.id}`} className="flex-1">
-          <Button variant="outline" size="sm" className="w-full text-xs font-semibold">
+          <Button variant="outline" size="sm" className="w-full text-xs font-semibold border-border hover:bg-secondary">
             View Trust Passport
           </Button>
         </Link>
         <Link href={`/customer/book?workerId=${worker.id}`} className="flex-1">
-          <Button size="sm" className="w-full text-xs font-semibold bg-primary hover:bg-primary/90 text-white">
+          <Button size="sm" className="w-full text-xs font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm">
             Book Now
           </Button>
         </Link>

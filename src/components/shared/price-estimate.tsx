@@ -34,39 +34,39 @@ export function PriceEstimate(props: PriceEstimateProps) {
   const materials = estimate?.breakdown?.materials || props.taxes || 0;
 
   return (
-    <Card className={cn("overflow-hidden border-primary/20 bg-white", className)}>
-      <CardHeader className="bg-blue-50/50 pb-4">
+    <Card className={cn("overflow-hidden border-primary/30 bg-card", className)}>
+      <CardHeader className="bg-primary/10 border-b border-border/80 pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold text-primary">Transparent Price Estimate</CardTitle>
-          <div className="flex items-center gap-1 text-gray-500 text-[11px] font-medium bg-white px-2 py-0.5 rounded border">
-            <AlertCircle className="h-3 w-3 text-amber-500" />
+          <CardTitle className="text-sm font-bold text-primary">Transparent Price Estimate</CardTitle>
+          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-semibold bg-secondary/80 px-2.5 py-0.5 rounded-full border border-border/60">
+            <AlertCircle className="h-3 w-3 text-amber-400" />
             AI ESTIMATE
           </div>
         </div>
-        <div className="text-2xl font-extrabold text-gray-900 mt-2 flex items-baseline gap-1">
-          {formatCurrency(min)} <span className="text-lg text-gray-400 font-normal mx-1">–</span> {formatCurrency(max)}
+        <div className="text-2xl font-black text-foreground mt-2 flex items-baseline gap-1">
+          {formatCurrency(min)} <span className="text-lg text-muted-foreground font-normal mx-1">–</span> {formatCurrency(max)}
         </div>
       </CardHeader>
       <CardContent className="pt-4">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Cost Breakdown</h4>
+        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Cost Breakdown</h4>
         <div className="space-y-2.5 text-xs">
-          <div className="flex justify-between items-center text-gray-700">
+          <div className="flex justify-between items-center text-muted-foreground">
             <span>Estimated Labour Charge</span>
-            <span className="font-semibold text-gray-900">{formatCurrency(labour)}</span>
+            <span className="font-semibold text-foreground">{formatCurrency(labour)}</span>
           </div>
-          <div className="flex justify-between items-center text-gray-700">
+          <div className="flex justify-between items-center text-muted-foreground">
             <span>Travel Allowance (Worker Transport)</span>
-            <span className="font-semibold text-gray-900">{formatCurrency(travel)}</span>
+            <span className="font-semibold text-foreground">{formatCurrency(travel)}</span>
           </div>
           {materials > 0 && (
-            <div className="flex justify-between items-center text-gray-700">
+            <div className="flex justify-between items-center text-muted-foreground">
               <span>Estimated Consumables & Tax</span>
-              <span className="font-semibold text-gray-900">{formatCurrency(materials)}</span>
+              <span className="font-semibold text-foreground">{formatCurrency(materials)}</span>
             </div>
           )}
         </div>
-        <div className="mt-4 pt-3 border-t border-dashed">
-          <p className="text-[11px] text-gray-500">
+        <div className="mt-4 pt-3 border-t border-border/60 border-dashed">
+          <p className="text-[11px] text-muted-foreground">
             Final price requires your confirmation after on-site diagnostic. Any extra material charges must be approved by you directly in the app.
           </p>
         </div>

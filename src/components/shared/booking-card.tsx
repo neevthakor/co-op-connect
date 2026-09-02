@@ -14,33 +14,33 @@ export function BookingCard({ booking, href, className }: { booking: any; href?:
   const targetHref = href || `/customer/bookings/${booking.id}`;
 
   return (
-    <Link href={targetHref} className="block h-full">
-      <Card className={cn("h-full transition-all hover:border-primary/40 hover:shadow-md bg-white border flex flex-col", className)}>
+    <Link href={targetHref} className="block h-full group">
+      <Card className={cn("h-full transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 bg-card border-border/80 flex flex-col", className)}>
         <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 p-4 pb-2">
           <div className="flex-1 space-y-1">
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs bg-gray-50">{categoryName}</Badge>
-              <span className="text-[11px] font-mono text-gray-400">#{booking.id}</span>
+              <Badge variant="outline" className="text-xs bg-secondary/70 border-border text-foreground">{categoryName}</Badge>
+              <span className="text-[11px] font-mono text-muted-foreground/70">#{booking.id}</span>
             </div>
-            <h4 className="font-bold text-gray-900 text-sm line-clamp-1">{description}</h4>
+            <h4 className="font-bold text-foreground group-hover:text-primary transition-colors text-sm line-clamp-1">{description}</h4>
           </div>
           <Badge className={cn("shrink-0 text-xs font-semibold", getStatusColor(booking.status))}>
             {booking.status.replace(/_/g, ' ')}
           </Badge>
         </CardHeader>
-        <CardContent className="p-4 pt-2 text-xs text-gray-500 flex-1 flex flex-col justify-end space-y-1.5">
+        <CardContent className="p-4 pt-2 text-xs text-muted-foreground flex-1 flex flex-col justify-end space-y-1.5">
           {workerName && (
-            <div className="flex items-center gap-1.5 text-gray-700">
-              <User className="h-3.5 w-3.5 text-gray-400" />
+            <div className="flex items-center gap-1.5 text-foreground/90">
+              <User className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="font-medium truncate">{workerName}</span>
             </div>
           )}
-          <div className="flex items-center gap-1.5 text-gray-500">
-            <Calendar className="h-3.5 w-3.5 text-gray-400" />
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
             <span>{formatDate(date)}</span>
           </div>
-          <div className="flex items-center justify-between font-bold text-gray-900 pt-2 border-t mt-1">
-            <span className="text-[11px] text-gray-500 font-normal">Amount:</span>
+          <div className="flex items-center justify-between font-bold text-foreground pt-2 border-t border-border mt-1">
+            <span className="text-[11px] text-muted-foreground font-normal">Amount:</span>
             <span className="text-sm text-primary font-bold">{formatCurrency(price)}</span>
           </div>
         </CardContent>

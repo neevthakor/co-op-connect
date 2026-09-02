@@ -10,21 +10,21 @@ export function ServiceCard({ service, href, className }: { service: any; href?:
   const targetHref = href || `/customer/book?category=${service.id}`;
 
   return (
-    <Link href={targetHref} className="block h-full">
-      <Card className={cn("h-full transition-all hover:border-primary/40 hover:shadow-md bg-white border", className)}>
+    <Link href={targetHref} className="block h-full group">
+      <Card className={cn("h-full transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 bg-card border-border/80", className)}>
         <CardHeader className="pb-2">
-          <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
             <IconComponent className="h-5 w-5" />
           </div>
-          <CardTitle className="line-clamp-1 text-base font-bold text-gray-900">{service.name}</CardTitle>
+          <CardTitle className="line-clamp-1 text-base font-bold text-foreground group-hover:text-primary transition-colors">{service.name}</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           {service.description && (
-            <p className="mb-3 line-clamp-2 text-xs text-gray-500">
+            <p className="mb-3 line-clamp-2 text-xs text-muted-foreground">
               {service.description}
             </p>
           )}
-          <p className="text-xs font-medium text-gray-700">
+          <p className="text-xs font-medium text-muted-foreground">
             From <span className="text-primary font-bold text-sm">{formatCurrency(service.basePrice || 250)}</span>
           </p>
         </CardContent>

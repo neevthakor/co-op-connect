@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const [demandHistory, forecasts, skillGaps, categories] = await Promise.all([
       prisma.demandHistory.findMany({
         where: {
-          ...(area !== 'ALL' && area !== 'Ahmedabad' ? { area: { contains: area } } : {}),
+          ...(area !== 'ALL' && area !== 'Ahmedabad' ? { area: { contains: area, mode: 'insensitive' } } : {}),
           ...(categoryId ? { categoryId } : {}),
         },
         include: { category: true },
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.demandForecast.findMany({
         where: {
-          ...(area !== 'ALL' && area !== 'Ahmedabad' ? { area: { contains: area } } : {}),
+          ...(area !== 'ALL' && area !== 'Ahmedabad' ? { area: { contains: area, mode: 'insensitive' } } : {}),
           ...(categoryId ? { categoryId } : {}),
         },
         include: { category: true },
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.skillGapRecord.findMany({
         where: {
-          ...(area !== 'ALL' && area !== 'Ahmedabad' ? { area: { contains: area } } : {}),
+          ...(area !== 'ALL' && area !== 'Ahmedabad' ? { area: { contains: area, mode: 'insensitive' } } : {}),
           ...(categoryId ? { categoryId } : {}),
         },
         include: { category: true },

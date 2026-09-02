@@ -40,6 +40,16 @@ function BookServiceContent() {
   const [matchedWorkers, setMatchedWorkers] = useState<any[]>([]);
   const [selectedWorker, setSelectedWorker] = useState<any>(null);
 
+  const stepTitles = [
+    'Describe Problem',
+    'AI Concierge',
+    'Service Location',
+    'Select Worker',
+    'Schedule Time',
+    'Fair Price',
+    'Confirm Booking',
+  ];
+
   const totalSteps = 7;
 
   const nextStep = () => setStep((prev) => Math.min(prev + 1, totalSteps));
@@ -141,21 +151,24 @@ function BookServiceContent() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 pb-20 md:p-8 max-w-2xl mx-auto w-full min-h-[calc(100vh-4rem)]">
-      <header className="flex items-center gap-4 mb-4">
+    <div className="flex flex-col gap-6 p-4 pb-28 md:p-8 max-w-2xl mx-auto w-full min-h-[calc(100vh-4rem)]">
+      <header className="flex items-center gap-4 mb-2">
         {step > 1 && (
-          <Button variant="ghost" size="icon" onClick={prevStep}>
+          <Button variant="ghost" size="icon" onClick={prevStep} className="shrink-0 h-10 w-10 rounded-xl hover:bg-secondary">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         )}
         <div className="flex-1">
-          <div className="flex justify-between text-sm font-medium mb-2">
-            <span>Step {step} of {totalSteps}</span>
-            <span className="text-primary font-semibold">{Math.round((step / totalSteps) * 100)}%</span>
+          <div className="flex justify-between items-center text-xs font-semibold mb-2">
+            <span className="text-foreground flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-primary" />
+              Step {step} of {totalSteps}: <span className="text-primary">{stepTitles[step - 1]}</span>
+            </span>
+            <span className="text-primary font-bold">{Math.round((step / totalSteps) * 100)}%</span>
           </div>
-          <div className="h-2 bg-secondary rounded-full overflow-hidden">
+          <div className="h-2 bg-secondary rounded-full overflow-hidden border border-border/40">
             <div
-              className="h-full bg-primary transition-all duration-300"
+              className="h-full bg-primary transition-all duration-300 rounded-full"
               style={{ width: `${(step / totalSteps) * 100}%` }}
             />
           </div>
@@ -200,8 +213,8 @@ function BookServiceContent() {
             <p className="text-muted-foreground">Our cooperative AI parsed your requirements:</p>
 
             {aiAnalysis && (
-              <Card className="border-primary/20 bg-primary/5">
-                <CardContent className="p-6 space-y-4">
+              <Card className="border-primary/30 bg-card shadow-md shadow-primary/5">
+                <CardContent className="p-5 md:p-6 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Category</p>
@@ -211,25 +224,25 @@ function BookServiceContent() {
                       <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Urgency</p>
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
                         aiAnalysis.urgency === 'EMERGENCY' ? 'bg-destructive text-destructive-foreground' :
-                        aiAnalysis.urgency === 'URGENT' ? 'bg-amber-500 text-white' : 'bg-green-600 text-white'
+                        aiAnalysis.urgency === 'URGENT' ? 'bg-amber-500 text-white' : 'bg-emerald-600 text-white'
                       }`}>
                         {aiAnalysis.urgency}
                       </span>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Est. Duration</p>
-                      <p className="font-semibold">{aiAnalysis.estimatedDuration}</p>
+                      <p className="font-semibold text-foreground">{aiAnalysis.estimatedDuration}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Base Rate</p>
-                      <p className="font-semibold">₹{bookingData.estimatedPrice}</p>
+                      <p className="font-semibold text-foreground">₹{bookingData.estimatedPrice}</p>
                     </div>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Required Tools for Technician</p>
                     <div className="flex flex-wrap gap-2">
                       {aiAnalysis.toolsNeeded?.map((t: string) => (
-                        <span key={t} className="bg-background border border-border px-2.5 py-1 rounded text-xs font-medium">
+                        <span key={t} className="bg-secondary border border-border px-2.5 py-1 rounded-md text-xs font-medium text-foreground">
                           {t}
                         </span>
                       ))}
@@ -285,8 +298,8 @@ function BookServiceContent() {
                   return (
                     <Card
                       key={workerObj.id}
-                      className={`cursor-pointer transition-all ${
-                        isSelected ? 'border-primary ring-2 ring-primary/20 bg-primary/5' : 'hover:border-primary/50'
+                      className={`cursor-pointer transition-all bg-card ${
+                        isSelected ? 'border-primary ring-2 ring-primary/30 bg-primary/10' : 'border-border/80 hover:border-primary/50'
                       }`}
                       onClick={() => {
                         setSelectedWorker(match);
@@ -391,8 +404,8 @@ function BookServiceContent() {
               platformFee={Math.round(bookingData.estimatedPrice * 0.05)}
               total={Math.round(bookingData.estimatedPrice * 1.1)}
             />
-            <div className="bg-muted/40 p-4 rounded-lg text-xs space-y-1 text-muted-foreground border">
-              <p className="font-semibold text-foreground">Cooperative Guarantee:</p>
+            <div className="bg-secondary/50 p-4 rounded-xl text-xs space-y-1.5 text-muted-foreground border border-border/80">
+              <p className="font-bold text-foreground">Cooperative Guarantee:</p>
               <p>• 100% transparent fee structure (5% cooperative fund, 2% worker welfare fund, 5% GST).</p>
               <p>• 30-day service warranty activated automatically upon job completion.</p>
               <p>• Secure 4-digit PIN verification before work begins.</p>
@@ -407,11 +420,11 @@ function BookServiceContent() {
           <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
             <h1 className="text-2xl font-bold">Review Booking Details</h1>
 
-            <Card>
+            <Card className="bg-card border-border/80">
               <CardContent className="p-6 space-y-4">
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Service Request</p>
-                  <p className="font-semibold text-base mt-1">{bookingData.categoryName}</p>
+                  <p className="font-bold text-base mt-1 text-foreground">{bookingData.categoryName}</p>
                   <p className="text-sm text-muted-foreground">{bookingData.description}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t">

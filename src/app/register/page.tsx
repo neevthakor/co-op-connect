@@ -70,104 +70,104 @@ export default function CustomerRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 md:p-6">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4 md:p-6">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+        <div className="flex items-center justify-center gap-2.5 mb-6">
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20">
             <Shield className="w-6 h-6 text-white" />
           </div>
-          <span className="font-bold text-xl text-gray-900">Co-opConnect</span>
+          <span className="font-bold text-xl text-foreground">Co-opConnect</span>
         </div>
 
-        <Card className="border shadow-sm bg-white">
+        <Card className="border border-border/80 shadow-lg bg-card">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl font-bold text-gray-900">Create Customer Account</CardTitle>
+            <CardTitle className="text-xl font-bold text-foreground tracking-tight">Create Customer Account</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">
               Book verified cooperative domestic trade services in Ahmedabad
             </p>
           </CardHeader>
           <CardContent>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 font-medium">
+              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-xl text-xs text-destructive font-medium">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+            <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="font-medium text-gray-700 block mb-1">Full Name *</label>
+                <label className="font-semibold text-foreground block mb-1">Full Name *</label>
                 <Input
                   required
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Amit Patel"
-                  className="h-9 text-xs"
+                  className="h-10 text-xs bg-secondary/50 border-border text-foreground"
                 />
               </div>
 
               <div>
-                <label className="font-medium text-gray-700 block mb-1">Email Address *</label>
+                <label className="font-semibold text-foreground block mb-1">Email Address *</label>
                 <Input
                   required
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="name@example.com"
-                  className="h-9 text-xs"
+                  className="h-10 text-xs bg-secondary/50 border-border text-foreground"
                 />
               </div>
 
               <div>
-                <label className="font-medium text-gray-700 block mb-1">Phone Number (Optional)</label>
+                <label className="font-semibold text-foreground block mb-1">Phone Number (Optional)</label>
                 <Input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+91 98765 43210"
-                  className="h-9 text-xs"
+                  className="h-10 text-xs bg-secondary/50 border-border text-foreground"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="font-medium text-gray-700 block mb-1">Password *</label>
+                  <label className="font-semibold text-foreground block mb-1">Password *</label>
                   <Input
                     required
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     placeholder="Min 6 characters"
-                    className="h-9 text-xs"
+                    className="h-10 text-xs bg-secondary/50 border-border text-foreground"
                   />
                 </div>
                 <div>
-                  <label className="font-medium text-gray-700 block mb-1">Confirm Password *</label>
+                  <label className="font-semibold text-foreground block mb-1">Confirm Password *</label>
                   <Input
                     required
                     type="password"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     placeholder="Re-enter password"
-                    className="h-9 text-xs"
+                    className="h-10 text-xs bg-secondary/50 border-border text-foreground"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-medium text-gray-700 block mb-1">Address / Neighborhood</label>
+                <label className="font-semibold text-foreground block mb-1">Address / Neighborhood</label>
                 <Input
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="e.g. Vastrapur, Ahmedabad"
-                  className="h-9 text-xs"
+                  className="h-10 text-xs bg-secondary/50 border-border text-foreground"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full h-10 text-xs font-bold mt-2"
+                className="w-full h-11 text-xs font-bold mt-3 bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 cursor-pointer"
                 disabled={loading}
               >
                 {loading ? (
@@ -182,16 +182,16 @@ export default function CustomerRegisterPage() {
               </Button>
             </form>
 
-            <div className="mt-4 pt-4 border-t border-gray-100 text-center space-y-2 text-xs">
-              <p className="text-gray-600">
+            <div className="mt-5 pt-4 border-t border-border/80 text-center space-y-2 text-xs">
+              <p className="text-muted-foreground">
                 Already have an account?{' '}
                 <Link href="/login" className="text-primary font-bold hover:underline">
                   Sign In
                 </Link>
               </p>
-              <p className="text-gray-500">
+              <p className="text-muted-foreground">
                 Are you a skilled technician or helper?{' '}
-                <Link href="/worker/register" className="text-green-700 font-semibold hover:underline">
+                <Link href="/worker/register" className="text-emerald-400 font-semibold hover:underline">
                   Register as Worker →
                 </Link>
               </p>

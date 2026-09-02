@@ -94,30 +94,30 @@ function LoginForm() {
     <div className="w-full max-w-md">
       {/* Mobile logo */}
       <div className="lg:hidden flex items-center gap-2 mb-8">
-        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20">
           <span className="text-white font-bold">CC</span>
         </div>
-        <span className="font-bold text-xl text-gray-900">Co-opConnect</span>
+        <span className="font-bold text-xl text-foreground">Co-opConnect</span>
       </div>
 
-      <h2 className="text-2xl font-bold text-gray-900 mb-1">Sign In to Your Account</h2>
-      <p className="text-gray-500 mb-6 text-sm">Enter your registered email and password</p>
+      <h2 className="text-2xl font-black text-foreground mb-1 tracking-tight">Sign In to Your Account</h2>
+      <p className="text-muted-foreground mb-6 text-sm">Enter your registered email and password</p>
 
       {isRegistered && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-800 font-medium">
+        <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-400 font-medium">
           Registration successful! Please sign in with your credentials.
         </div>
       )}
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 font-medium">
+        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-xl text-xs text-destructive font-medium">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-xs font-semibold text-gray-700 mb-1.5">
+          <label htmlFor="email" className="block text-xs font-semibold text-foreground mb-1.5">
             Email Address
           </label>
           <input
@@ -127,11 +127,11 @@ function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@example.com"
             required
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white"
+            className="w-full px-3.5 py-2.5 border border-border/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors bg-secondary/50 text-foreground placeholder:text-muted-foreground"
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-xs font-semibold text-gray-700 mb-1.5">
+          <label htmlFor="password" className="block text-xs font-semibold text-foreground mb-1.5">
             Password
           </label>
           <div className="relative">
@@ -142,12 +142,13 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors pr-10 bg-white"
+              className="w-full px-3.5 py-2.5 border border-border/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors pr-10 bg-secondary/50 text-foreground placeholder:text-muted-foreground"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -157,7 +158,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
         >
           {loading ? (
             <>
@@ -171,28 +172,28 @@ function LoginForm() {
       </form>
 
       {/* Registration Options */}
-      <div className="mt-6 pt-6 border-t border-gray-200 space-y-3 text-xs">
-        <div className="flex items-center justify-between p-3 bg-blue-50/60 rounded-lg border border-blue-100">
+      <div className="mt-6 pt-6 border-t border-border/80 space-y-3 text-xs">
+        <div className="flex items-center justify-between p-3.5 bg-primary/5 rounded-xl border border-primary/20">
           <div>
-            <p className="font-semibold text-gray-900">New Customer?</p>
-            <p className="text-gray-500 text-[11px]">Book domestic services from verified workers</p>
+            <p className="font-semibold text-foreground">New Customer?</p>
+            <p className="text-muted-foreground text-[11px]">Book domestic services from verified workers</p>
           </div>
           <Link
             href="/register"
-            className="px-3 py-1.5 bg-primary text-white rounded-md font-semibold text-xs hover:bg-primary/90 flex items-center gap-1"
+            className="px-3 py-1.5 bg-primary text-white rounded-lg font-semibold text-xs hover:bg-primary/90 flex items-center gap-1 shadow-xs"
           >
             <UserPlus className="w-3.5 h-3.5" /> Register
           </Link>
         </div>
 
-        <div className="flex items-center justify-between p-3 bg-emerald-50/60 rounded-lg border border-emerald-100">
+        <div className="flex items-center justify-between p-3.5 bg-emerald-500/5 rounded-xl border border-emerald-500/20">
           <div>
-            <p className="font-semibold text-gray-900">Skilled Technician or Helper?</p>
-            <p className="text-gray-500 text-[11px]">Join the cooperative with fair wages & 0% fees</p>
+            <p className="font-semibold text-foreground">Skilled Technician or Helper?</p>
+            <p className="text-muted-foreground text-[11px]">Join the cooperative with fair wages & 0% fees</p>
           </div>
           <Link
             href="/worker/register"
-            className="px-3 py-1.5 bg-emerald-700 text-white rounded-md font-semibold text-xs hover:bg-emerald-800 flex items-center gap-1"
+            className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-semibold text-xs hover:bg-emerald-700 flex items-center gap-1 shadow-xs"
           >
             <Wrench className="w-3.5 h-3.5" /> Join
           </Link>
@@ -204,15 +205,15 @@ function LoginForm() {
         <button
           type="button"
           onClick={() => setShowDevAccounts(!showDevAccounts)}
-          className="flex items-center justify-between w-full text-xs text-gray-400 hover:text-gray-600 transition-colors py-1"
+          className="flex items-center justify-between w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1 cursor-pointer"
         >
           <span>Development / Test Profiles</span>
           {showDevAccounts ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
 
         {showDevAccounts && (
-          <div className="mt-3 p-3 bg-gray-100 rounded-lg border border-gray-200">
-            <p className="text-[11px] text-gray-500 mb-2">
+          <div className="mt-3 p-3 bg-secondary/50 rounded-xl border border-border/80">
+            <p className="text-[11px] text-muted-foreground mb-2">
               Click any role to load seeded local test profile:
             </p>
             <div className="grid grid-cols-2 gap-1.5">
@@ -222,10 +223,10 @@ function LoginForm() {
                   type="button"
                   onClick={() => handleDevAccountLogin(account.email)}
                   disabled={loading}
-                  className="flex items-center gap-1.5 p-2 bg-white border border-gray-200 rounded text-left hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 p-2 bg-card border border-border/80 rounded-lg text-left hover:bg-secondary transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   <div className={`w-2 h-2 rounded-full ${account.color}`} />
-                  <span className="text-[11px] font-medium text-gray-700 truncate">{account.role}</span>
+                  <span className="text-[11px] font-medium text-foreground truncate">{account.role}</span>
                 </button>
               ))}
             </div>
@@ -233,7 +234,7 @@ function LoginForm() {
         )}
       </div>
 
-      <p className="mt-6 text-center text-xs text-gray-500">
+      <p className="mt-6 text-center text-xs text-muted-foreground">
         <Link href="/" className="text-primary hover:underline">← Back to home</Link>
       </p>
     </div>
@@ -242,38 +243,38 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-background text-foreground flex">
       {/* Left panel - decorative */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-700" />
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-card via-[#0b1329] to-[#091638] border-r border-border/80 relative overflow-hidden">
+        <div className="absolute inset-0 bg-radial from-primary/10 via-transparent to-transparent" />
         <div className="relative z-10 flex flex-col justify-center px-16">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <Shield className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 bg-primary/20 border border-primary/30 rounded-2xl flex items-center justify-center">
+              <Shield className="w-7 h-7 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Co-opConnect</h1>
-              <p className="text-sm text-white/70">Cooperative Services Platform</p>
+              <h1 className="text-2xl font-bold text-foreground">Co-opConnect</h1>
+              <p className="text-sm text-primary">Cooperative Services Platform</p>
             </div>
           </div>
-          <h2 className="text-4xl font-bold text-white leading-tight mb-4">
+          <h2 className="text-4xl font-black text-foreground leading-tight mb-4 tracking-tight">
             Trusted Workers.
             <br />
             Fair Opportunities.
             <br />
             Stronger Cooperatives.
           </h2>
-          <p className="text-white/80 text-lg max-w-md">
+          <p className="text-muted-foreground text-base max-w-md">
             Connect with verified cooperative workers for reliable household
             and community services across Ahmedabad.
           </p>
           <div className="mt-12 space-y-3">
             {["Identity-verified workers", "Fair & transparent pricing", "Cooperative-backed social security"].map((item) => (
               <div key={item} className="flex items-center gap-3">
-                <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
+                <div className="w-5 h-5 bg-primary/20 border border-primary/30 rounded-full flex items-center justify-center">
+                  <span className="text-primary text-xs font-bold">✓</span>
                 </div>
-                <span className="text-white/90 text-sm">{item}</span>
+                <span className="text-foreground/90 text-sm font-medium">{item}</span>
               </div>
             ))}
           </div>
@@ -281,8 +282,8 @@ export default function LoginPage() {
       </div>
 
       {/* Right panel - login form */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <Suspense fallback={<div className="p-8 text-center text-xs text-gray-500">Loading sign in...</div>}>
+      <div className="flex-1 flex items-center justify-center p-6 bg-background">
+        <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading sign in...</div>}>
           <LoginForm />
         </Suspense>
       </div>
