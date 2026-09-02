@@ -41,6 +41,17 @@ model User {
   auditLogs         AuditLog[]
   votes             Vote[]
   createdProposals  CooperativeProposal[] @relation("ProposalCreator")
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
 }
 
 model Customer {
