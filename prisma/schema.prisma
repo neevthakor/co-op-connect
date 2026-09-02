@@ -1,5 +1,5 @@
 // Co-opConnect Prisma Schema
-// Database: SQLite (prototype) — swap to PostgreSQL for production
+// Database: PostgreSQL (Supabase)
 
 generator client {
   provider = "prisma-client-js"

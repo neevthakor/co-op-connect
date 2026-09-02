@@ -14,8 +14,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        const email = (credentials.email as string).trim().toLowerCase();
+        const password = credentials.password as string;
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
           include: {
             worker: { select: { id: true, cooperativeId: true, verificationStatus: true } },
             customer: { select: { id: true } },
@@ -26,13 +29,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           },
         });
 
-        if (!user) return null;
+        if (!user || !user.passwordHash || !user.isActive) {
+          return null;
+        }
 
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash
-        );
-        if (!isValid) return null;
+        const isValid = await bcrypt.compare(password, user.passwordHash);
+        if (!isValid) {
+          return null;
+        }
 
         return {
           id: user.id,

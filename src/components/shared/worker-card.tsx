@@ -10,11 +10,11 @@ import { cn } from "@/lib/utils";
 export function WorkerCard({ worker, href, className }: { worker: any; href?: string; className?: string }) {
   const name = worker.user?.name || worker.name || "Worker";
   const avatar = worker.user?.avatar || worker.avatar;
-  const coopName = worker.cooperative?.name || worker.cooperative || "Ahmedabad Cooperative";
+  const coopName = worker.cooperative?.name || "Cooperative Member";
   const trade = worker.primaryTrade || "Technician";
-  const rating = worker.averageRating || 4.8;
+  const rating = worker.averageRating > 0 ? worker.averageRating : null;
   const jobs = worker.totalJobs || 0;
-  const isVerified = worker.verificationStatus === "VERIFIED" || worker.isVerified;
+  const isVerified = worker.verificationStatus === "VERIFIED" || worker.isVerified === true;
   const distance = worker.distance;
   const matchScore = worker.matchScore || worker.match_score;
 
@@ -39,11 +39,15 @@ export function WorkerCard({ worker, href, className }: { worker: any; href?: st
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs mt-2">
-            <span className="flex items-center text-amber-500 font-bold">
-              <Star className="h-3.5 w-3.5 fill-current mr-0.5" />
-              {rating.toFixed(1)}
-            </span>
-            <span className="text-gray-400">({jobs} jobs)</span>
+            {rating !== null ? (
+              <span className="flex items-center text-amber-500 font-bold">
+                <Star className="h-3.5 w-3.5 fill-current mr-0.5" />
+                {rating.toFixed(1)}
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground font-medium">New Worker</span>
+            )}
+            <span className="text-gray-400">({jobs} job{jobs === 1 ? '' : 's'})</span>
             {distance !== undefined && (
               <span className="text-gray-500 flex items-center ml-auto">
                 <MapPin className="h-3 w-3 mr-0.5" />

@@ -19,6 +19,7 @@ export default auth((req) => {
     nextUrl.pathname === "/" ||
     nextUrl.pathname === "/login" ||
     nextUrl.pathname === "/register" ||
+    nextUrl.pathname === "/worker/register" ||
     nextUrl.pathname.startsWith("/api/") ||
     nextUrl.pathname.startsWith("/_next/") ||
     nextUrl.pathname.startsWith("/favicon") ||

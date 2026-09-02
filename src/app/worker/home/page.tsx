@@ -42,6 +42,17 @@ export default async function WorkerHomePage() {
   const todayEarnings = worker?.earnings.reduce((sum, e) => sum + e.netAmount, 0) || 0;
   const activeBookings = worker?.bookings || [];
 
+  const completedJobsCount = workerId
+    ? await prisma.booking.count({
+        where: { workerId, status: 'COMPLETED' },
+      })
+    : 0;
+
+  const ratingDisplay =
+    worker?.averageRating && worker.averageRating > 0
+      ? `★ ${worker.averageRating.toFixed(1)}`
+      : 'No ratings yet';
+
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6 pb-24 lg:pb-8">
       {/* Header */}
@@ -60,7 +71,7 @@ export default async function WorkerHomePage() {
             {worker?.primaryTrade || 'Technician'} • {worker?.cooperative?.name || 'Ahmedabad Cooperative'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200">
             ● AVAILABLE FOR JOBS
           </span>
@@ -71,8 +82,8 @@ export default async function WorkerHomePage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard title="Today's Net Earnings" value={formatCurrency(todayEarnings)} />
         <StatCard title="Active Jobs" value={activeBookings.length.toString()} />
-        <StatCard title="Overall Rating" value={`★ ${worker?.averageRating?.toFixed(1) || '4.8'}`} />
-        <StatCard title="Completed Jobs" value={(worker?.totalJobs || 0).toString()} />
+        <StatCard title="Overall Rating" value={ratingDisplay} />
+        <StatCard title="Completed Jobs" value={completedJobsCount.toString()} />
       </div>
 
       {/* Active Jobs Queue */}

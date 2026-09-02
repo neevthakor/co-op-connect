@@ -127,7 +127,8 @@ export async function requirePermission(permission: Permission) {
 export function getRoleRedirect(role: string): string {
   switch (role) {
     case 'CUSTOMER': return '/customer/home';
-    case 'WORKER': return '/worker/home';
+    case 'WORKER':
+    case 'HELPER': return '/worker/home';
     case 'COOPERATIVE_ADMIN': return '/admin/overview';
     case 'FEDERATION_ADMIN': return '/admin/overview';
     case 'SOCIETY_ADMIN': return '/society/dashboard';

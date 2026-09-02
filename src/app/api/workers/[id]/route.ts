@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
+import { getWorkerProfile } from '@/services/worker-profile';
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } }
@@ -10,28 +12,13 @@ export async function GET(
     const resolvedParams = await Promise.resolve(params);
     const workerId = resolvedParams.id;
 
-    const worker = await prisma.worker.findUnique({
-      where: { id: workerId },
-      include: {
-        user: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
-        cooperative: true,
-        skills: { include: { skill: { include: { category: true } } } },
-        certifications: { include: { certification: true } },
-        portfolioItems: true,
-        ratings: {
-          include: { customer: { include: { user: { select: { name: true, avatar: true } } } } },
-          orderBy: { createdAt: 'desc' },
-          take: 20,
-        },
-        availability: true,
-      },
-    });
+    const profileData = await getWorkerProfile(workerId);
 
-    if (!worker) {
+    if (!profileData) {
       return NextResponse.json({ error: 'Worker not found' }, { status: 404 });
     }
 
-    return NextResponse.json(worker);
+    return NextResponse.json(profileData);
   } catch (error: any) {
     console.error('Worker Detail GET Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

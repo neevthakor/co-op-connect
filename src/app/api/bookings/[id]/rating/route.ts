@@ -38,33 +38,54 @@ export async function POST(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const customerId = (session.user as any).customerId || booking.customerId;
-    const overallScore = overall
-      ? parseFloat(overall.toString())
-      : Number(((technicalQuality + punctuality + communication + professionalism + priceTransparency) / 5).toFixed(1));
+    // 1. Prevent reviewing an uncompleted job
+    if (booking.status !== 'COMPLETED') {
+      return NextResponse.json(
+        { error: 'Reviews can only be submitted for completed jobs' },
+        { status: 400 }
+      );
+    }
 
-    const rating = await prisma.rating.upsert({
+    // 2. Prevent reviewing a job that does not belong to this customer
+    const sessionCustomerId = (session.user as any).customerId;
+    if (sessionCustomerId && sessionCustomerId !== booking.customerId) {
+      return NextResponse.json(
+        { error: 'Unauthorized: You can only review your own bookings' },
+        { status: 403 }
+      );
+    }
+
+    // 3. Prevent duplicate review for the same booking
+    const existingRating = await prisma.rating.findUnique({
       where: { bookingId },
-      create: {
+    });
+    if (existingRating) {
+      return NextResponse.json(
+        { error: 'A review has already been submitted for this booking' },
+        { status: 400 }
+      );
+    }
+
+    const customerId = sessionCustomerId || booking.customerId;
+    const computedScore = overall !== undefined && overall !== null
+      ? parseFloat(overall.toString())
+      : ((Number(technicalQuality) + Number(punctuality) + Number(communication) + Number(professionalism) + Number(priceTransparency)) / 5);
+    const overallScore = Number(Math.max(1, Math.min(5, computedScore)).toFixed(1));
+
+    const cleanedReview = typeof review === 'string' && review.trim().length > 0 ? review.trim() : null;
+
+    const rating = await prisma.rating.create({
+      data: {
         bookingId,
         customerId,
         workerId: booking.workerId,
-        technicalQuality: parseInt(technicalQuality.toString()),
-        punctuality: parseInt(punctuality.toString()),
-        communication: parseInt(communication.toString()),
-        professionalism: parseInt(professionalism.toString()),
-        priceTransparency: parseInt(priceTransparency.toString()),
+        technicalQuality: Math.max(1, Math.min(5, parseInt(technicalQuality.toString(), 10))),
+        punctuality: Math.max(1, Math.min(5, parseInt(punctuality.toString(), 10))),
+        communication: Math.max(1, Math.min(5, parseInt(communication.toString(), 10))),
+        professionalism: Math.max(1, Math.min(5, parseInt(professionalism.toString(), 10))),
+        priceTransparency: Math.max(1, Math.min(5, parseInt(priceTransparency.toString(), 10))),
         overall: overallScore,
-        review: review || null,
-      },
-      update: {
-        technicalQuality: parseInt(technicalQuality.toString()),
-        punctuality: parseInt(punctuality.toString()),
-        communication: parseInt(communication.toString()),
-        professionalism: parseInt(professionalism.toString()),
-        priceTransparency: parseInt(priceTransparency.toString()),
-        overall: overallScore,
-        review: review || null,
+        review: cleanedReview,
       },
     });
 

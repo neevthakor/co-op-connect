@@ -1,10 +1,11 @@
 import { auth, signOut } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import { getWorkerProfile } from '@/services/worker-profile';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star, ShieldCheck, Award, Wrench, CheckCircle2, Phone, Mail, MapPin, LogOut } from 'lucide-react';
+import { Award, Wrench, LogOut, CheckCircle2 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -15,22 +16,7 @@ export default async function ProfilePage() {
 
   const workerId = (session.user as any).workerId;
 
-  const worker = await prisma.worker.findFirst({
-    where: workerId ? { id: workerId } : { userId: session.user.id },
-    include: {
-      user: true,
-      cooperative: true,
-      skills: { include: { skill: true } },
-      certifications: { include: { certification: true } },
-      ratings: {
-        include: { customer: { include: { user: true } } },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-      },
-    },
-  });
-
-  if (!worker) {
+  if (!workerId) {
     return (
       <div className="p-8 text-center text-muted-foreground">
         Worker profile not found for this account.
@@ -38,51 +24,130 @@ export default async function ProfilePage() {
     );
   }
 
+  const profileData = await getWorkerProfile(workerId);
+
+  if (!profileData) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Worker profile not found.
+      </div>
+    );
+  }
+
+  const {
+    worker,
+    completedJobsCount,
+    averageRating,
+    totalRatingsCount,
+    punctualityScore,
+    skills,
+    certifications,
+    recentReviews,
+    earningsSummary,
+  } = profileData;
+
+  const isVerified = worker.verificationStatus === 'VERIFIED';
+
   return (
     <div className="flex flex-col gap-6 p-4 pb-20 md:p-8 max-w-4xl mx-auto w-full">
       <header className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">{worker.user.name}</h1>
-            <Badge className="bg-primary/10 text-primary font-bold">{worker.verificationStatus}</Badge>
+            <Badge
+              className={
+                isVerified
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-amber-100 text-amber-800'
+              }
+            >
+              {worker.verificationStatus}
+            </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            {worker.primaryTrade} • Member of {worker.cooperative?.name || 'Ahmedabad Cooperative'}
+            {worker.primaryTrade || 'Technician'} • Member of{' '}
+            {worker.cooperative?.name || 'Cooperative'}
           </p>
         </div>
       </header>
 
-      {/* Overview Stats */}
+      {/* Overview Stats from Real Database Aggregations */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-xs text-muted-foreground font-semibold">Average Rating</p>
             <p className="text-2xl font-black text-amber-500 mt-1 flex items-center justify-center gap-1">
-              ⭐ {worker.averageRating || 4.9}
+              {averageRating !== null ? (
+                <>⭐ {averageRating}</>
+              ) : (
+                <span className="text-sm font-normal text-muted-foreground">No ratings yet</span>
+              )}
             </p>
+            {totalRatingsCount > 0 && (
+              <p className="text-[10px] text-muted-foreground mt-0.5">{totalRatingsCount} review{totalRatingsCount > 1 ? 's' : ''}</p>
+            )}
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-xs text-muted-foreground font-semibold">Completed Jobs</p>
-            <p className="text-2xl font-black text-primary mt-1">{worker.totalJobs || 0}</p>
+            <p className="text-2xl font-black text-primary mt-1">{completedJobsCount}</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-xs text-muted-foreground font-semibold">Punctuality Score</p>
-            <p className="text-2xl font-black text-green-600 mt-1">{worker.punctualityScore || 98}%</p>
+            <p className="text-2xl font-black text-green-600 mt-1">
+              {punctualityScore !== null ? (
+                `${punctualityScore}%`
+              ) : (
+                <span className="text-xs font-normal text-muted-foreground">Not enough data</span>
+              )}
+            </p>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-xs text-muted-foreground font-semibold">Availability</p>
-            <Badge className="mt-2" variant={worker.availabilityStatus === 'AVAILABLE' ? 'default' : 'secondary'}>
+            <Badge
+              className="mt-2"
+              variant={worker.availabilityStatus === 'AVAILABLE' ? 'default' : 'secondary'}
+            >
               {worker.availabilityStatus}
             </Badge>
           </CardContent>
         </Card>
       </div>
+
+      {/* Financial Summary */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Earnings Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div>
+              <span className="text-muted-foreground">Gross Revenue:</span>
+              <p className="text-sm font-bold text-foreground mt-0.5">{formatCurrency(earningsSummary.grossTotal)}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">5% Co-op Fund:</span>
+              <p className="text-sm font-bold text-amber-700 mt-0.5">{formatCurrency(earningsSummary.cooperativeTotal)}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">2% Welfare Fund:</span>
+              <p className="text-sm font-bold text-blue-700 mt-0.5">{formatCurrency(earningsSummary.welfareTotal)}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Net Take-Home:</span>
+              <p className="text-sm font-bold text-green-600 mt-0.5">{formatCurrency(earningsSummary.netTotal)}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Skills & Certifications */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -93,12 +158,13 @@ export default async function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {worker.skills.length === 0 ? (
-              <p className="text-xs text-muted-foreground">General trade expertise</p>
+            {skills.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No skills added yet</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {worker.skills.map((ws) => (
-                  <Badge key={ws.id} variant="outline" className="text-xs py-1 px-2.5">
+                {skills.map((ws) => (
+                  <Badge key={ws.id} variant="outline" className="text-xs py-1 px-2.5 flex items-center gap-1">
+                    {ws.verified && <CheckCircle2 className="h-3 w-3 text-green-600" />}
                     {ws.skill.name} • {ws.proficiencyLevel}
                   </Badge>
                 ))}
@@ -114,13 +180,15 @@ export default async function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {worker.certifications.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Cooperative Induction Training Certified</p>
+            {certifications.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No certifications added</p>
             ) : (
-              worker.certifications.map((c) => (
+              certifications.map((c) => (
                 <div key={c.id} className="flex justify-between items-center text-xs p-2 bg-muted/40 rounded">
                   <span className="font-semibold">{c.certification.name}</span>
-                  <Badge variant="outline" className="text-green-700">Verified</Badge>
+                  <Badge variant="outline" className={c.verified ? 'text-green-700' : 'text-muted-foreground'}>
+                    {c.verified ? 'Verified' : 'Pending'}
+                  </Badge>
                 </div>
               ))
             )}
@@ -130,8 +198,10 @@ export default async function ProfilePage() {
 
       {/* Recent Reviews */}
       <section className="space-y-3">
-        <h2 className="text-lg font-bold text-foreground">Recent Customer Reviews</h2>
-        {worker.ratings.length === 0 ? (
+        <h2 className="text-lg font-bold text-foreground">
+          Recent Customer Reviews ({recentReviews.length})
+        </h2>
+        {recentReviews.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center text-xs text-muted-foreground">
               No customer reviews submitted yet.
@@ -139,25 +209,54 @@ export default async function ProfilePage() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {worker.ratings.map((r) => (
-              <Card key={r.id}>
-                <CardContent className="p-4 space-y-1.5 text-xs">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-foreground">{r.customer?.user?.name || 'Customer'}</span>
-                    <span className="text-amber-500 font-bold">⭐ {r.overall} / 5</span>
-                  </div>
-                  <p className="text-muted-foreground">{r.review || 'Excellent and punctual service!'}</p>
-                </CardContent>
-              </Card>
-            ))}
+            {recentReviews.map((r) => {
+              const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-IN', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+              }) : '';
+
+              return (
+                <Card key={r.id}>
+                  <CardContent className="p-4 space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-foreground">
+                          {r.customer?.name || 'Customer'}
+                        </span>
+                        {r.serviceCategory && (
+                          <span className="text-muted-foreground">
+                            ({r.serviceCategory})
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-amber-500 font-bold">{r.rating.toFixed(1)} ★</span>
+                    </div>
+                    <p className="text-foreground mt-1">
+                      {r.comment ? r.comment : <span className="italic text-muted-foreground">No written review</span>}
+                    </p>
+                    <div className="flex justify-between items-center pt-1 border-t border-muted/50 text-[10px] text-muted-foreground">
+                      <div className="flex gap-4">
+                        <span>Quality: {r.technicalQuality}/5</span>
+                        <span>Punctuality: {r.punctuality}/5</span>
+                        <span>Transparency: {r.priceTransparency}/5</span>
+                      </div>
+                      {dateStr && <span>{dateStr}</span>}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </section>
 
-      <form action={async () => {
-        'use server';
-        await signOut({ redirectTo: '/login' });
-      }}>
+      <form
+        action={async () => {
+          'use server';
+          await signOut({ redirectTo: '/login' });
+        }}
+      >
         <Button variant="destructive" className="w-full gap-2" type="submit">
           <LogOut className="h-4 w-4" />
           Sign Out
@@ -166,4 +265,3 @@ export default async function ProfilePage() {
     </div>
   );
 }
-

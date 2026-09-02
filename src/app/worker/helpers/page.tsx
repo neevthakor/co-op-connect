@@ -226,9 +226,9 @@ export default function HelpersPage() {
                     </div>
                   </div>
                   <div className="pt-2 border-t flex justify-between text-muted-foreground">
-                    <span>⭐ {h.averageRating || 4.8}</span>
-                    <span>📍 {match.distanceKm || 1.2} km</span>
-                    <span className="text-primary font-semibold">{match.matchScore || 90}% Match</span>
+                    <span>{h.averageRating > 0 ? `⭐ ${h.averageRating.toFixed(1)}` : '⭐ New'}</span>
+                    <span>📍 {match.distanceKm !== undefined ? `${match.distanceKm} km` : 'Nearby'}</span>
+                    <span className="text-primary font-semibold">{match.matchScore || match.match_score || 90}% Match</span>
                   </div>
                 </CardContent>
               </Card>

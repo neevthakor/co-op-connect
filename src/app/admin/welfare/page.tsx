@@ -20,32 +20,15 @@ export default function WelfarePage() {
   }, []);
 
   const metrics = data?.metrics || {
-    totalWorkers: 50,
-    insuredWorkers: 43,
-    insuranceCoveragePercent: 86,
-    trainedWorkers: 38,
-    trainingCoveragePercent: 76,
-    highWorkloadAlerts: 4,
+    totalWorkers: 0,
+    insuredWorkers: 0,
+    insuranceCoveragePercent: 0,
+    trainedWorkers: 0,
+    trainingCoveragePercent: 0,
+    highWorkloadAlerts: 0,
   };
 
-  const welfareRecords = data?.welfareRecords || [
-    {
-      id: '1',
-      date: new Date(),
-      type: 'HEALTH_CHECKUP',
-      description: 'Annual occupational health screening completed for AC and Electrical technicians.',
-      status: 'RESOLVED',
-      worker: { user: { name: 'Ramesh Patel', phone: '+91 98765 43210' } },
-    },
-    {
-      id: '2',
-      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      type: 'OVERWORK_ALERT',
-      description: 'Logged over 52 working hours in past 6 days. Mandatory rest day recommendation issued.',
-      status: 'OPEN',
-      worker: { user: { name: 'Priya Sharma', phone: '+91 98765 43211' } },
-    },
-  ];
+  const welfareRecords = data?.welfareRecords || [];
 
   return (
     <div className="space-y-6 p-4 md:p-8 max-w-7xl mx-auto w-full pb-20">

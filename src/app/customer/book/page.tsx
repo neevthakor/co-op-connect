@@ -309,22 +309,22 @@ function BookServiceContent() {
                                 {userObj.name || 'Cooperative Worker'}
                                 <ShieldCheck className="h-4 w-4 text-primary" />
                               </h3>
-                              <p className="text-xs text-muted-foreground">{workerObj.primaryTrade || 'Technician'} • {workerObj.experience || 3} yrs exp</p>
+                              <p className="text-xs text-muted-foreground">{workerObj.primaryTrade || 'Technician'} • {workerObj.experience ? `${workerObj.experience} yrs exp` : 'Verified Member'}</p>
                             </div>
-                            <span className="font-bold text-primary">₹{match.estimatedPrice || bookingData.estimatedPrice}</span>
+                            <span className="font-bold text-primary">₹{match.estimatedPrice || bookingData.estimatedPrice || 450}</span>
                           </div>
                           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                            <span>⭐ {workerObj.averageRating || 4.9}</span>
+                            <span>{workerObj.averageRating > 0 ? `⭐ ${workerObj.averageRating.toFixed(1)}` : '⭐ New'}</span>
                             <span>•</span>
-                            <span>{match.distanceKm || 1.8} km away</span>
+                            <span>{match.distanceKm !== undefined ? `${match.distanceKm} km away` : 'Nearby'}</span>
                             <span>•</span>
-                            <span>{workerObj.totalJobs || 24} jobs</span>
+                            <span>{workerObj.totalJobs || 0} jobs</span>
                           </div>
                           <div className="mt-2">
                             <MatchScore
-                              score={match.compositeScore || 94}
+                              score={match.compositeScore || match.match_score || 90}
                               reasons={[
-                                `Punctuality: ${workerObj.punctualityScore || 98}%`,
+                                workerObj.punctualityScore ? `Punctuality: ${workerObj.punctualityScore}%` : `Cooperative FairMatch`,
                                 `Fair wage certified`,
                               ]}
                             />

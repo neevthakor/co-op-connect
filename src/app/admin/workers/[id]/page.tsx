@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import { getWorkerProfile } from '@/services/worker-profile';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/shared/stat-card';
 import { TrustPassport } from '@/components/shared/trust-passport';
@@ -9,29 +9,21 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
-export default async function WorkerDetailPage({ params }: { params: { id: string } }) {
-  const worker = await prisma.worker.findUnique({
-    where: { id: params.id },
-    include: {
-      user: true,
-      cooperative: true,
-      skills: {
-        include: {
-          skill: true,
-        },
-      },
-      certifications: {
-        include: {
-          certification: true,
-        },
-      },
-      earnings: true,
-    },
-  });
+export default async function WorkerDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }> | { id: string };
+}) {
+  const resolvedParams = await Promise.resolve(params);
+  const workerId = resolvedParams.id;
 
-  if (!worker) notFound();
+  const profileData = await getWorkerProfile(workerId);
 
-  const totalEarnings = worker.earnings.reduce((sum, e) => sum + e.netAmount, 0);
+  if (!profileData) notFound();
+
+  const { worker, completedJobsCount, averageRating, totalRatingsCount, earningsSummary } = profileData;
+
+  const ratingDisplay = averageRating !== null ? `★ ${averageRating.toFixed(1)} (${totalRatingsCount})` : 'No reviews yet';
 
   return (
     <div className="space-y-6">
@@ -46,7 +38,7 @@ export default async function WorkerDetailPage({ params }: { params: { id: strin
             </Badge>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            {worker.primaryTrade} • {worker.cooperative?.name || 'Ahmedabad Cooperative'}
+            {worker.primaryTrade || 'Technician'} • {worker.cooperative?.name || 'Ahmedabad Cooperative'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -57,12 +49,12 @@ export default async function WorkerDetailPage({ params }: { params: { id: strin
       </div>
       
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total Net Earnings" value={formatCurrency(totalEarnings)} />
-        <StatCard title="Total Jobs Completed" value={worker.totalJobs.toString()} />
-        <StatCard title="Average Rating" value={`★ ${worker.averageRating.toFixed(1)}`} />
+        <StatCard title="Total Net Earnings" value={formatCurrency(earningsSummary.netTotal)} />
+        <StatCard title="Total Jobs Completed" value={completedJobsCount.toString()} />
+        <StatCard title="Average Rating" value={ratingDisplay} />
       </div>
 
-      <TrustPassport worker={worker} />
+      <TrustPassport profileData={profileData} />
     </div>
   );
 }
