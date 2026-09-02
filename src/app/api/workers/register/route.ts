@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { isValidEmail, isValidPhone, normalizePhone } from '@/lib/validation';
@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
       cooperativeId,
       skillIds = [],
       address,
-      city = 'Ahmedabad',
-      state = 'Gujarat',
+      city = 'Unspecified',
+      state = 'Unspecified',
       isEmergencyAvailable = false,
       role = 'WORKER',
     } = body;
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
             cooperativeId: coopId,
             primaryTrade: primaryTrade.trim(),
             experience: parseInt(experience.toString(), 10) || 1,
-            address: address && typeof address === 'string' ? address.trim() : 'Ahmedabad, Gujarat',
+            address: address && typeof address === 'string' ? address.trim() : 'Location Not Provided',
             city,
             state,
             verificationStatus: 'PENDING', // Real worker starts as PENDING until verified by cooperative admin
@@ -96,8 +96,8 @@ export async function POST(req: NextRequest) {
             averageRating: 0,
             completionRate: 100,
             punctualityScore: 100,
-            latitude: 23.0225 + (Math.random() - 0.5) * 0.05,
-            longitude: 72.5714 + (Math.random() - 0.5) * 0.05,
+            latitude: null,
+            longitude: null,
           },
         },
       },

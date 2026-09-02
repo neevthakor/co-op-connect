@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { isValidEmail, isValidPhone, normalizePhone } from '@/lib/validation';
@@ -6,7 +6,7 @@ import { isValidEmail, isValidPhone, normalizePhone } from '@/lib/validation';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, phone, password, address, city = 'Ahmedabad', state = 'Gujarat' } = body;
+    const { name, email, phone, password, address, city = 'Unspecified', state = 'Unspecified' } = body;
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Full name is required' }, { status: 400 });
@@ -59,11 +59,11 @@ export async function POST(req: NextRequest) {
         language: 'en',
         customer: {
           create: {
-            address: address && typeof address === 'string' ? address.trim() : 'Ahmedabad',
+            address: address && typeof address === 'string' ? address.trim() : 'Location Not Provided',
             city,
             state,
-            latitude: 23.0225 + (Math.random() - 0.5) * 0.05,
-            longitude: 72.5714 + (Math.random() - 0.5) * 0.05,
+            latitude: null,
+            longitude: null,
           },
         },
       },

@@ -147,7 +147,7 @@ export default function SocietyRequestsPage() {
                     <p className="text-sm text-gray-600 mt-1">{req.description}</p>
                     <div className="flex items-center gap-2 mt-2">
                       {req.area && <span className="text-xs text-gray-500">{req.area}</span>}
-                      <span className="text-xs text-gray-400">â€¢</span>
+                      <span className="text-xs text-gray-400">•</span>
                       <span className="text-xs text-gray-500">{new Date(req.createdAt).toLocaleDateString("en-IN")}</span>
                     </div>
                   </div>

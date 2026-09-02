@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -139,10 +139,12 @@ function BookServiceContent() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Booking failed');
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Booking failed');
+      }
 
-      toast.success(`Booking Confirmed! Security PIN: ${data.servicePin}`);
-      router.push(`/customer/bookings/${data.id}`);
+      toast.success(`Booking Confirmed! Security PIN: ${data.booking.servicePin}`);
+      router.push(`/customer/bookings/${data.booking.id}`);
     } catch (err: any) {
       toast.error(err.message || 'Booking failed');
     } finally {
@@ -235,7 +237,7 @@ function BookServiceContent() {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Base Rate</p>
-                      <p className="font-semibold text-foreground">â‚¹{bookingData.estimatedPrice}</p>
+                      <p className="font-semibold text-foreground">₹{bookingData.estimatedPrice}</p>
                     </div>
                   </div>
                   <div>
@@ -322,15 +324,15 @@ function BookServiceContent() {
                                 {userObj.name || 'Cooperative Worker'}
                                 <ShieldCheck className="h-4 w-4 text-primary" />
                               </h3>
-                              <p className="text-xs text-muted-foreground">{workerObj.primaryTrade || 'Technician'} â€¢ {workerObj.experience ? `${workerObj.experience} yrs exp` : 'Verified Member'}</p>
+                              <p className="text-xs text-muted-foreground">{workerObj.primaryTrade || 'Technician'} • {workerObj.experience ? `${workerObj.experience} yrs exp` : 'Verified Member'}</p>
                             </div>
-                            <span className="font-bold text-primary">â‚¹{match.estimatedPrice || bookingData.estimatedPrice || 450}</span>
+                            <span className="font-bold text-primary">₹{match.estimatedPrice || bookingData.estimatedPrice || 450}</span>
                           </div>
                           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                            <span>{workerObj.averageRating > 0 ? `â­ ${workerObj.averageRating.toFixed(1)}` : 'â­ New'}</span>
-                            <span>â€¢</span>
+                            <span>{workerObj.averageRating > 0 ? `⭐ ${workerObj.averageRating.toFixed(1)}` : '⭐ New'}</span>
+                            <span>•</span>
                             <span>{match.distanceKm !== undefined ? `${match.distanceKm} km away` : 'Nearby'}</span>
-                            <span>â€¢</span>
+                            <span>•</span>
                             <span>{workerObj.totalJobs || 0} jobs</span>
                           </div>
                           <div className="mt-2">
@@ -406,9 +408,9 @@ function BookServiceContent() {
             />
             <div className="bg-secondary/50 p-4 rounded-xl text-xs space-y-1.5 text-muted-foreground border border-border/80">
               <p className="font-bold text-foreground">Cooperative Guarantee:</p>
-              <p>â€¢ 100% transparent fee structure (5% cooperative fund, 2% worker welfare fund, 5% GST).</p>
-              <p>â€¢ 30-day service warranty activated automatically upon job completion.</p>
-              <p>â€¢ Secure 4-digit PIN verification before work begins.</p>
+              <p>• 100% transparent fee structure (5% cooperative fund, 2% worker welfare fund, 5% GST).</p>
+              <p>• 30-day service warranty activated automatically upon job completion.</p>
+              <p>• Secure 4-digit PIN verification before work begins.</p>
             </div>
             <Button className="w-full h-12 mt-8" onClick={nextStep}>
               Review & Confirm
@@ -440,7 +442,7 @@ function BookServiceContent() {
                 <div className="pt-4 border-t flex justify-between items-center">
                   <div>
                     <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Estimated Total</p>
-                    <p className="text-2xl font-black text-primary">â‚¹{Math.round(bookingData.estimatedPrice * 1.1)}</p>
+                    <p className="text-2xl font-black text-primary">₹{Math.round(bookingData.estimatedPrice * 1.1)}</p>
                   </div>
                   <div className="text-right text-xs text-muted-foreground">
                     Includes GST & 30-day warranty

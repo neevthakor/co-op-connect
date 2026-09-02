@@ -35,15 +35,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/bookings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
             <ClipboardList className="w-4 h-4" /> Bookings & Jobs
           </Link>
-          <Link href="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
-            <Users className="w-4 h-4" /> Users
-          </Link>
-          <div className="pt-4 pb-1 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            System
-          </div>
-          <Link href="/admin/audit" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
-            <Activity className="w-4 h-4" /> Audit Logs
-          </Link>
         </nav>
         <div className="p-4 mt-auto border-t border-slate-800">
            <SignOutButton className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg py-2 transition-colors" />

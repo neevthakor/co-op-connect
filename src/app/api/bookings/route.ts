@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { createBooking } from '@/services/booking';
+import { ensureServiceCategories } from '@/lib/reference-data';
 
 export async function GET(req: NextRequest) {
   try {
@@ -65,9 +66,10 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 });
     }
 
+    const body = await req.json();
     let customerId = (session.user as any).customerId;
     if (!customerId) {
       // Find or create customer record for this user
@@ -80,15 +82,14 @@ export async function POST(req: NextRequest) {
         const newCustomer = await prisma.customer.create({
           data: {
             userId: session.user.id || 'default-user',
-            city: 'Ahmedabad',
-            state: 'Gujarat',
+            city: body.city || 'Unspecified',
+            state: body.state || 'Unspecified',
           },
         });
         customerId = newCustomer.id;
       }
     }
 
-    const body = await req.json();
     const {
       workerId,
       categoryId,
@@ -103,8 +104,11 @@ export async function POST(req: NextRequest) {
     } = body;
 
     if (!workerId || !categoryId) {
-      return NextResponse.json({ error: 'workerId and categoryId are required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'workerId and categoryId are required', code: 'MISSING_FIELDS' }, { status: 400 });
     }
+
+    // Safely ensure reference data exists without destroying data
+    await ensureServiceCategories();
 
     // Defensive validation: ensure the category exists in the database
     // to prevent Prisma P2003 Foreign Key constraint errors.
@@ -113,7 +117,7 @@ export async function POST(req: NextRequest) {
     });
     
     if (!categoryExists) {
-      return NextResponse.json({ error: 'Selected service category is no longer available. Please select another service.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Selected service category is no longer available. Please select another service.', code: 'INVALID_CATEGORY' }, { status: 400 });
     }
 
     const booking = await createBooking({
@@ -124,16 +128,22 @@ export async function POST(req: NextRequest) {
       scheduledDate: scheduledDate ? new Date(scheduledDate) : new Date(),
       scheduledTime: scheduledTime || '10:00 AM',
       estimatedPrice: estimatedPrice ? parseFloat(estimatedPrice) : 350,
-      address: address || 'Ahmedabad, Gujarat',
-      latitude: latitude ? parseFloat(latitude) : 23.0225,
-      longitude: longitude ? parseFloat(longitude) : 72.5714,
+      address: address || 'Service Location Not Provided',
+      latitude: latitude ? parseFloat(latitude) : undefined,
+      longitude: longitude ? parseFloat(longitude) : undefined,
       isEmergency: !!isEmergency,
     });
 
-    return NextResponse.json(booking, { status: 201 });
+    return NextResponse.json({ success: true, booking }, { status: 201 });
   } catch (error: any) {
     console.error('Booking Creation Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create booking' }, { status: 500 });
+    
+    let errorCode = 'INTERNAL_ERROR';
+    if (error.message === 'Worker not found') errorCode = 'WORKER_NOT_FOUND';
+    if (error.message.includes('not currently eligible')) errorCode = 'WORKER_UNAVAILABLE';
+    if (error.message.includes('no longer available for the selected time')) errorCode = 'SCHEDULING_CONFLICT';
+    
+    return NextResponse.json({ success: false, error: error.message || 'Failed to create booking', code: errorCode }, { status: 500 });
   }
 }
 
