@@ -17,6 +17,12 @@ export default function LandingPage() {
           </Link>
           <div className="flex items-center gap-3">
             <Link
+              href="/about"
+              className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
+            >
+              About Us
+            </Link>
+            <Link
               href="/login"
               className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -225,6 +231,9 @@ export default function LandingPage() {
                 <span className="text-white font-bold text-xs">CC</span>
               </div>
               <span className="font-bold text-foreground">Co-opConnect</span>
+            </div>
+            <div className="flex items-center gap-4 text-xs font-semibold">
+              <Link href="/about" className="hover:text-foreground transition-colors">About Us</Link>
             </div>
             <p className="text-xs">
               SIH 2026 — Problem Statement 26089 — Cooperative Gig Services Platform

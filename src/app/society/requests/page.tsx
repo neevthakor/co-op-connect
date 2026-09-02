@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Plus, ClipboardList } from "lucide-react";
@@ -131,7 +131,7 @@ export default function SocietyRequestsPage() {
 
       <div className="bg-white rounded-xl border border-gray-200">
         {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading...</div>
+          <div className="p-8 text-center text-gray-500 min-h-[400px] flex items-center justify-center">Loading...</div>
         ) : requests.length === 0 ? (
           <div className="p-8 text-center">
             <ClipboardList className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -147,7 +147,7 @@ export default function SocietyRequestsPage() {
                     <p className="text-sm text-gray-600 mt-1">{req.description}</p>
                     <div className="flex items-center gap-2 mt-2">
                       {req.area && <span className="text-xs text-gray-500">{req.area}</span>}
-                      <span className="text-xs text-gray-400">•</span>
+                      <span className="text-xs text-gray-400">â€¢</span>
                       <span className="text-xs text-gray-500">{new Date(req.createdAt).toLocaleDateString("en-IN")}</span>
                     </div>
                   </div>

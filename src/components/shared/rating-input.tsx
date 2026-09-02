@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { Star } from "lucide-react";
@@ -85,7 +85,7 @@ export function RatingInput({ bookingId, categories = DEFAULT_CATEGORIES, onSubm
                   <button
                     key={star}
                     type="button"
-                    className="p-1 hover:scale-110 transition-transform"
+                    className="p-1  transition-colors"
                     onMouseEnter={() => setHoveredRating(prev => ({ ...prev, [category]: star }))}
                     onMouseLeave={() => setHoveredRating(prev => ({ ...prev, [category]: 0 }))}
                     onClick={() => handleRate(category, star)}

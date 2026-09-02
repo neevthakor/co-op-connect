@@ -72,11 +72,30 @@ export default async function WorkerHomePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200">
-            ● AVAILABLE FOR JOBS
-          </span>
+          {worker?.verificationStatus === 'VERIFIED' ? (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+              ● AVAILABLE FOR JOBS
+            </span>
+          ) : (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
+              ● PENDING VERIFICATION
+            </span>
+          )}
         </div>
       </div>
+
+      {worker?.verificationStatus !== 'VERIFIED' && (
+        <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl flex items-start gap-3">
+          <div className="text-orange-600 font-bold mt-0.5">!</div>
+          <div>
+            <h3 className="text-sm font-bold text-orange-800">Your profile is pending verification</h3>
+            <p className="text-xs text-orange-700 mt-1">
+              You will not be visible to customers until a cooperative admin verifies your identity and skills.
+              Please ensure your profile is complete.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -1,125 +1,74 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { DataTable } from '@/components/shared/data-table';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, ShieldCheck, UserCheck } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
-
-export default async function AdminWorkersPage() {
+export default async function AdminWorkersPage({ searchParams }: { searchParams: Promise<{ status?: string }> | { status?: string } }) {
   const session = await auth();
-  if (!session?.user) redirect('/login');
+  if (!session?.user || (session.user as any).role !== 'ADMIN') redirect('/login');
+
+  const resolvedParams = await Promise.resolve(searchParams);
+  const statusFilter = resolvedParams.status || 'PENDING';
 
   const workers = await prisma.worker.findMany({
+    where: statusFilter !== 'ALL' ? { verificationStatus: statusFilter } : {},
     include: {
-      user: true,
-      cooperative: true,
-      earnings: true,
+      user: { select: { name: true, email: true, phone: true } },
+      cooperative: { select: { name: true } }
     },
-    orderBy: { joinedAt: 'desc' },
+    orderBy: { joinedAt: 'desc' }
   });
-
-  const formattedData = workers.map((w) => {
-    const totalEarnings = w.earnings.reduce((sum, e) => sum + e.netAmount, 0);
-    return {
-      id: w.id,
-      name: w.user.name,
-      trade: w.primaryTrade || 'General',
-      cooperative: w.cooperative?.name || 'Ahmedabad Cooperative',
-      verificationStatus: w.verificationStatus,
-      availabilityStatus: w.availabilityStatus,
-      rating: w.averageRating.toFixed(1),
-      totalJobs: w.totalJobs,
-      earnings: formatCurrency(totalEarnings),
-    };
-  });
-
-  const columns = [
-    {
-      header: 'Worker Name',
-      accessorKey: 'name',
-      cell: (row: any) => (
-        <div className="font-semibold text-gray-900">
-          <Link href={`/admin/workers/${row.id}`} className="hover:text-primary hover:underline">
-            {row.name}
-          </Link>
-          <div className="text-xs text-gray-500">{row.cooperative}</div>
-        </div>
-      ),
-    },
-    {
-      header: 'Trade Skill',
-      accessorKey: 'trade',
-      cell: (row: any) => <Badge variant="outline" className="bg-gray-50 font-medium">{row.trade}</Badge>,
-    },
-    {
-      header: 'Verification',
-      accessorKey: 'verificationStatus',
-      cell: (row: any) => (
-        <Badge className={
-          row.verificationStatus === 'VERIFIED' ? 'bg-green-100 text-green-800' :
-          row.verificationStatus === 'PENDING' ? 'bg-amber-100 text-amber-800' :
-          'bg-gray-100 text-gray-800'
-        }>
-          {row.verificationStatus}
-        </Badge>
-      ),
-    },
-    {
-      header: 'Rating',
-      accessorKey: 'rating',
-      cell: (row: any) => (
-        <span className="flex items-center text-amber-600 font-bold text-xs">
-          <Star className="w-3.5 h-3.5 fill-amber-500 mr-1" />
-          {row.rating}
-        </span>
-      ),
-    },
-    {
-      header: 'Jobs Done',
-      accessorKey: 'totalJobs',
-    },
-    {
-      header: 'Total Earnings',
-      accessorKey: 'earnings',
-      cell: (row: any) => <span className="font-bold text-gray-900">{row.earnings}</span>,
-    },
-    {
-      header: 'Actions',
-      accessorKey: 'id',
-      cell: (row: any) => (
-        <Link href={`/admin/workers/${row.id}`}>
-          <Button size="sm" variant="outline" className="text-xs">
-            Inspect Profile
-          </Button>
-        </Link>
-      ),
-    },
-  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cooperative Workforce Directory</h1>
-          <p className="text-sm text-gray-500">Monitor active members, verified trades, and workload allocation</p>
+          <h1 className="text-2xl font-bold text-gray-900">Worker Verification</h1>
+          <p className="text-gray-500 text-sm">Review and manage worker accounts.</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/admin/verification">
-            <Button className="bg-primary text-white text-xs font-semibold gap-1.5">
-              <UserCheck className="w-4 h-4" />
-              Verification Queue
-            </Button>
-          </Link>
+          <Link href="?status=PENDING" className={`px-4 py-2 rounded-lg text-sm font-semibold ${statusFilter === 'PENDING' ? 'bg-orange-100 text-orange-700' : 'bg-white border text-gray-600'}`}>Pending</Link>
+          <Link href="?status=VERIFIED" className={`px-4 py-2 rounded-lg text-sm font-semibold ${statusFilter === 'VERIFIED' ? 'bg-green-100 text-green-700' : 'bg-white border text-gray-600'}`}>Verified</Link>
+          <Link href="?status=ALL" className={`px-4 py-2 rounded-lg text-sm font-semibold ${statusFilter === 'ALL' ? 'bg-blue-100 text-blue-700' : 'bg-white border text-gray-600'}`}>All</Link>
         </div>
       </div>
 
-      <div className="bg-white p-5 rounded-xl border shadow-xs">
-        <DataTable data={formattedData} columns={columns} searchable={true} filterable={true} />
+      <div className="grid gap-4">
+        {workers.length === 0 ? (
+          <div className="p-8 text-center bg-white border rounded-xl">
+            <p className="text-gray-500">No workers found with status {statusFilter}.</p>
+          </div>
+        ) : (
+          workers.map(w => (
+            <Card key={w.id}>
+              <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-lg">{w.user.name}</h3>
+                    <Badge variant="outline" className={
+                      w.verificationStatus === 'VERIFIED' ? "text-green-600 border-green-600" :
+                      w.verificationStatus === 'PENDING' ? "text-orange-600 border-orange-600" :
+                      "text-red-600 border-red-600"
+                    }>
+                      {w.verificationStatus}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-gray-500 space-y-1">
+                    <p>{w.user.email} • {w.user.phone}</p>
+                    <p>Trade: {w.primaryTrade || 'Not specified'} • {w.cooperative?.name}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Link href={`/admin/workers/${w.id}`} className="w-full sm:w-auto text-center px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-800">
+                    Review Profile
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );

@@ -37,9 +37,28 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4 p-4 md:p-8 max-w-2xl mx-auto w-full">
-        <Skeleton className="h-8 w-48 mb-4" />
-        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
+      <div className="flex flex-col gap-6 p-4 pb-20 md:p-8 max-w-2xl mx-auto w-full">
+        <header className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </header>
+        <div className="flex flex-col gap-2 mt-2">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="flex gap-4 p-4 border-b">
+              <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-4/5" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

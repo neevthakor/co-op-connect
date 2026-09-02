@@ -1,60 +1,90 @@
-import { notFound } from 'next/navigation';
-import { getWorkerProfile } from '@/services/worker-profile';
-import { Button } from '@/components/ui/button';
-import { StatCard } from '@/components/shared/stat-card';
-import { TrustPassport } from '@/components/shared/trust-passport';
+﻿import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { redirect } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/utils';
-import Link from 'next/link';
+import { AdminWorkerActions } from './actions';
 
-export const dynamic = 'force-dynamic';
+export default async function AdminWorkerDetailsPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+  const session = await auth();
+  if (!session?.user || (session.user as any).role !== 'ADMIN') redirect('/login');
 
-export default async function WorkerDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }> | { id: string };
-}) {
   const resolvedParams = await Promise.resolve(params);
   const workerId = resolvedParams.id;
 
-  const profileData = await getWorkerProfile(workerId);
+  const worker = await prisma.worker.findUnique({
+    where: { id: workerId },
+    include: {
+      user: true,
+      cooperative: true,
+      skills: { include: { skill: true } }
+    }
+  });
 
-  if (!profileData) notFound();
-
-  const { worker, completedJobsCount, averageRating, totalRatingsCount, earningsSummary } = profileData;
-
-  const ratingDisplay = averageRating !== null ? `★ ${averageRating.toFixed(1)} (${totalRatingsCount})` : 'No reviews yet';
+  if (!worker) return <div>Worker not found</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900">{worker.user.name}</h1>
-            <Badge className={
-              worker.verificationStatus === 'VERIFIED' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-            }>
-              {worker.verificationStatus}
-            </Badge>
-          </div>
-          <p className="text-sm text-gray-500 mt-1">
-            {worker.primaryTrade || 'Technician'} • {worker.cooperative?.name || 'Ahmedabad Cooperative'}
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">{worker.user.name}</h1>
+          <p className="text-gray-500 text-sm">Worker Profile Details</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/admin/workers">
-            <Button variant="outline" size="sm">← Back to Workers</Button>
-          </Link>
-        </div>
-      </div>
-      
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total Net Earnings" value={formatCurrency(earningsSummary.netTotal)} />
-        <StatCard title="Total Jobs Completed" value={completedJobsCount.toString()} />
-        <StatCard title="Average Rating" value={ratingDisplay} />
+        <Badge className="text-sm">
+          {worker.verificationStatus}
+        </Badge>
       </div>
 
-      <TrustPassport profileData={profileData} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Personal Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Email</span>
+              <p className="font-medium">{worker.user.email}</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Phone</span>
+              <p className="font-medium">{worker.user.phone || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Address</span>
+              <p className="font-medium">{worker.address}, {worker.city}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Professional Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Cooperative</span>
+              <p className="font-medium">{worker.cooperative?.name || 'None'}</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Primary Trade</span>
+              <p className="font-medium">{worker.primaryTrade || 'Not specified'}</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Experience</span>
+              <p className="font-medium">{worker.experience} years</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Verification Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AdminWorkerActions workerId={worker.id} currentStatus={worker.verificationStatus} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, AlertCircle, ShieldCheck, User, Wrench, RefreshCw } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, ShieldCheck, User, Wrench, RefreshCw, Clock } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -99,9 +99,11 @@ export default function VerificationPage() {
               <tbody className="divide-y divide-border">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                      <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-primary" />
-                      Loading verification queue...
+                    <td colSpan={6}>
+                      <div className="p-8 text-center text-muted-foreground flex flex-col items-center justify-center min-h-[400px]">
+                        <Clock className="w-8 h-8 animate-spin mb-2 opacity-50" />
+                        Loading verification queue...
+                      </div>
                     </td>
                   </tr>
                 ) : workers.length === 0 ? (

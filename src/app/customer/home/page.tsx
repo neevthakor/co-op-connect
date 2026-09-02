@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+﻿import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -72,7 +72,7 @@ export default async function CustomerHomePage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-black tracking-tight text-foreground">
-              Hello, {session.user.name || 'Cooperator'}! 👋
+              Hello, {session.user.name || 'Cooperator'}! ðŸ‘‹
             </h1>
           </div>
           <p className="text-muted-foreground text-xs md:text-sm mt-0.5">
@@ -80,7 +80,7 @@ export default async function CustomerHomePage() {
           </p>
         </div>
         <Link href="/customer/profile" className="shrink-0">
-          <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-base hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-base  transition-colors">
             {session.user.name?.charAt(0) || 'U'}
           </div>
         </Link>
@@ -110,7 +110,7 @@ export default async function CustomerHomePage() {
         <Link href="/customer/emergency" className="block group">
           <div className="flex items-center justify-between p-3.5 rounded-xl bg-destructive/10 border border-destructive/30 hover:border-destructive/60 hover:bg-destructive/15 transition-all">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-destructive flex items-center justify-center text-white shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 rounded-lg bg-destructive flex items-center justify-center text-white shrink-0 group- transition-colors">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
@@ -118,7 +118,7 @@ export default async function CustomerHomePage() {
                 <p className="text-xs text-muted-foreground">Rapid-dispatch electricians, plumbers, and emergency repair</p>
               </div>
             </div>
-            <span className="hidden sm:inline-flex text-xs font-bold text-destructive group-hover:translate-x-0.5 transition-transform">
+            <span className="hidden sm:inline-flex text-xs font-bold text-destructive  transition-colors">
               Request Emergency &rarr;
             </span>
           </div>

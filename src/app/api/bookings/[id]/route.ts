@@ -11,6 +11,14 @@ export async function GET(
     const resolvedParams = await Promise.resolve(params);
     const bookingId = resolvedParams.id;
 
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userRole = (session.user as any).role;
+    const workerId = (session.user as any).workerId;
+    const customerId = (session.user as any).customerId;
+
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
@@ -67,6 +75,19 @@ export async function GET(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
+    if (userRole === 'CUSTOMER' && booking.customerId !== customerId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (userRole === 'WORKER' && booking.workerId !== workerId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    if (userRole === 'WORKER' && booking.workerId === workerId && booking.status === 'REQUESTED') {
+      if (booking.customer && booking.customer.user) {
+        booking.customer.user.phone = null;
+      }
+    }
+
     return NextResponse.json(booking);
   } catch (error: any) {
     console.error('Booking GET Error:', error);
@@ -83,6 +104,30 @@ export async function PATCH(
     const bookingId = resolvedParams.id;
     const body = await req.json();
     const { status, pin, note, reason } = body;
+
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId }
+    });
+
+    if (!booking) {
+      return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+    }
+
+    const userRole = (session.user as any).role;
+    const workerId = (session.user as any).workerId;
+    const customerId = (session.user as any).customerId;
+
+    if (userRole === 'CUSTOMER' && booking.customerId !== customerId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (userRole === 'WORKER' && booking.workerId !== workerId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Handle PIN verification
     if (pin) {

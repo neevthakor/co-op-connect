@@ -16,6 +16,37 @@ export async function createBooking(params: {
   longitude?: number;
   isEmergency?: boolean;
 }) {
+  // Validate worker eligibility and verification
+  const worker = await prisma.worker.findUnique({
+    where: { id: params.workerId },
+  });
+
+  if (!worker) {
+    throw new Error("Worker not found");
+  }
+
+  if (worker.verificationStatus !== "VERIFIED") {
+    throw new Error("Worker is not currently eligible for new bookings");
+  }
+
+  // Check for scheduling conflicts
+  if (params.scheduledDate && params.scheduledTime) {
+    const conflicting = await prisma.booking.findFirst({
+      where: {
+        workerId: params.workerId,
+        scheduledDate: params.scheduledDate,
+        scheduledTime: params.scheduledTime,
+        status: {
+          in: ["REQUESTED", "ACCEPTED", "TRAVELLING", "ARRIVED", "IN_PROGRESS"]
+        }
+      }
+    });
+
+    if (conflicting) {
+      throw new Error("This worker is no longer available for the selected time. Please choose another worker or time.");
+    }
+  }
+
   const servicePin = generatePin();
 
   const booking = await prisma.booking.create({

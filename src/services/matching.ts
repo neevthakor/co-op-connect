@@ -45,18 +45,55 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     }
   }
 
+  // Dynamically resolve allowable trades from the database using ServiceCategory and Skills
+  const categoryData = await prisma.serviceCategory.findUnique({
+    where: { id: categoryId },
+    include: { skills: true }
+  });
+
+  const dynamicTrades = new Set<string>();
+  if (categoryData?.name) dynamicTrades.add(categoryData.name);
+  if (categoryData?.skills) {
+    categoryData.skills.forEach(s => dynamicTrades.add(s.name));
+  }
+
+  // Graceful fallback purely to prevent breaking existing workers if the production database is unseeded
+  if (dynamicTrades.size === 0) {
+    const fallbackMap: Record<string, string[]> = {
+      'cat-ac': ['AC Repair', 'Appliance Repair'],
+      'cat-plumb': ['Plumber'],
+      'cat-elec': ['Electrician'],
+      'cat-carp': ['Carpenter'],
+      'cat-paint': ['Painter'],
+      'cat-clean': ['Cleaner'],
+      'cat-appliance': ['Appliance Repair', 'AC Repair'],
+    };
+    (fallbackMap[categoryId] || []).forEach(t => dynamicTrades.add(t));
+  }
+
+  const allowedTradesArray = Array.from(dynamicTrades);
+
   // 1. Filter eligible workers (verified, belongs to trade/skills in category)
   const workers = await prisma.worker.findMany({
     where: {
       verificationStatus: "VERIFIED",
       ...(cooperativeId ? { cooperativeId } : {}),
-      skills: {
-        some: {
-          skill: {
-            categoryId,
-          },
+      OR: [
+        {
+          skills: {
+            some: {
+              skill: {
+                categoryId,
+              },
+            },
+          }
         },
-      },
+        ...(allowedTradesArray.length > 0 ? [{
+          primaryTrade: {
+            in: allowedTradesArray
+          }
+        }] : [])
+      ]
     },
     include: {
       user: {

@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { isValidEmail, isValidPhone, normalizePhone } from '@/lib/validation';
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,8 +26,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Full legal name is required' }, { status: 400 });
     }
 
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
-      return NextResponse.json({ error: 'Valid email address is required' }, { status: 400 });
+    if (!email || typeof email !== 'string' || !isValidEmail(email)) {
+      return NextResponse.json({ error: 'A valid email address is required' }, { status: 400 });
+    }
+    
+    if (!phone || typeof phone !== 'string' || !isValidPhone(phone)) {
+      return NextResponse.json({ error: 'A valid 10-digit Indian phone number is required for workers' }, { status: 400 });
     }
 
     if (!password || typeof password !== 'string' || password.length < 6) {
@@ -38,16 +43,23 @@ export async function POST(req: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = normalizePhone(phone);
 
     // Check existing email
-    const existing = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
+    const existing = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: normalizedEmail },
+          { phone: normalizedPhone },
+        ],
+      },
     });
     if (existing) {
-      return NextResponse.json(
-        { error: 'An account with this email already exists.' },
-        { status: 409 }
-      );
+      if (existing.email === normalizedEmail) {
+        return NextResponse.json({ error: 'An account with this email already exists.' }, { status: 409 });
+      } else {
+        return NextResponse.json({ error: 'This phone number is already registered.' }, { status: 409 });
+      }
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -65,7 +77,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: name.trim(),
         email: normalizedEmail,
-        phone: phone && typeof phone === 'string' ? phone.trim() : null,
+        phone: normalizedPhone,
         passwordHash,
         role: userRole,
         language: 'en',

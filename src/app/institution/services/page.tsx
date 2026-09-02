@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Plus, ClipboardList } from "lucide-react";
@@ -98,7 +98,7 @@ export default function InstitutionServicesPage() {
 
       <div className="bg-white rounded-xl border">
         {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading...</div>
+          <div className="p-8 text-center text-gray-500 min-h-[400px] flex items-center justify-center">Loading...</div>
         ) : requests.length === 0 ? (
           <div className="p-8 text-center">
             <ClipboardList className="w-8 h-8 mx-auto mb-2 text-gray-300" />

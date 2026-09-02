@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -74,7 +74,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
         <aside className="fixed top-0 left-0 bottom-0 w-64 bg-card border-r border-border/80 z-40 flex flex-col">
           <div className="p-6 border-b border-border/40">
             <Link href="/customer/home" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group- transition-colors">
                 <span className="text-white font-bold text-base">CC</span>
               </div>
               <div>
@@ -134,7 +134,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <item.icon className={cn("w-5 h-5 transition-transform", isActive ? "stroke-[2.2] scale-105" : "stroke-[1.7]")} />
+                <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "stroke-[2.2] scale-105" : "stroke-[1.7]")} />
                 <span className={cn("text-[11px] font-medium tracking-tight", isActive ? "font-bold text-primary" : "text-muted-foreground")}>
                   {item.label}
                 </span>

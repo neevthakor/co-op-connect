@@ -65,13 +65,13 @@ export default function JobExecutionPage() {
     fetchJob();
   }, [params.id]);
 
-  const updateStatus = async (status: string) => {
+  const updateStatus = async (status: string, reason?: string) => {
     setActionLoading(true);
     try {
       const res = await fetch(`/api/bookings/${params.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, reason }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update status');
@@ -202,7 +202,7 @@ export default function JobExecutionPage() {
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-muted-foreground">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center text-muted-foreground">
         Loading Job Execution Console...
       </div>
     );
@@ -229,14 +229,17 @@ export default function JobExecutionPage() {
             <Badge className="bg-primary/10 text-primary font-bold">{job.status}</Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            {job.category?.name} • Customer: {job.customer?.user?.name || 'Customer'} ({job.customer?.user?.phone || '+91 98765 43210'})
+            {job.category?.name} • Customer: {job.customer?.user?.name || 'Customer'} 
+            {job.status !== 'REQUESTED' && ` (${job.customer?.user?.phone || '+91 98765 43210'})`}
           </p>
         </div>
-        <a href={`tel:${job.customer?.user?.phone || '+919876543210'}`}>
-          <Button variant="outline" size="sm" className="gap-1.5">
-            <Phone className="h-4 w-4" /> Call Customer
-          </Button>
-        </a>
+        {job.status !== 'REQUESTED' && (
+          <a href={`tel:${job.customer?.user?.phone || '+919876543210'}`}>
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <Phone className="h-4 w-4" /> Call Customer
+            </Button>
+          </a>
+        )}
       </header>
 
       {/* Address & Service Details */}
@@ -275,14 +278,25 @@ export default function JobExecutionPage() {
             <div className="space-y-3">
               <h3 className="font-bold text-lg">New Incoming Job Request</h3>
               <p className="text-xs text-muted-foreground">Accept this job to confirm dispatch to the customer location.</p>
-              <Button
-                size="lg"
-                className="w-full h-14 text-base font-bold gap-2"
-                onClick={() => updateStatus('ACCEPTED')}
-                disabled={actionLoading}
-              >
-                ACCEPT JOB <CheckCircle2 className="h-5 w-5" />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="flex-1 h-14 text-base font-bold text-red-600 border-red-200 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => updateStatus('CANCELLED', 'Worker declined the job request')}
+                  disabled={actionLoading}
+                >
+                  DECLINE
+                </Button>
+                <Button
+                  size="lg"
+                  className="flex-[2] h-14 text-base font-bold gap-2"
+                  onClick={() => updateStatus('ACCEPTED')}
+                  disabled={actionLoading}
+                >
+                  ACCEPT JOB <CheckCircle2 className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           )}
 
