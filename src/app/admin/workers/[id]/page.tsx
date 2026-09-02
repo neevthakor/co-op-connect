@@ -1,4 +1,4 @@
-﻿import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -7,7 +7,8 @@ import { AdminWorkerActions } from './actions';
 
 export default async function AdminWorkerDetailsPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
   const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'ADMIN') redirect('/login');
+  const userRole = (session?.user as any)?.role;
+  if (!session?.user || (userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
 
   const resolvedParams = await Promise.resolve(params);
   const workerId = resolvedParams.id;

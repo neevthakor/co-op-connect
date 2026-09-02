@@ -1,4 +1,4 @@
-﻿import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Users, Shield, ShieldCheck, ClipboardList, Activity, LayoutDashboard, LogOut } from 'lucide-react';
@@ -6,7 +6,8 @@ import { SignOutButton } from '@/components/auth/signout-button';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'ADMIN') {
+  const userRole = (session?.user as any)?.role;
+  if (!session?.user || (userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
     redirect('/login');
   }
 

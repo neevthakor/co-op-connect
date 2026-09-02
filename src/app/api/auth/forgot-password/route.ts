@@ -57,8 +57,14 @@ export async function POST(req: NextRequest) {
     });
 
     // 6. Generate the link
-    // Default to localhost if NEXT_PUBLIC_APP_URL is not set
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Support standard Vercel environment variables or explicit NEXT_PUBLIC_APP_URL
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+    
+    // Vercel URLs don't include protocol, so add https:// if missing and not localhost
+    if (!baseUrl.startsWith('http')) {
+      baseUrl = `https://${baseUrl}`;
+    }
+    
     const resetUrl = `${baseUrl}/reset-password?token=${rawToken}`;
 
     // 7. Send Email

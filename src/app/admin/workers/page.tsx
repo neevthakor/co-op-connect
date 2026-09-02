@@ -7,7 +7,8 @@ import Link from 'next/link';
 
 export default async function AdminWorkersPage({ searchParams }: { searchParams: Promise<{ status?: string }> | { status?: string } }) {
   const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'ADMIN') redirect('/login');
+  const userRole = (session?.user as any)?.role;
+  if (!session?.user || (userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
 
   const resolvedParams = await Promise.resolve(searchParams);
   const statusFilter = resolvedParams.status || 'PENDING';

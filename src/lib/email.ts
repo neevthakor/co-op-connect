@@ -15,7 +15,16 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string) {
       },
     });
   } else {
-    // For development/testing: use ethereal email which creates fake catch-all inbox
+    // If we are in production, we MUST have a real email provider configured.
+    // Do not fall back to ethereal in production as it swallows emails into a fake inbox.
+    if (process.env.NODE_ENV === 'production') {
+      console.error('CRITICAL: Email delivery failed because SMTP credentials are not configured in Vercel environment variables.');
+      console.error('REQUIRED ENV VARS: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE');
+      throw new Error('Email delivery is not configured in production environment.');
+    }
+    
+    // For development/testing ONLY: use ethereal email which creates fake catch-all inbox
+    console.log('Using fallback Ethereal Email provider for local development...');
     const testAccount = await nodemailer.createTestAccount();
     transporter = nodemailer.createTransport({
       host: 'smtp.ethereal.email',
@@ -29,7 +38,7 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string) {
   }
 
   const mailOptions = {
-    from: '"Co-opConnect Security" <noreply@coopconnect.com>',
+    from: process.env.EMAIL_FROM || '"Co-opConnect Security" <noreply@coopconnect.com>',
     to: email,
     subject: 'Reset Your Co-opConnect Password',
     text: `You have requested to reset your password for Co-opConnect.\n\nPlease click the link below to securely reset your password:\n\n${resetUrl}\n\nThis link will expire in 30 minutes.\nIf you did not request this, please ignore this email.\n\nThank you,\nThe Co-opConnect Team`,
@@ -49,14 +58,19 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string) {
     `,
   };
 
-  const info = await transporter.sendMail(mailOptions);
-  
-  // If we used ethereal, log the preview URL for testing purposes
-  if (!process.env.SMTP_HOST) {
-    console.log('--- TEST EMAIL SENT ---');
-    console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-    console.log('-----------------------');
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    
+    // If we used ethereal, log the preview URL for testing purposes
+    if (!process.env.SMTP_HOST) {
+      console.log('--- TEST EMAIL SENT ---');
+      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+      console.log('-----------------------');
+    }
+    
+    return info;
+  } catch (error) {
+    console.error('Error sending email through nodemailer:', error);
+    throw new Error('Failed to send email. Provider rejected the request.');
   }
-
-  return info;
 }

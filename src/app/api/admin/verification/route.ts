@@ -6,7 +6,8 @@ import { approveWorker, rejectWorker, requestMoreInfo, suspendWorker } from '@/s
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    const userRole = (session?.user as any)?.role;
+    if (!session?.user || (userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -38,7 +39,8 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    const userRole = (session?.user as any)?.role;
+    if (!session?.user || (userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
