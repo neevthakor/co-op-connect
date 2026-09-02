@@ -38,7 +38,9 @@ export async function POST(req: NextRequest) {
         problem: parsed.problem,
         detectedKeywords: parsed.parsedData.detectedKeywords,
         language: parsed.parsedData.language,
+        aiProvider: parsed.parsedData.aiProvider,
       },
+      aiProvider: parsed.parsedData.aiProvider,
     });
   } catch (error: any) {
     console.error('AI Concierge Error:', error);

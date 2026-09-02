@@ -155,7 +155,7 @@ function fallbackParseServiceRequest(text: string, language?: string): ParsedSer
   let categoryKey = 'technician';
   const detectedKeywords: string[] = [];
 
-  if (lower.includes('ac') || lower.includes('air condition') || lower.includes('cooling') || lower.includes('cool') || lower.includes('filter') || lower.includes('gas refill') || lower.includes('compressor') || lower.includes('એસી') || lower.includes('ઠંડક') || lower.includes('कूलिंग')) {
+  if (lower.includes('ac') || lower.includes('air condition') || lower.includes('cooling') || lower.includes('cool') || lower.includes('filter') || lower.includes('gas refill') || lower.includes('compressor') || lower.includes('એસી') || lower.includes('ઠંડક') || lower.includes('कूलिंग') || lower.includes('एसी') || lower.includes('ठंडा') || lower.includes('ठंडी')) {
     categoryKey = 'ac';
     detectedKeywords.push('AC', 'Cooling');
   } else if (lower.includes('plumb') || lower.includes('leak') || lower.includes('tap') || lower.includes('faucet') || lower.includes('pipe') || lower.includes('sink') || lower.includes('drain') || lower.includes('flush') || lower.includes('bathroom') || lower.includes('નળ') || lower.includes('ટપકે') || lower.includes('પાણી') || lower.includes('પાઈપ') || lower.includes('नल') || lower.includes('लीक')) {
@@ -190,7 +190,7 @@ function fallbackParseServiceRequest(text: string, language?: string): ParsedSer
   let urgency: 'NORMAL' | 'URGENT' | 'EMERGENCY' = 'NORMAL';
   if (lower.includes('emergency') || lower.includes('immediately') || lower.includes('burst') || lower.includes('danger') || lower.includes('sparking') || lower.includes('હમણાં જ') || lower.includes('ઇમરજન્સી') || lower.includes('तुरंत')) {
     urgency = 'EMERGENCY';
-  } else if (lower.includes('urgent') || lower.includes('today') || lower.includes('asap') || lower.includes('soon') || lower.includes('આજે જ') || lower.includes('જલ્દી') || lower.includes('जल्दी')) {
+  } else if (lower.includes('urgent') || lower.includes('today') || lower.includes('asap') || lower.includes('soon') || lower.includes('આજે જ') || lower.includes('જલ્દી') || lower.includes('जल्दी') || lower.includes('आज')) {
     urgency = 'URGENT';
   }
 
