@@ -6,14 +6,19 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 
-export default async function ServicesPage({ searchParams }: { searchParams: { q?: string } }) {
+interface ServicesPageProps {
+  searchParams: Promise<{ q?: string }>;
+}
+
+export default async function ServicesPage({ searchParams }: ServicesPageProps) {
   const session = await auth();
   
   if (!session || !session.user) {
     redirect('/login');
   }
 
-  const query = searchParams.q || '';
+  const resolvedSearchParams = await searchParams;
+  const query = resolvedSearchParams?.q || '';
 
   const services = await prisma.serviceCategory.findMany({
     where: {
