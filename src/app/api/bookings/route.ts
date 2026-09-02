@@ -106,6 +106,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'workerId and categoryId are required' }, { status: 400 });
     }
 
+    // Defensive validation: ensure the category exists in the database
+    // to prevent Prisma P2003 Foreign Key constraint errors.
+    const categoryExists = await prisma.serviceCategory.findUnique({
+      where: { id: categoryId }
+    });
+    
+    if (!categoryExists) {
+      return NextResponse.json({ error: 'Selected service category is no longer available. Please select another service.' }, { status: 400 });
+    }
+
     const booking = await createBooking({
       customerId,
       workerId,
