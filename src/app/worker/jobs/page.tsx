@@ -37,7 +37,6 @@ export default async function WorkerJobsPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Badge className="bg-blue-100 text-blue-800">{b.category.name}</Badge>
-            <span className="text-xs font-mono text-gray-400">#{b.id}</span>
             <Badge variant="outline" className="text-xs font-semibold">{b.status}</Badge>
           </div>
           <h3 className="font-bold text-gray-900">{b.description || 'Household Service Request'}</h3>

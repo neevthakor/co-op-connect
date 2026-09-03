@@ -8,6 +8,13 @@ export async function POST(req: NextRequest) {
     const type = searchParams.get('type');
     const bucket = type === 'private' ? 'private-uploads' : 'public-uploads';
     
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: 'Photo upload failed: Supabase storage is not configured on this server.' },
+        { status: 500 }
+      );
+    }
+
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
       const file = formData.get('file') as File | null;

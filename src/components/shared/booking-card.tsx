@@ -20,7 +20,6 @@ export function BookingCard({ booking, href, className }: { booking: any; href?:
           <div className="flex-1 space-y-1">
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs bg-secondary/70 border-border text-foreground">{categoryName}</Badge>
-              <span className="text-[11px] font-mono text-muted-foreground/70">#{booking.id}</span>
             </div>
             <h4 className="font-bold text-foreground group-hover:text-primary transition-colors text-sm line-clamp-1">{description}</h4>
           </div>

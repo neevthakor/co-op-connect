@@ -394,19 +394,7 @@ export default function JobExecutionPage() {
                 <ShieldCheck className="h-5 w-5" /> PIN Verified • Service In Progress
               </div>
 
-              {/* In-progress actions */}
               <div className="grid grid-cols-2 gap-3 pt-2">
-                <input type="file" accept="image/*" id="before-photo" className="hidden" onChange={(e) => handleFileSelect(e, 'BEFORE')} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 h-11"
-                  onClick={() => handleUploadClick('BEFORE')}
-                  disabled={actionLoading}
-                >
-                  <Camera className="h-4 w-4" /> Before Photo ({beforePhotos.length})
-                </Button>
-
                 <Button
                   variant="outline"
                   size="sm"
@@ -491,7 +479,7 @@ export default function JobExecutionPage() {
           <h3 className="font-bold text-sm text-foreground">Requested Materials / Spare Parts</h3>
           <div className="flex flex-col gap-2">
             {job.materialRequests.map((mat: any) => (
-              <MaterialApproval key={mat.id} material={mat} bookingId={job.id} />
+              <MaterialApproval key={mat.id} material={mat} bookingId={job.id} readOnly={true} />
             ))}
           </div>
         </section>

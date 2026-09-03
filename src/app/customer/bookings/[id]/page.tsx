@@ -130,7 +130,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         </section>
       )}
 
-      {isCompleted && booking.jobProofs && booking.jobProofs.length > 0 && (
+      {booking.jobProofs && booking.jobProofs.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-base font-bold text-foreground">Before & After Job Proof</h2>
           <ProofGallery proofs={booking.jobProofs} />

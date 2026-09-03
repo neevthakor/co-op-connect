@@ -62,20 +62,33 @@ export async function POST(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const sessionWorkerId = (session.user as any).workerId;
-    if (!sessionWorkerId || sessionWorkerId !== booking.workerId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const u = session.user as any;
+    const isCustomer = u.customerId === booking.customerId;
+    const isWorker = u.workerId === booking.workerId;
+    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN'].includes(u.role);
+
+    const isBefore = type.toUpperCase() === 'BEFORE';
+    const isAfter = type.toUpperCase() === 'AFTER';
+
+    if (isBefore && !isCustomer && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden: Only the customer can upload BEFORE photos' }, { status: 403 });
+    }
+    
+    if (isAfter && !isWorker && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden: Only the worker can upload AFTER photos' }, { status: 403 });
     }
 
-    const workerId = booking.workerId;
+    if (!isBefore && !isAfter) {
+      return NextResponse.json({ error: 'Invalid photo type' }, { status: 400 });
+    }
 
     const proof = await prisma.jobProof.create({
       data: {
         bookingId,
-        workerId,
-        type: type.toUpperCase() === 'AFTER' ? 'AFTER' : 'BEFORE',
-        imageUrl: imageUrl || (type === 'BEFORE' ? '/uploads/proof-before.jpg' : '/uploads/proof-after.jpg'),
-        caption: caption || `${type} service verification photo`,
+        workerId: booking.workerId, // Ensure it is linked to the booking's worker
+        type: isAfter ? 'AFTER' : 'BEFORE',
+        imageUrl: imageUrl,
+        caption: caption || `${isAfter ? 'AFTER' : 'BEFORE'} service verification photo`,
         latitude: latitude ? parseFloat(latitude) : booking.latitude,
         longitude: longitude ? parseFloat(longitude) : booking.longitude,
       },

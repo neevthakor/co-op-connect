@@ -77,6 +77,45 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
 
   const isCompleted = status === 'COMPLETED';
   const hasPaid = !!payment || invoice?.status === 'PAID';
+  const canUploadBefore = ['ACCEPTED', 'TRAVELLING', 'ARRIVED', 'IN_PROGRESS'].includes(status);
+
+  const [uploadingBefore, setUploadingBefore] = useState(false);
+  const handleBeforePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBefore(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadRes = await fetch('/api/upload?type=public', {
+        method: 'POST',
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed');
+      
+      const res = await fetch(`/api/bookings/${bookingId}/proof`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'BEFORE',
+          imageUrl: uploadData.url,
+          caption: `BEFORE servicing inspection photo by customer`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Photo DB save failed');
+
+      toast.success('Before photo uploaded successfully');
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload photo');
+    } finally {
+      setUploadingBefore(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -102,6 +141,36 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
                 </>
               )}
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {canUploadBefore && (
+        <Card className="border-primary/50 bg-primary/5 p-4">
+          <CardContent className="p-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h4 className="font-bold text-sm text-foreground">Service Evidence</h4>
+              <p className="text-xs text-muted-foreground">Upload a BEFORE photo of the issue for records.</p>
+            </div>
+            <div className="relative w-full sm:w-auto">
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleBeforePhoto} 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" 
+                disabled={uploadingBefore}
+              />
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto font-bold pointer-events-none"
+              >
+                {uploadingBefore ? (
+                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
+                ) : (
+                  'Upload Before Photo'
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

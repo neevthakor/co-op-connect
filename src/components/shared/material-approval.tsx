@@ -24,9 +24,10 @@ interface MaterialApprovalProps {
   onApprove?: (id: string) => void;
   onReject?: (id: string) => void;
   className?: string;
+  readOnly?: boolean;
 }
 
-export function MaterialApproval({ material, bookingId, onApprove, onReject, className }: MaterialApprovalProps) {
+export function MaterialApproval({ material, bookingId, onApprove, onReject, className, readOnly }: MaterialApprovalProps) {
   const [currentStatus, setCurrentStatus] = useState(material.status);
   const [isHandling, setIsHandling] = useState(false);
 
@@ -89,9 +90,16 @@ export function MaterialApproval({ material, bookingId, onApprove, onReject, cla
             <Receipt className="h-3 w-3 mr-1" /> View Receipt
           </Button>
         )}
+
+        {currentStatus === "APPROVED" && (
+          <p className="text-xs text-green-700 font-semibold mt-3 bg-green-50 p-2 rounded border border-green-100 flex items-center gap-1.5">
+            <Check className="h-3.5 w-3.5" />
+            {formatCurrency(material.totalPrice)} added to final bill
+          </p>
+        )}
       </CardContent>
 
-      {currentStatus === "PENDING" && (
+      {currentStatus === "PENDING" && !readOnly && (
         <CardFooter className="p-0 border-t flex divide-x bg-muted/20">
           <Button
             variant="ghost"

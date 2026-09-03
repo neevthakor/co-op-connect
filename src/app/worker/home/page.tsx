@@ -131,7 +131,6 @@ export default async function WorkerHomePage() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Badge className="bg-blue-100 text-blue-800">{b.category.name}</Badge>
-                      <span className="text-xs font-mono text-gray-400">#{b.id}</span>
                       <span className="text-xs font-bold text-orange-600 px-2 py-0.5 bg-orange-50 rounded">
                         {b.status}
                       </span>
