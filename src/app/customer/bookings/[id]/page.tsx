@@ -11,6 +11,7 @@ import { MaterialApproval } from '@/components/shared/material-approval';
 import { WorkerCard } from '@/components/shared/worker-card';
 import { CustomerBookingActions } from '@/components/customer/customer-booking-actions';
 import { RealtimeBookingListener } from '@/components/shared/realtime-listeners';
+import { LiveMap } from '@/components/shared/live-map';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Map, ShieldCheck } from 'lucide-react';
@@ -94,20 +95,37 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         </section>
       )}
 
-      {isTravelling && (
+      {isTravelling && booking.worker && (
         <Card className="border-primary/50 bg-primary/5">
           <CardContent className="p-4 flex flex-col gap-3">
             <div className="flex justify-between items-center">
               <h3 className="font-semibold text-sm flex items-center gap-2 text-primary">
                 <Map className="h-4 w-4" /> Live Worker Tracking
               </h3>
-              <span className="text-xs font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded">
-                ETA: ~12 mins
-              </span>
             </div>
-            <div className="w-full h-24 bg-background border rounded-xl flex items-center justify-center text-xs text-muted-foreground">
-              📍 Worker {booking.worker?.user?.name || 'Technician'} is en route to {booking.address || 'your registered address'}
-            </div>
+            <LiveMap 
+              height="200px"
+              center={
+                booking.worker.latitude && booking.worker.longitude
+                  ? [booking.worker.latitude, booking.worker.longitude]
+                  : booking.latitude && booking.longitude 
+                    ? [booking.latitude, booking.longitude]
+                    : undefined
+              }
+              markers={[
+                ...(booking.latitude && booking.longitude ? [{
+                  lat: booking.latitude,
+                  lng: booking.longitude,
+                  label: "Service Location",
+                }] : []),
+                ...(booking.worker.latitude && booking.worker.longitude ? [{
+                  lat: booking.worker.latitude,
+                  lng: booking.worker.longitude,
+                  label: `${booking.worker.user.name || 'Worker'} (En Route)`,
+                  isWorker: true,
+                }] : [])
+              ]}
+            />
           </CardContent>
         </Card>
       )}

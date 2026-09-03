@@ -26,8 +26,17 @@ export default function CustomerRegisterPage() {
     e.preventDefault();
     setError('');
 
-    if (!formData.name.trim() || !formData.email.trim() || !formData.password) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.password || !formData.phone.trim()) {
       setError('Please fill in all required fields.');
+      return;
+    }
+
+    const cleanedPhone = formData.phone.replace(/\D/g, '');
+    const isPhoneValid = (cleanedPhone.length === 10 && /^[6-9]\d{9}$/.test(cleanedPhone)) || 
+                         (cleanedPhone.length === 12 && cleanedPhone.startsWith('91') && /^[6-9]\d{9}$/.test(cleanedPhone.substring(2)));
+                         
+    if (!isPhoneValid) {
+      setError('Please enter a valid 10-digit Indian mobile number.');
       return;
     }
 
@@ -120,8 +129,9 @@ export default function CustomerRegisterPage() {
               </div>
 
               <div>
-                <label className="font-semibold text-foreground block mb-1">Phone Number (Optional)</label>
+                <label className="font-semibold text-foreground block mb-1">Phone Number *</label>
                 <Input
+                  required
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}

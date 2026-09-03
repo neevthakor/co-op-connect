@@ -7,7 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Star, MapPin, Briefcase, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function WorkerCard({ worker, href, className }: { worker: any; href?: string; className?: string }) {
+import { TrustedWorkerButton } from "@/components/customer/trusted-worker-button";
+
+export function WorkerCard({ 
+  worker, 
+  href, 
+  className,
+  showTrustedButton = false,
+  initialIsTrusted = false,
+}: { 
+  worker: any; 
+  href?: string; 
+  className?: string;
+  showTrustedButton?: boolean;
+  initialIsTrusted?: boolean;
+}) {
   const name = worker.user?.name || worker.name || "Worker";
   const avatar = worker.user?.avatar || worker.avatar;
   const coopName = worker.cooperative?.name || "Cooperative Member";
@@ -56,13 +70,23 @@ export function WorkerCard({ worker, href, className }: { worker: any; href?: st
             )}
           </div>
         </div>
-        {matchScore && (
-          <div>
+        <div className="flex flex-col items-end gap-2">
+          {matchScore && (
             <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold text-xs">
               {matchScore}% Match
             </Badge>
-          </div>
-        )}
+          )}
+          {showTrustedButton && (
+            <TrustedWorkerButton 
+              workerId={worker.id} 
+              initialIsTrusted={initialIsTrusted} 
+              size="icon" 
+              showText={false}
+              variant="ghost"
+              className="h-8 w-8 rounded-full border"
+            />
+          )}
+        </div>
       </CardHeader>
       
       <CardFooter className="flex gap-2 p-3 bg-secondary/40 border-t border-border mt-auto">

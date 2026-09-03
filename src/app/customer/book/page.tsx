@@ -202,6 +202,7 @@ function BookServiceContent() {
           latitude: bookingData.latitude,
           longitude: bookingData.longitude,
           isEmergency: bookingData.isEmergency,
+          imageUrls: bookingData.imageUrls,
         }),
       });
       const data = await res.json();

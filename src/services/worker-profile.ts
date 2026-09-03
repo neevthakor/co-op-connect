@@ -20,64 +20,50 @@ export interface WorkerProfileData {
 }
 
 export async function getWorkerProfile(workerId: string): Promise<WorkerProfileData | null> {
-  const worker = await prisma.worker.findUnique({
+  const workerPromise = prisma.worker.findUnique({
     where: { id: workerId },
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          avatar: true,
-        },
+        select: { id: true, name: true, email: true, phone: true, avatar: true },
       },
       cooperative: true,
-      skills: {
-        include: { skill: true },
-        orderBy: { createdAt: 'asc' },
-      },
-      certifications: {
-        include: { certification: true },
-        orderBy: { createdAt: 'asc' },
-      },
-      availability: {
-        orderBy: { dayOfWeek: 'asc' },
-      },
+      skills: { include: { skill: true }, orderBy: { createdAt: 'asc' } },
+      certifications: { include: { certification: true }, orderBy: { createdAt: 'asc' } },
+      availability: { orderBy: { dayOfWeek: 'asc' } },
     },
   });
 
-  if (!worker) return null;
-
-  // 1. Actual Completed Jobs Count from database
-  const completedJobsCount = await prisma.booking.count({
-    where: {
-      workerId,
-      status: 'COMPLETED',
-    },
+  const completedJobsCountPromise = prisma.booking.count({
+    where: { workerId, status: 'COMPLETED' },
   });
 
-  // 2. Actual Ratings & Reviews from database (Exact relations, no duplicate queries)
-  const ratings = await prisma.rating.findMany({
+  const ratingsPromise = prisma.rating.findMany({
     where: { workerId },
     include: {
-      customer: {
-        include: {
-          user: {
-            select: { name: true, avatar: true },
-          },
-        },
-      },
-      booking: {
-        include: {
-          category: {
-            select: { name: true },
-          },
-        },
-      },
+      customer: { include: { user: { select: { name: true, avatar: true } } } },
+      booking: { include: { category: { select: { name: true } } } },
     },
     orderBy: { createdAt: 'desc' },
   });
+
+  const earningsPromise = prisma.workerEarning.aggregate({
+    where: { workerId },
+    _sum: {
+      grossAmount: true,
+      cooperativeDeduction: true,
+      welfareDeduction: true,
+      netAmount: true,
+    },
+  });
+
+  const [worker, completedJobsCount, ratings, earningsAgg] = await Promise.all([
+    workerPromise,
+    completedJobsCountPromise,
+    ratingsPromise,
+    earningsPromise,
+  ]);
+
+  if (!worker) return null;
 
   const totalRatingsCount = ratings.length;
   let averageRating: number | null = null;
@@ -87,14 +73,12 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfileD
     const sumRating = ratings.reduce((sum, r) => sum + r.overall, 0);
     averageRating = Number((sumRating / totalRatingsCount).toFixed(1));
 
-    // Punctuality requires at least 2 real reviews for statistical validity
     if (totalRatingsCount >= 2) {
       const sumPunctuality = ratings.reduce((sum, r) => sum + r.punctuality, 0);
       punctualityScore = Math.round((sumPunctuality / (totalRatingsCount * 5)) * 100);
     }
   }
 
-  // Canonical mapping of review records (no duplicate strings, dates serialized to ISO)
   const canonicalReviews: WorkerReview[] = ratings.map((r) => ({
     id: r.id,
     rating: Number(r.overall.toFixed(1)),
@@ -111,17 +95,6 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfileD
     },
     serviceCategory: r.booking?.category?.name || null,
   }));
-
-  // 3. Actual Earnings from database
-  const earningsAgg = await prisma.workerEarning.aggregate({
-    where: { workerId },
-    _sum: {
-      grossAmount: true,
-      cooperativeDeduction: true,
-      welfareDeduction: true,
-      netAmount: true,
-    },
-  });
 
   const earningsSummary = {
     grossTotal: earningsAgg._sum.grossAmount || 0,

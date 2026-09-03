@@ -16,17 +16,17 @@ datasource db {
 // ============================================================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  phone         String?   @unique
+  id            String   @id @default(cuid())
+  email         String   @unique
+  phone         String?  @unique
   passwordHash  String
   name          String
   avatar        String?
-  role          String    @default("CUSTOMER") // CUSTOMER, WORKER, HELPER, COOPERATIVE_ADMIN, FEDERATION_ADMIN, SOCIETY_ADMIN, INSTITUTIONAL_CUSTOMER
-  language      String    @default("en")
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          String   @default("CUSTOMER") // CUSTOMER, WORKER, HELPER, COOPERATIVE_ADMIN, FEDERATION_ADMIN, SOCIETY_ADMIN, INSTITUTIONAL_CUSTOMER
+  language      String   @default("en")
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   customer              Customer?
   worker                Worker?
@@ -35,35 +35,35 @@ model User {
   societyAdmin          SocietyAdmin?
   institutionalCustomer InstitutionalCustomer?
 
-  sentMessages      Message[]       @relation("SentMessages")
-  receivedMessages  Message[]       @relation("ReceivedMessages")
-  notifications     Notification[]
-  auditLogs         AuditLog[]
-  votes             Vote[]
-  createdProposals  CooperativeProposal[] @relation("ProposalCreator")
+  sentMessages        Message[]             @relation("SentMessages")
+  receivedMessages    Message[]             @relation("ReceivedMessages")
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  votes               Vote[]
+  createdProposals    CooperativeProposal[] @relation("ProposalCreator")
   passwordResetTokens PasswordResetToken[]
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  tokenHash String   @unique
+  user      User      @relation(fields: [userId], references: [id])
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 model Customer {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id])
-  address         String?
-  city            String?  @default("Ahmedabad")
-  state           String?  @default("Gujarat")
-  pincode         String?
-  latitude        Float?
-  longitude       Float?
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id])
+  address   String?
+  city      String? @default("Ahmedabad")
+  state     String? @default("Gujarat")
+  pincode   String?
+  latitude  Float?
+  longitude Float?
 
   serviceRequests ServiceRequest[]
   bookings        Booking[]
@@ -73,56 +73,56 @@ model Customer {
 }
 
 model Worker {
-  id                  String   @id @default(cuid())
-  userId              String   @unique
-  user                User     @relation(fields: [userId], references: [id])
-  cooperativeId       String?
-  cooperative         Cooperative? @relation(fields: [cooperativeId], references: [id])
-  primaryTrade        String?
-  secondarySkills     String?  // JSON array
-  experience          Int      @default(0) // years
-  bio                 String?
-  serviceRadius       Float    @default(10.0) // km
-  verificationStatus  String   @default("PENDING") // PENDING, UNDER_REVIEW, VERIFIED, REJECTED, SUSPENDED, MORE_INFO_REQUIRED
-  availabilityStatus  String   @default("OFFLINE") // AVAILABLE, BUSY, OFFLINE
-  isEmergencyAvailable Boolean @default(false)
-  latitude            Float?
-  longitude           Float?
-  address             String?
-  city                String?  @default("Ahmedabad")
-  state               String?  @default("Gujarat")
-  identityVerified    Boolean  @default(false)
-  identityDocType     String?
-  identityDocMasked   String?  // Last 4 digits only
-  totalJobs           Int      @default(0)
-  averageRating       Float    @default(0)
-  completionRate      Float    @default(100)
-  punctualityScore    Float    @default(100)
-  lastAssignedAt      DateTime?
-  workingHoursStart   String?  @default("08:00")
-  workingHoursEnd     String?  @default("20:00")
-  joinedAt            DateTime @default(now())
+  id                   String       @id @default(cuid())
+  userId               String       @unique
+  user                 User         @relation(fields: [userId], references: [id])
+  cooperativeId        String?
+  cooperative          Cooperative? @relation(fields: [cooperativeId], references: [id])
+  primaryTrade         String?
+  secondarySkills      String? // JSON array
+  experience           Int          @default(0) // years
+  bio                  String?
+  serviceRadius        Float        @default(10.0) // km
+  verificationStatus   String       @default("PENDING") // PENDING, UNDER_REVIEW, VERIFIED, REJECTED, SUSPENDED, MORE_INFO_REQUIRED
+  availabilityStatus   String       @default("OFFLINE") // AVAILABLE, BUSY, OFFLINE
+  isEmergencyAvailable Boolean      @default(false)
+  latitude             Float?
+  longitude            Float?
+  address              String?
+  city                 String?      @default("Ahmedabad")
+  state                String?      @default("Gujarat")
+  identityVerified     Boolean      @default(false)
+  identityDocType      String?
+  identityDocMasked    String? // Last 4 digits only
+  totalJobs            Int          @default(0)
+  averageRating        Float        @default(0)
+  completionRate       Float        @default(100)
+  punctualityScore     Float        @default(100)
+  lastAssignedAt       DateTime?
+  workingHoursStart    String?      @default("08:00")
+  workingHoursEnd      String?      @default("20:00")
+  joinedAt             DateTime     @default(now())
 
-  skills              WorkerSkill[]
-  certifications      WorkerCertification[]
-  availability        WorkerAvailability[]
-  bookings            Booking[]
-  earnings            WorkerEarning[]
-  welfareRecords      WelfareRecord[]
-  insuranceRecords    InsuranceRecord[]
-  trainingRecords     TrainingRecord[]
-  portfolioItems      PortfolioItem[]
-  jobProofs           JobProof[]
-  materialRequests    MaterialRequest[]
-  helperRequestsAsLead    HelperRequest[]  @relation("LeadWorkerHelperRequests")
-  helperRequestsAsHelper  HelperRequest[]  @relation("HelperWorkerRequests")
-  teamsAsLead         JobTeam[]
-  teamMemberships     JobTeamMember[]
-  referralsMade       JobReferral[]    @relation("ReferringWorker")
-  referralsReceived   JobReferral[]    @relation("ReferredWorker")
-  ratings             Rating[]
-  complaints          Complaint[]      @relation("WorkerComplaints")
-  trustedBy           TrustedWorker[]
+  skills                 WorkerSkill[]
+  certifications         WorkerCertification[]
+  availability           WorkerAvailability[]
+  bookings               Booking[]
+  earnings               WorkerEarning[]
+  welfareRecords         WelfareRecord[]
+  insuranceRecords       InsuranceRecord[]
+  trainingRecords        TrainingRecord[]
+  portfolioItems         PortfolioItem[]
+  jobProofs              JobProof[]
+  materialRequests       MaterialRequest[]
+  helperRequestsAsLead   HelperRequest[]       @relation("LeadWorkerHelperRequests")
+  helperRequestsAsHelper HelperRequest[]       @relation("HelperWorkerRequests")
+  teamsAsLead            JobTeam[]
+  teamMemberships        JobTeamMember[]
+  referralsMade          JobReferral[]         @relation("ReferringWorker")
+  referralsReceived      JobReferral[]         @relation("ReferredWorker")
+  ratings                Rating[]
+  complaints             Complaint[]           @relation("WorkerComplaints")
+  trustedBy              TrustedWorker[]
 }
 
 // ============================================================
@@ -130,21 +130,21 @@ model Worker {
 // ============================================================
 
 model Cooperative {
-  id              String   @id @default(cuid())
-  name            String
-  registrationNo  String?
-  address         String?
-  city            String?  @default("Ahmedabad")
-  state           String?  @default("Gujarat")
-  latitude        Float?
-  longitude       Float?
-  established     DateTime?
-  description     String?
-  totalMembers    Int      @default(0)
-  isActive        Boolean  @default(true)
-  federationId    String?
-  federation      Federation? @relation(fields: [federationId], references: [id])
-  createdAt       DateTime @default(now())
+  id             String      @id @default(cuid())
+  name           String
+  registrationNo String?
+  address        String?
+  city           String?     @default("Ahmedabad")
+  state          String?     @default("Gujarat")
+  latitude       Float?
+  longitude      Float?
+  established    DateTime?
+  description    String?
+  totalMembers   Int         @default(0)
+  isActive       Boolean     @default(true)
+  federationId   String?
+  federation     Federation? @relation(fields: [federationId], references: [id])
+  createdAt      DateTime    @default(now())
 
   workers         Worker[]
   admins          CooperativeAdmin[]
@@ -176,56 +176,56 @@ model HousingSociety {
   longitude     Float?
   createdAt     DateTime @default(now())
 
-  admins         SocietyAdmin[]
-  serviceRequests SocietyServiceRequest[]
+  admins               SocietyAdmin[]
+  serviceRequests      SocietyServiceRequest[]
   maintenanceContracts MaintenanceContract[]
 }
 
 model Institution {
-  id          String   @id @default(cuid())
-  name        String
-  type        String?  // SCHOOL, HOSPITAL, OFFICE, COMMERCIAL
-  address     String?
-  city        String?  @default("Ahmedabad")
+  id            String   @id @default(cuid())
+  name          String
+  type          String? // SCHOOL, HOSPITAL, OFFICE, COMMERCIAL
+  address       String?
+  city          String?  @default("Ahmedabad")
   contactPerson String?
   contactPhone  String?
-  latitude    Float?
-  longitude   Float?
-  createdAt   DateTime @default(now())
+  latitude      Float?
+  longitude     Float?
+  createdAt     DateTime @default(now())
 
-  admins       InstitutionalCustomer[]
-  contracts    InstitutionContract[]
+  admins          InstitutionalCustomer[]
+  contracts       InstitutionContract[]
   serviceRequests InstitutionServiceRequest[]
 }
 
 model CooperativeAdmin {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id])
+  id            String      @id @default(cuid())
+  userId        String      @unique
+  user          User        @relation(fields: [userId], references: [id])
   cooperativeId String
   cooperative   Cooperative @relation(fields: [cooperativeId], references: [id])
 }
 
 model FederationAdmin {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id])
+  id           String     @id @default(cuid())
+  userId       String     @unique
+  user         User       @relation(fields: [userId], references: [id])
   federationId String
   federation   Federation @relation(fields: [federationId], references: [id])
 }
 
 model SocietyAdmin {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
+  id        String         @id @default(cuid())
+  userId    String         @unique
+  user      User           @relation(fields: [userId], references: [id])
   societyId String
   society   HousingSociety @relation(fields: [societyId], references: [id])
 }
 
 model InstitutionalCustomer {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id])
+  id            String      @id @default(cuid())
+  userId        String      @unique
+  user          User        @relation(fields: [userId], references: [id])
   institutionId String
   institution   Institution @relation(fields: [institutionId], references: [id])
 }
@@ -254,12 +254,12 @@ model ServiceCategory {
 }
 
 model Skill {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
   categoryId  String
   category    ServiceCategory @relation(fields: [categoryId], references: [id])
   description String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime        @default(now())
 
   workerSkills    WorkerSkill[]
   certifications  Certification[]
@@ -268,43 +268,43 @@ model Skill {
 }
 
 model Certification {
-  id              String   @id @default(cuid())
-  name            String
-  skillId         String
-  skill           Skill    @relation(fields: [skillId], references: [id])
+  id               String   @id @default(cuid())
+  name             String
+  skillId          String
+  skill            Skill    @relation(fields: [skillId], references: [id])
   issuingAuthority String?
-  validityMonths  Int      @default(24)
-  isMandatory     Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  validityMonths   Int      @default(24)
+  isMandatory      Boolean  @default(false)
+  createdAt        DateTime @default(now())
 
   workerCertifications WorkerCertification[]
 }
 
 model WorkerSkill {
-  id              String   @id @default(cuid())
-  workerId        String
-  worker          Worker   @relation(fields: [workerId], references: [id])
-  skillId         String
-  skill           Skill    @relation(fields: [skillId], references: [id])
-  proficiencyLevel String  @default("INTERMEDIATE") // BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
-  verified        Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  id               String   @id @default(cuid())
+  workerId         String
+  worker           Worker   @relation(fields: [workerId], references: [id])
+  skillId          String
+  skill            Skill    @relation(fields: [skillId], references: [id])
+  proficiencyLevel String   @default("INTERMEDIATE") // BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+  verified         Boolean  @default(false)
+  createdAt        DateTime @default(now())
 
   @@unique([workerId, skillId])
 }
 
 model WorkerCertification {
-  id              String   @id @default(cuid())
+  id              String        @id @default(cuid())
   workerId        String
-  worker          Worker   @relation(fields: [workerId], references: [id])
+  worker          Worker        @relation(fields: [workerId], references: [id])
   certificationId String
   certification   Certification @relation(fields: [certificationId], references: [id])
   certificateNo   String?
   issueDate       DateTime?
   expiryDate      DateTime?
   documentUrl     String?
-  verified        Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  verified        Boolean       @default(false)
+  createdAt       DateTime      @default(now())
 
   @@unique([workerId, certificationId])
 }
@@ -314,13 +314,13 @@ model WorkerCertification {
 // ============================================================
 
 model WorkerAvailability {
-  id                    String   @id @default(cuid())
-  workerId              String
-  worker                Worker   @relation(fields: [workerId], references: [id])
-  dayOfWeek             Int      // 0=Sunday, 6=Saturday
-  startTime             String   // HH:mm
-  endTime               String   // HH:mm
-  isEmergencyAvailable  Boolean  @default(false)
+  id                   String  @id @default(cuid())
+  workerId             String
+  worker               Worker  @relation(fields: [workerId], references: [id])
+  dayOfWeek            Int // 0=Sunday, 6=Saturday
+  startTime            String // HH:mm
+  endTime              String // HH:mm
+  isEmergencyAvailable Boolean @default(false)
 
   @@unique([workerId, dayOfWeek])
 }
@@ -330,68 +330,68 @@ model WorkerAvailability {
 // ============================================================
 
 model ServiceRequest {
-  id            String   @id @default(cuid())
-  customerId    String
-  customer      Customer @relation(fields: [customerId], references: [id])
-  categoryId    String
-  category      ServiceCategory @relation(fields: [categoryId], references: [id])
-  description   String
-  aiParsedData  String?  // JSON: parsed service details
-  urgency       String   @default("NORMAL") // NORMAL, URGENT, EMERGENCY
-  address       String?
-  latitude      Float?
-  longitude     Float?
-  mediaUrls     String?  // JSON array of URLs
-  status        String   @default("PENDING") // PENDING, MATCHED, BOOKED, CANCELLED
-  language      String   @default("en")
-  createdAt     DateTime @default(now())
+  id           String          @id @default(cuid())
+  customerId   String
+  customer     Customer        @relation(fields: [customerId], references: [id])
+  categoryId   String
+  category     ServiceCategory @relation(fields: [categoryId], references: [id])
+  description  String
+  aiParsedData String? // JSON: parsed service details
+  urgency      String          @default("NORMAL") // NORMAL, URGENT, EMERGENCY
+  address      String?
+  latitude     Float?
+  longitude    Float?
+  mediaUrls    String? // JSON array of URLs
+  status       String          @default("PENDING") // PENDING, MATCHED, BOOKED, CANCELLED
+  language     String          @default("en")
+  createdAt    DateTime        @default(now())
 
-  booking       Booking?
+  booking Booking?
 }
 
 model Booking {
-  id              String   @id @default(cuid())
-  requestId       String?  @unique
-  request         ServiceRequest? @relation(fields: [requestId], references: [id])
-  customerId      String
-  customer        Customer @relation(fields: [customerId], references: [id])
-  workerId        String
-  worker          Worker   @relation(fields: [workerId], references: [id])
-  categoryId      String
-  category        ServiceCategory @relation(fields: [categoryId], references: [id])
-  description     String?
-  scheduledDate   DateTime?
-  scheduledTime   String?
-  estimatedPrice  Float?
-  finalPrice      Float?
-  servicePin      String?  // 4-digit PIN
-  pinVerified     Boolean  @default(false)
-  address         String?
-  latitude        Float?
-  longitude       Float?
-  status          String   @default("REQUESTED") // REQUESTED, ACCEPTED, TRAVELLING, ARRIVED, IN_PROGRESS, COMPLETED, CANCELLED
-  cancelReason    String?
-  completedAt     DateTime?
-  isEmergency     Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String          @id @default(cuid())
+  requestId      String?         @unique
+  request        ServiceRequest? @relation(fields: [requestId], references: [id])
+  customerId     String
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  workerId       String
+  worker         Worker          @relation(fields: [workerId], references: [id])
+  categoryId     String
+  category       ServiceCategory @relation(fields: [categoryId], references: [id])
+  description    String?
+  scheduledDate  DateTime?
+  scheduledTime  String?
+  estimatedPrice Float?
+  finalPrice     Float?
+  servicePin     String? // 4-digit PIN
+  pinVerified    Boolean         @default(false)
+  address        String?
+  latitude       Float?
+  longitude      Float?
+  status         String          @default("REQUESTED") // REQUESTED, ACCEPTED, TRAVELLING, ARRIVED, IN_PROGRESS, COMPLETED, CANCELLED
+  cancelReason   String?
+  completedAt    DateTime?
+  isEmergency    Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
-  statusHistory   BookingStatusHistory[]
-  payment         Payment?
-  invoice         Invoice?
-  rating          Rating?
-  complaints      Complaint[]
-  warranty        Warranty?
-  jobProofs       JobProof[]
+  statusHistory    BookingStatusHistory[]
+  payment          Payment?
+  invoice          Invoice?
+  rating           Rating?
+  complaints       Complaint[]
+  warranty         Warranty?
+  jobProofs        JobProof[]
   materialRequests MaterialRequest[]
-  messages        Message[]
-  helperRequests  HelperRequest[]
-  team            JobTeam?
-  referrals       JobReferral[]
+  messages         Message[]
+  helperRequests   HelperRequest[]
+  team             JobTeam?
+  referrals        JobReferral[]
 
-  societyRequest    SocietyServiceRequest? @relation(fields: [societyRequestId], references: [id])
-  societyRequestId  String?
-  institutionRequest InstitutionServiceRequest? @relation(fields: [institutionRequestId], references: [id])
+  societyRequest       SocietyServiceRequest?     @relation(fields: [societyRequestId], references: [id])
+  societyRequestId     String?
+  institutionRequest   InstitutionServiceRequest? @relation(fields: [institutionRequestId], references: [id])
   institutionRequestId String?
 }
 
@@ -409,62 +409,62 @@ model BookingStatusHistory {
 // ============================================================
 
 model Payment {
-  id            String   @id @default(cuid())
-  bookingId     String   @unique
-  booking       Booking  @relation(fields: [bookingId], references: [id])
+  id            String    @id @default(cuid())
+  bookingId     String    @unique
+  booking       Booking   @relation(fields: [bookingId], references: [id])
   amount        Float
-  method        String?  // UPI, CARD, NET_BANKING, CASH
-  status        String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, REFUNDED
+  method        String? // UPI, CARD, NET_BANKING, CASH
+  status        String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, REFUNDED
   transactionId String?
-  provider      String?  @default("SANDBOX")
+  provider      String?   @default("SANDBOX")
   paidAt        DateTime?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
 }
 
 model Invoice {
-  id                      String   @id @default(cuid())
-  bookingId               String   @unique
-  booking                 Booking  @relation(fields: [bookingId], references: [id])
-  invoiceNumber           String   @unique
-  labourCharge            Float    @default(0)
-  travelCharge            Float    @default(0)
-  materialCharge          Float    @default(0)
-  additionalCharge        Float    @default(0)
-  cooperativeContribution Float    @default(0)
-  welfareContribution     Float    @default(0)
-  subtotal                Float    @default(0)
-  tax                     Float    @default(0)
-  total                   Float    @default(0)
-  status                  String   @default("DRAFT") // DRAFT, ISSUED, PAID
+  id                      String    @id @default(cuid())
+  bookingId               String    @unique
+  booking                 Booking   @relation(fields: [bookingId], references: [id])
+  invoiceNumber           String    @unique
+  labourCharge            Float     @default(0)
+  travelCharge            Float     @default(0)
+  materialCharge          Float     @default(0)
+  additionalCharge        Float     @default(0)
+  cooperativeContribution Float     @default(0)
+  welfareContribution     Float     @default(0)
+  subtotal                Float     @default(0)
+  tax                     Float     @default(0)
+  total                   Float     @default(0)
+  status                  String    @default("DRAFT") // DRAFT, ISSUED, PAID
   issuedAt                DateTime?
-  createdAt               DateTime @default(now())
+  createdAt               DateTime  @default(now())
 
   items InvoiceItem[]
 }
 
 model InvoiceItem {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   invoiceId   String
-  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
   description String
   amount      Float
-  type        String   // LABOUR, TRAVEL, MATERIAL, ADDITIONAL, COOPERATIVE, WELFARE, TAX
+  type        String // LABOUR, TRAVEL, MATERIAL, ADDITIONAL, COOPERATIVE, WELFARE, TAX
 }
 
 model MaterialRequest {
-  id          String   @id @default(cuid())
-  bookingId   String
-  booking     Booking  @relation(fields: [bookingId], references: [id])
-  workerId    String
-  worker      Worker   @relation(fields: [workerId], references: [id])
-  item        String
-  quantity    Int      @default(1)
-  unitPrice   Float
-  totalPrice  Float
-  receiptUrl  String?
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  approvedAt  DateTime?
-  createdAt   DateTime @default(now())
+  id         String    @id @default(cuid())
+  bookingId  String
+  booking    Booking   @relation(fields: [bookingId], references: [id])
+  workerId   String
+  worker     Worker    @relation(fields: [workerId], references: [id])
+  item       String
+  quantity   Int       @default(1)
+  unitPrice  Float
+  totalPrice Float
+  receiptUrl String?
+  status     String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  approvedAt DateTime?
+  createdAt  DateTime  @default(now())
 }
 
 // ============================================================
@@ -490,39 +490,39 @@ model Rating {
 }
 
 model Complaint {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   bookingId   String
-  booking     Booking  @relation(fields: [bookingId], references: [id])
+  booking     Booking   @relation(fields: [bookingId], references: [id])
   customerId  String
-  customer    Customer @relation(fields: [customerId], references: [id])
+  customer    Customer  @relation(fields: [customerId], references: [id])
   workerId    String?
-  worker      Worker?  @relation("WorkerComplaints", fields: [workerId], references: [id])
-  category    String   // POOR_QUALITY, DAMAGE, MISBEHAVIOR, BILLING, LATE_ARRIVAL, INCOMPLETE_WORK
+  worker      Worker?   @relation("WorkerComplaints", fields: [workerId], references: [id])
+  category    String // POOR_QUALITY, DAMAGE, MISBEHAVIOR, BILLING, LATE_ARRIVAL, INCOMPLETE_WORK
   description String
-  status      String   @default("OPEN") // OPEN, UNDER_REVIEW, RESOLVED, DISMISSED
+  status      String    @default("OPEN") // OPEN, UNDER_REVIEW, RESOLVED, DISMISSED
   resolution  String?
   resolvedAt  DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 }
 
 model Warranty {
-  id              String   @id @default(cuid())
-  bookingId       String   @unique
-  booking         Booking  @relation(fields: [bookingId], references: [id])
+  id              String    @id @default(cuid())
+  bookingId       String    @unique
+  booking         Booking   @relation(fields: [bookingId], references: [id])
   expiryDate      DateTime
-  status          String   @default("ACTIVE") // ACTIVE, EXPIRED, CLAIMED
-  reworkRequested Boolean  @default(false)
+  status          String    @default("ACTIVE") // ACTIVE, EXPIRED, CLAIMED
+  reworkRequested Boolean   @default(false)
   reworkDate      DateTime?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
 }
 
 model TrustedWorker {
-  id          String   @id @default(cuid())
-  customerId  String
-  customer    Customer @relation(fields: [customerId], references: [id])
-  workerId    String
-  worker      Worker   @relation(fields: [workerId], references: [id])
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  workerId   String
+  worker     Worker   @relation(fields: [workerId], references: [id])
+  createdAt  DateTime @default(now())
 
   @@unique([customerId, workerId])
 }
@@ -537,7 +537,7 @@ model JobProof {
   booking   Booking  @relation(fields: [bookingId], references: [id])
   workerId  String
   worker    Worker   @relation(fields: [workerId], references: [id])
-  type      String   // BEFORE, AFTER
+  type      String // BEFORE, AFTER
   imageUrl  String
   caption   String?
   latitude  Float?
@@ -618,29 +618,29 @@ model JobReferral {
 // ============================================================
 
 model Message {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   bookingId   String?
-  booking     Booking? @relation(fields: [bookingId], references: [id])
+  booking     Booking?  @relation(fields: [bookingId], references: [id])
   senderId    String
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  sender      User      @relation("SentMessages", fields: [senderId], references: [id])
   recipientId String
-  recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  recipient   User      @relation("ReceivedMessages", fields: [recipientId], references: [id])
   content     String
   mediaUrl    String?
   readAt      DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 }
 
 model Notification {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  type      String   // BOOKING, PAYMENT, WORKER, COMPLAINT, WARRANTY, COOPERATIVE, EMERGENCY
+  user      User      @relation(fields: [userId], references: [id])
+  type      String // BOOKING, PAYMENT, WORKER, COMPLAINT, WARRANTY, COOPERATIVE, EMERGENCY
   title     String
   body      String
-  data      String?  // JSON
+  data      String? // JSON
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 // ============================================================
@@ -648,52 +648,52 @@ model Notification {
 // ============================================================
 
 model WorkerEarning {
-  id                      String   @id @default(cuid())
-  workerId                String
-  worker                  Worker   @relation(fields: [workerId], references: [id])
-  bookingId               String?
-  date                    DateTime @default(now())
-  grossAmount             Float    @default(0)
-  labourAmount            Float    @default(0)
-  travelAmount            Float    @default(0)
-  materialAmount          Float    @default(0)
-  cooperativeDeduction    Float    @default(0)
-  welfareDeduction        Float    @default(0)
-  netAmount               Float    @default(0)
-  description             String?
+  id                   String   @id @default(cuid())
+  workerId             String
+  worker               Worker   @relation(fields: [workerId], references: [id])
+  bookingId            String?
+  date                 DateTime @default(now())
+  grossAmount          Float    @default(0)
+  labourAmount         Float    @default(0)
+  travelAmount         Float    @default(0)
+  materialAmount       Float    @default(0)
+  cooperativeDeduction Float    @default(0)
+  welfareDeduction     Float    @default(0)
+  netAmount            Float    @default(0)
+  description          String?
 }
 
 model WelfareRecord {
-  id        String   @id @default(cuid())
-  workerId  String
-  worker    Worker   @relation(fields: [workerId], references: [id])
-  type      String   // HOURS_ALERT, TRAVEL_ALERT, INCOME_ALERT, REST_SUGGESTION, TRAINING_COMPLETED
-  details   String?
-  date      DateTime @default(now())
+  id       String   @id @default(cuid())
+  workerId String
+  worker   Worker   @relation(fields: [workerId], references: [id])
+  type     String // HOURS_ALERT, TRAVEL_ALERT, INCOME_ALERT, REST_SUGGESTION, TRAINING_COMPLETED
+  details  String?
+  date     DateTime @default(now())
 }
 
 model InsuranceRecord {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   workerId   String
-  worker     Worker   @relation(fields: [workerId], references: [id])
+  worker     Worker    @relation(fields: [workerId], references: [id])
   provider   String?
   policyNo   String?
   validUntil DateTime?
-  type       String?  // HEALTH, ACCIDENT, LIFE
-  createdAt  DateTime @default(now())
+  type       String? // HEALTH, ACCIDENT, LIFE
+  createdAt  DateTime  @default(now())
 }
 
 model TrainingRecord {
-  id            String   @id @default(cuid())
-  workerId      String
-  worker        Worker   @relation(fields: [workerId], references: [id])
-  skillId       String?
-  skill         Skill?   @relation(fields: [skillId], references: [id])
-  program       String
-  provider      String?
-  completedAt   DateTime?
+  id             String    @id @default(cuid())
+  workerId       String
+  worker         Worker    @relation(fields: [workerId], references: [id])
+  skillId        String?
+  skill          Skill?    @relation(fields: [skillId], references: [id])
+  program        String
+  provider       String?
+  completedAt    DateTime?
   certificateUrl String?
-  createdAt     DateTime @default(now())
+  createdAt      DateTime  @default(now())
 }
 
 // ============================================================
@@ -701,41 +701,41 @@ model TrainingRecord {
 // ============================================================
 
 model DemandHistory {
-  id          String   @id @default(cuid())
-  categoryId  String
-  category    ServiceCategory @relation(fields: [categoryId], references: [id])
-  area        String   // locality/area name
-  latitude    Float?
-  longitude   Float?
-  date        DateTime
-  hour        Int      @default(0)
-  count       Int      @default(0)
+  id         String          @id @default(cuid())
+  categoryId String
+  category   ServiceCategory @relation(fields: [categoryId], references: [id])
+  area       String // locality/area name
+  latitude   Float?
+  longitude  Float?
+  date       DateTime
+  hour       Int             @default(0)
+  count      Int             @default(0)
 }
 
 model DemandForecast {
-  id              String   @id @default(cuid())
+  id              String          @id @default(cuid())
   categoryId      String
   category        ServiceCategory @relation(fields: [categoryId], references: [id])
   area            String
   latitude        Float?
   longitude       Float?
   date            DateTime
-  forecastedCount Int      @default(0)
-  confidence      Float    @default(0.8)
-  trend           String?  // INCREASING, STABLE, DECREASING
-  createdAt       DateTime @default(now())
+  forecastedCount Int             @default(0)
+  confidence      Float           @default(0.8)
+  trend           String? // INCREASING, STABLE, DECREASING
+  createdAt       DateTime        @default(now())
 }
 
 model SkillGapRecord {
-  id              String   @id @default(cuid())
-  categoryId      String
-  category        ServiceCategory @relation(fields: [categoryId], references: [id])
-  area            String
-  expectedDemand  Int      @default(0)
-  availableWorkers Int     @default(0)
-  gap             Int      @default(0)
-  recommendation  String?
-  detectedAt      DateTime @default(now())
+  id               String          @id @default(cuid())
+  categoryId       String
+  category         ServiceCategory @relation(fields: [categoryId], references: [id])
+  area             String
+  expectedDemand   Int             @default(0)
+  availableWorkers Int             @default(0)
+  gap              Int             @default(0)
+  recommendation   String?
+  detectedAt       DateTime        @default(now())
 }
 
 // ============================================================
@@ -743,28 +743,28 @@ model SkillGapRecord {
 // ============================================================
 
 model CooperativeProposal {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   cooperativeId String
   cooperative   Cooperative @relation(fields: [cooperativeId], references: [id])
   title         String
   description   String
-  status        String   @default("OPEN") // OPEN, CLOSED, APPROVED, REJECTED
+  status        String      @default("OPEN") // OPEN, CLOSED, APPROVED, REJECTED
   createdById   String
-  createdBy     User     @relation("ProposalCreator", fields: [createdById], references: [id])
+  createdBy     User        @relation("ProposalCreator", fields: [createdById], references: [id])
   closedAt      DateTime?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime    @default(now())
 
   votes Vote[]
 }
 
 model Vote {
-  id          String   @id @default(cuid())
-  proposalId  String
-  proposal    CooperativeProposal @relation(fields: [proposalId], references: [id])
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  vote        String   // YES, NO, ABSTAIN
-  createdAt   DateTime @default(now())
+  id         String              @id @default(cuid())
+  proposalId String
+  proposal   CooperativeProposal @relation(fields: [proposalId], references: [id])
+  userId     String
+  user       User                @relation(fields: [userId], references: [id])
+  vote       String // YES, NO, ABSTAIN
+  createdAt  DateTime            @default(now())
 
   @@unique([proposalId, userId])
 }
@@ -780,22 +780,22 @@ model AuditLog {
   action     String
   entityType String
   entityId   String?
-  details    String?  // JSON
+  details    String? // JSON
   ipAddress  String?
   createdAt  DateTime @default(now())
 }
 
 model FraudAlert {
-  id         String   @id @default(cuid())
-  type       String   // UNUSUAL_REVIEWS, REPEATED_CANCELLATIONS, DUPLICATE_ACCOUNTS, SUSPICIOUS_BOOKING, PAYMENT_ANOMALY, REPEATED_DISPUTES
-  entityType String   // USER, WORKER, CUSTOMER, BOOKING
+  id         String    @id @default(cuid())
+  type       String // UNUSUAL_REVIEWS, REPEATED_CANCELLATIONS, DUPLICATE_ACCOUNTS, SUSPICIOUS_BOOKING, PAYMENT_ANOMALY, REPEATED_DISPUTES
+  entityType String // USER, WORKER, CUSTOMER, BOOKING
   entityId   String
-  riskLevel  String   @default("LOW") // LOW, MEDIUM, HIGH, CRITICAL
+  riskLevel  String    @default("LOW") // LOW, MEDIUM, HIGH, CRITICAL
   reason     String
-  evidence   String?  // JSON
-  status     String   @default("OPEN") // OPEN, REVIEWING, DISMISSED, ACTIONED
+  evidence   String? // JSON
+  status     String    @default("OPEN") // OPEN, REVIEWING, DISMISSED, ACTIONED
   reviewedAt DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 }
 
 // ============================================================
@@ -803,16 +803,16 @@ model FraudAlert {
 // ============================================================
 
 model MatchingWeights {
-  id                   String   @id @default(cuid())
-  cooperativeId        String   @unique
-  cooperative          Cooperative @relation(fields: [cooperativeId], references: [id])
-  skillWeight          Float    @default(0.35)
-  availabilityWeight   Float    @default(0.20)
-  distanceWeight       Float    @default(0.15)
-  reliabilityWeight    Float    @default(0.10)
-  certificationWeight  Float    @default(0.10)
-  fairnessWeight       Float    @default(0.10)
-  updatedAt            DateTime @updatedAt
+  id                  String      @id @default(cuid())
+  cooperativeId       String      @unique
+  cooperative         Cooperative @relation(fields: [cooperativeId], references: [id])
+  skillWeight         Float       @default(0.35)
+  availabilityWeight  Float       @default(0.20)
+  distanceWeight      Float       @default(0.15)
+  reliabilityWeight   Float       @default(0.10)
+  certificationWeight Float       @default(0.10)
+  fairnessWeight      Float       @default(0.10)
+  updatedAt           DateTime    @updatedAt
 }
 
 // ============================================================
@@ -820,16 +820,16 @@ model MatchingWeights {
 // ============================================================
 
 model SharedWorkforceRequest {
-  id                    String   @id @default(cuid())
+  id                      String       @id @default(cuid())
   requestingCooperativeId String
-  requestingCooperative Cooperative @relation("RequestingCooperative", fields: [requestingCooperativeId], references: [id])
-  offeringCooperativeId String?
-  offeringCooperative   Cooperative? @relation("OfferingCooperative", fields: [offeringCooperativeId], references: [id])
-  skillRequired         String
-  workersNeeded         Int      @default(1)
-  workersAllocated      Int      @default(0)
-  status                String   @default("PENDING") // PENDING, APPROVED, PARTIAL, FULFILLED, REJECTED
-  createdAt             DateTime @default(now())
+  requestingCooperative   Cooperative  @relation("RequestingCooperative", fields: [requestingCooperativeId], references: [id])
+  offeringCooperativeId   String?
+  offeringCooperative     Cooperative? @relation("OfferingCooperative", fields: [offeringCooperativeId], references: [id])
+  skillRequired           String
+  workersNeeded           Int          @default(1)
+  workersAllocated        Int          @default(0)
+  status                  String       @default("PENDING") // PENDING, APPROVED, PARTIAL, FULFILLED, REJECTED
+  createdAt               DateTime     @default(now())
 }
 
 // ============================================================
@@ -837,32 +837,32 @@ model SharedWorkforceRequest {
 // ============================================================
 
 model SocietyServiceRequest {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   societyId   String
   society     HousingSociety @relation(fields: [societyId], references: [id])
   categoryId  String?
   title       String
   description String
-  priority    String   @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
-  area        String?  // Common area, Unit, etc.
-  status      String   @default("OPEN") // OPEN, SCHEDULED, IN_PROGRESS, COMPLETED
-  createdAt   DateTime @default(now())
+  priority    String         @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  area        String? // Common area, Unit, etc.
+  status      String         @default("OPEN") // OPEN, SCHEDULED, IN_PROGRESS, COMPLETED
+  createdAt   DateTime       @default(now())
 
-  bookings    Booking[]
+  bookings Booking[]
 }
 
 model MaintenanceContract {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   societyId   String
   society     HousingSociety @relation(fields: [societyId], references: [id])
   title       String
-  frequency   String   // MONTHLY, QUARTERLY, ANNUAL
+  frequency   String // MONTHLY, QUARTERLY, ANNUAL
   categoryId  String?
   nextService DateTime?
   lastService DateTime?
-  cost        Float    @default(0)
-  status      String   @default("ACTIVE") // ACTIVE, PAUSED, EXPIRED
-  createdAt   DateTime @default(now())
+  cost        Float          @default(0)
+  status      String         @default("ACTIVE") // ACTIVE, PAUSED, EXPIRED
+  createdAt   DateTime       @default(now())
 }
 
 // ============================================================
@@ -870,29 +870,31 @@ model MaintenanceContract {
 // ============================================================
 
 model InstitutionContract {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   institutionId String
   institution   Institution @relation(fields: [institutionId], references: [id])
   title         String
   description   String?
   startDate     DateTime?
   endDate       DateTime?
-  slaDetails    String?  // JSON
-  totalValue    Float    @default(0)
-  status        String   @default("ACTIVE") // ACTIVE, PAUSED, EXPIRED, TERMINATED
-  createdAt     DateTime @default(now())
+  slaDetails    String? // JSON
+  totalValue    Float       @default(0)
+  status        String      @default("ACTIVE") // ACTIVE, PAUSED, EXPIRED, TERMINATED
+  createdAt     DateTime    @default(now())
 }
 
 model InstitutionServiceRequest {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   institutionId String
   institution   Institution @relation(fields: [institutionId], references: [id])
   contractId    String?
   title         String
   description   String
-  priority      String   @default("NORMAL")
-  status        String   @default("OPEN") // OPEN, SCHEDULED, IN_PROGRESS, COMPLETED
-  createdAt     DateTime @default(now())
+  priority      String      @default("NORMAL")
+  status        String      @default("OPEN") // OPEN, SCHEDULED, IN_PROGRESS, COMPLETED
+  createdAt     DateTime    @default(now())
 
-  bookings      Booking[]
+  bookings Booking[]
 }
+
+

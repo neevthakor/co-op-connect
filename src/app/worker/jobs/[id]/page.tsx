@@ -24,6 +24,8 @@ import {
   ArrowRight,
   AlertCircle
 } from 'lucide-react';
+import { LiveMap } from '@/components/shared/live-map';
+import { useWorkerLocationSync } from '@/hooks/use-worker-location-sync';
 import { toast } from 'sonner';
 
 export default function JobExecutionPage() {
@@ -32,6 +34,10 @@ export default function JobExecutionPage() {
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Live Location Sync
+  const isTrackingActive = job && ['ACCEPTED', 'TRAVELLING', 'IN_PROGRESS'].includes(job.status);
+  useWorkerLocationSync(job?.workerId, isTrackingActive);
 
   // Modal / Input states
   const [pinInput, setPinInput] = useState('');
@@ -96,7 +102,11 @@ export default function JobExecutionPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to update status');
 
       toast.success(`Job updated to ${status}`);
-      await fetchJob();
+      if (data.booking) {
+        setJob((prev: any) => ({ ...prev, ...data.booking }));
+      } else {
+        await fetchJob();
+      }
     } catch (err: any) {
       toast.error(err.message || 'Status transition failed');
     } finally {
@@ -119,7 +129,11 @@ export default function JobExecutionPage() {
 
       toast.success('PIN Verified! Job is now IN_PROGRESS.');
       setShowPinModal(false);
-      await fetchJob();
+      if (data.booking) {
+        setJob((prev: any) => ({ ...prev, ...data.booking }));
+      } else {
+        await fetchJob();
+      }
     } catch (err: any) {
       toast.error(err.message || 'PIN verification failed');
     } finally {
@@ -293,6 +307,34 @@ export default function JobExecutionPage() {
               <p className="font-medium text-sm text-foreground">{job.address || 'Vastrapur, Ahmedabad, Gujarat'}</p>
             </div>
           </div>
+          
+          {(job.latitude && job.longitude) && (
+            <div className="mt-2">
+              <LiveMap 
+                height="150px"
+                center={[job.latitude, job.longitude]}
+                markers={[
+                  {
+                    lat: job.latitude,
+                    lng: job.longitude,
+                    label: "Customer Location",
+                  }
+                ]}
+              />
+              <div className="mt-2">
+                <a 
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`}
+                  target="_blank" 
+                  rel="noreferrer"
+                >
+                  <Button variant="outline" size="sm" className="w-full gap-2">
+                    <Navigation className="h-4 w-4" /> Get Directions
+                  </Button>
+                </a>
+              </div>
+            </div>
+          )}
+
           <div className="pt-3 border-t grid grid-cols-2 gap-4 text-xs">
             <div>
               <p className="text-muted-foreground font-semibold">Scheduled Date & Time</p>

@@ -134,6 +134,23 @@ export async function POST(req: NextRequest) {
       isEmergency: !!isEmergency,
     });
 
+    const imageUrls = body.imageUrls;
+    if (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0) {
+      for (const url of imageUrls) {
+        await prisma.jobProof.create({
+          data: {
+            bookingId: booking.id,
+            workerId: booking.workerId,
+            type: 'BEFORE',
+            imageUrl: url,
+            caption: 'Customer uploaded BEFORE photo during booking',
+            latitude: latitude ? parseFloat(latitude) : undefined,
+            longitude: longitude ? parseFloat(longitude) : undefined,
+          }
+        });
+      }
+    }
+
     return NextResponse.json({ success: true, booking }, { status: 201 });
   } catch (error: any) {
     console.error('Booking Creation Error:', error);

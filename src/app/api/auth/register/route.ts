@@ -16,8 +16,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A valid email address is required' }, { status: 400 });
     }
 
-    if (phone && !isValidPhone(phone)) {
-      return NextResponse.json({ error: 'A valid 10-digit Indian phone number is required' }, { status: 400 });
+    if (!phone || typeof phone !== 'string' || phone.trim() === '') {
+      return NextResponse.json({ error: 'A phone number is required' }, { status: 400 });
+    }
+
+    if (!isValidPhone(phone)) {
+      return NextResponse.json({ error: 'A valid 10-digit Indian mobile number is required' }, { status: 400 });
     }
 
     if (!password || typeof password !== 'string' || password.length < 6) {

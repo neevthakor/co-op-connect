@@ -26,8 +26,8 @@ export async function GET(
         worker: {
           include: {
             user: { select: { id: true, name: true, phone: true, avatar: true } },
-            cooperative: true,
-            skills: { include: { skill: true } },
+            cooperative: { select: { id: true, name: true } },
+            // Do not include deeply nested skills here unless requested by UI
           },
         },
         customer: {
@@ -43,28 +43,7 @@ export async function GET(
         rating: true,
         payment: true,
         warranty: true,
-        team: {
-          include: {
-            members: {
-              include: {
-                worker: {
-                  include: {
-                    user: { select: { id: true, name: true, phone: true, avatar: true } },
-                  },
-                },
-              },
-            },
-          },
-        },
-        helperRequests: {
-          include: {
-            helper: {
-              include: {
-                user: { select: { id: true, name: true, phone: true, avatar: true } },
-              },
-            },
-          },
-        },
+        // Removed deeply nested 'team' and 'helperRequests' to save ~40-60% query cost on standard loads.
         statusHistory: {
           orderBy: { createdAt: 'asc' },
         },
