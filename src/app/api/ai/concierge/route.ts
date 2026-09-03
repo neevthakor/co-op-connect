@@ -14,12 +14,15 @@ export async function POST(req: NextRequest) {
     const parsed = await parseServiceRequest(text, language);
 
     // Look up category in database
-    const category = await prisma.serviceCategory.findUnique({
-      where: { id: parsed.categoryId },
-      include: {
-        skills: true,
-      },
-    });
+    let category = null;
+    if (parsed.categoryId) {
+      category = await prisma.serviceCategory.findUnique({
+        where: { id: parsed.categoryId },
+        include: {
+          skills: true,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -29,6 +32,8 @@ export async function POST(req: NextRequest) {
         basePrice: 350,
       },
       analysis: {
+        intent: parsed.intent,
+        confidence: parsed.confidence,
         category: category?.name || parsed.categoryName,
         categoryId: category?.id || parsed.categoryId,
         urgency: parsed.urgency,

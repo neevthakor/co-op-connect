@@ -1,0 +1,106 @@
+export const CLASSIFICATION_EXAMPLES = `
+Examples (English, Hindi, Hinglish, Gujarati):
+- "AC thanda nahi kar raha" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.95}
+- "accident hua hai" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.99, "urgency": "CRITICAL"}
+- "mujhe lawyer chahiye" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.95}
+- "help chahiye" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.50}
+- "tap se pani leak ho raha hai" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-plumber", "confidence": 0.95}
+- "fridge cooling nahi kar raha" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-appliance", "confidence": 0.95}
+- "fan nahi chal raha" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-electrician", "confidence": 0.95}
+- "mummy gir gayi hain aur chot lagi hai" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.98, "urgency": "CRITICAL"}
+- "ghar mein aag lag gayi" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.99, "urgency": "CRITICAL"}
+- "ambulance chahiye" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.99, "urgency": "CRITICAL"}
+- "restaurant suggest karo" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.98}
+- "train ticket book karni hai" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.98}
+- "problem hai" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.40}
+- "worker chahiye" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.45}
+- "AC mein problem hai but ghar mein accident bhi hua hai" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.90, "urgency": "CRITICAL"}
+- "meri mummy gir gayi hain aur fan bhi nahi chal raha" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.90, "urgency": "CRITICAL"}
+- "police chahiye aur bathroom ka tap bhi leak hai" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.90, "urgency": "CRITICAL"}
+- "bhai ko chot lag gayi" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.96, "urgency": "CRITICAL"}
+- "AC ke paas accident hua" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.90, "urgency": "CRITICAL"}
+- "AC band hai" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.92}
+- "AC se pani leak ho raha hai" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.95}
+- "mere ghar mein short circuit hua" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.90, "urgency": "CRITICAL"}
+- "electric switch replace karna hai" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-electrician", "confidence": 0.95}
+- "door hinge broken" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-carpenter", "confidence": 0.94}
+- "need someone to paint my living room" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-painter", "confidence": 0.97}
+- "deep cleaning for 2BHK" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-cleaner", "confidence": 0.96}
+- "cockroaches everywhere in kitchen" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-pest", "confidence": 0.98}
+- "ceiling is seeping water" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-waterproofing", "confidence": 0.92}
+- "need my lawn mowed" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-gardener", "confidence": 0.95}
+- "visa apply karna hai" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.97}
+- "movie batao" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.98}
+- "something is wrong" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.30}
+- "એસી ઠંડક આપતું નથી" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.95}
+- "નળ માંથી પાણી ટપકે છે" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-plumber", "confidence": 0.95}
+- "ઘરમાં આગ લાગી છે" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.99, "urgency": "CRITICAL"}
+- "મને ડોક્ટરની જરૂર છે" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.99, "urgency": "CRITICAL"}
+- "મારા ઘરમાં ફર્નિચર બનાવવું છે" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-carpenter", "confidence": 0.94}
+- "दीवाल पर पेंट करवाना है" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-painter", "confidence": 0.96}
+- "मच्छर और कीड़े बहुत हैं" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-pest", "confidence": 0.95}
+- "छत से पानी टपक रहा है" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-waterproofing", "confidence": 0.93}
+- "गार्डन साफ करवाना है" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-gardener", "confidence": 0.94}
+- "मुझे एक मैकेनिक चाहिए गाड़ी के लिए" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.92}
+- "I need a doctor" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.99, "urgency": "CRITICAL"}
+- "My house is on fire" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.99, "urgency": "CRITICAL"}
+- "I need to book a flight" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.98}
+- "I want to eat pizza" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.98}
+- "Please send someone" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.40}
+- "AC cooling issue" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.90}
+- "AC sound coming" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.90}
+- "AC service required" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.95}
+- "Water leaking from AC" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.95}
+- "AC not turning on" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.94}
+- "Bathroom pipe burst" -> {"intent":"EMERGENCY", "categoryId":"cat-plumber", "confidence": 0.90, "urgency": "EMERGENCY"}
+- "Toilet clogged" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-plumber", "confidence": 0.96}
+- "Kitchen sink leaking" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-plumber", "confidence": 0.95}
+- "Install new shower" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-plumber", "confidence": 0.94}
+- "Change tap" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-plumber", "confidence": 0.95}
+- "Main switchboard sparking" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.92, "urgency": "CRITICAL"}
+- "Install ceiling fan" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-electrician", "confidence": 0.95}
+- "Change light bulb" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-electrician", "confidence": 0.90}
+- "Fix wiring issue" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-electrician", "confidence": 0.95}
+- "Install inverter" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-electrician", "confidence": 0.94}
+- "Build custom wardrobe" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-carpenter", "confidence": 0.95}
+- "Fix broken bed frame" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-carpenter", "confidence": 0.94}
+- "Install wooden shelves" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-carpenter", "confidence": 0.96}
+- "Repair dining table" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-carpenter", "confidence": 0.95}
+- "Polish wooden doors" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-carpenter", "confidence": 0.93}
+- "Paint whole house interior" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-painter", "confidence": 0.97}
+- "Touch up wall paint" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-painter", "confidence": 0.96}
+- "Whitewash exterior" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-painter", "confidence": 0.95}
+- "Texture painting for bedroom" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-painter", "confidence": 0.96}
+- "Deep clean bathroom" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-cleaner", "confidence": 0.96}
+- "Sofa dry cleaning" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-cleaner", "confidence": 0.95}
+- "Kitchen deep cleaning" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-cleaner", "confidence": 0.96}
+- "Full house cleaning after party" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-cleaner", "confidence": 0.97}
+- "Washing machine not spinning" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-appliance", "confidence": 0.95}
+- "Refrigerator not cooling" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-appliance", "confidence": 0.96}
+- "Microwave button not working" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-appliance", "confidence": 0.94}
+- "Geyser not heating water" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-appliance", "confidence": 0.95}
+- "Termite treatment required" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-pest", "confidence": 0.95}
+- "Bed bugs in mattress" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-pest", "confidence": 0.96}
+- "Ants everywhere" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-pest", "confidence": 0.94}
+- "Rat problem in kitchen" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-pest", "confidence": 0.95}
+- "Water leaking from roof" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-waterproofing", "confidence": 0.94}
+- "Dampness on bedroom wall" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-waterproofing", "confidence": 0.95}
+- "Terrace waterproofing needed" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-waterproofing", "confidence": 0.96}
+- "Trim hedges and bushes" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-gardener", "confidence": 0.94}
+- "Plant new flowers in balcony" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-gardener", "confidence": 0.95}
+- "Garden maintenance and watering" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-gardener", "confidence": 0.96}
+- "Weed removal from lawn" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-gardener", "confidence": 0.95}
+- "Need a plumber" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-plumber", "confidence": 0.92}
+- "Can you send an electrician" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-electrician", "confidence": 0.92}
+- "Looking for a carpenter" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-carpenter", "confidence": 0.92}
+- "Who can fix my AC" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.93}
+- "Need someone to clean my house" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-cleaner", "confidence": 0.94}
+- "Call the cops" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.99, "urgency": "CRITICAL"}
+- "My son is not breathing" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.99, "urgency": "CRITICAL"}
+- "Can you teach me coding" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.98}
+- "I want to buy a laptop" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.97}
+- "What is the time" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.98}
+- "Hello" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.20}
+- "Are you there" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.20}
+- "I need help with my house" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.45}
+`;

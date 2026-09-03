@@ -283,51 +283,88 @@ function BookServiceContent() {
               <Sparkles className="h-5 w-5 text-primary" />
               <h1 className="text-2xl font-bold">AI Concierge Analysis</h1>
             </div>
-            <p className="text-muted-foreground">Our cooperative AI parsed your requirements:</p>
 
             {aiAnalysis && (
               <Card className="border-primary/30 bg-card shadow-md shadow-primary/5">
                 <CardContent className="p-5 md:p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Category</p>
-                      <p className="text-lg font-bold text-primary">{aiAnalysis.category}</p>
+                  {['EMERGENCY', 'MEDICAL_EMERGENCY'].includes(aiAnalysis.intent) && (
+                    <div className="bg-destructive/10 border border-destructive/20 text-destructive rounded-lg p-4">
+                      <p className="font-bold text-lg mb-2">Emergency Detected</p>
+                      <p>This sounds like an emergency. Co-opConnect's home-service workers are not emergency responders. Please contact the appropriate emergency service.</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Urgency</p>
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                        aiAnalysis.urgency === 'EMERGENCY' ? 'bg-destructive text-destructive-foreground' :
-                        aiAnalysis.urgency === 'URGENT' ? 'bg-amber-500 text-white' : 'bg-emerald-600 text-white'
-                      }`}>
-                        {aiAnalysis.urgency}
-                      </span>
+                  )}
+
+                  {aiAnalysis.intent === 'OUT_OF_SCOPE' && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 rounded-lg p-4">
+                      <p className="font-bold text-lg mb-2">Service Not Available</p>
+                      <p>This request isn't a service currently supported by Co-opConnect. We currently support household skilled trades like plumbing, electrical, and AC repair.</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Est. Duration</p>
-                      <p className="font-semibold text-foreground">{aiAnalysis.estimatedDuration}</p>
+                  )}
+
+                  {aiAnalysis.intent === 'CLARIFICATION_REQUIRED' && (
+                    <div className="bg-primary/10 border border-primary/20 text-primary-foreground rounded-lg p-4">
+                      <p className="font-bold text-lg mb-2 text-primary">Clarification Required</p>
+                      <p className="text-foreground mb-4">We are not quite sure what specific service you need. Could you please answer the following to help us:</p>
+                      <ul className="list-disc pl-5 text-foreground space-y-1">
+                        {aiAnalysis.clarificationQuestions?.map((q: string, i: number) => (
+                          <li key={i}>{q}</li>
+                        ))}
+                      </ul>
+                      <Button className="mt-4" onClick={prevStep} variant="outline">Modify Request</Button>
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Base Rate</p>
-                      <p className="font-semibold text-foreground">₹{bookingData.estimatedPrice}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Required Tools for Technician</p>
-                    <div className="flex flex-wrap gap-2">
-                      {aiAnalysis.toolsNeeded?.map((t: string) => (
-                        <span key={t} className="bg-secondary border border-border px-2.5 py-1 rounded-md text-xs font-medium text-foreground">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                  )}
+
+                  {aiAnalysis.intent === 'SERVICE_REQUEST' && aiAnalysis.categoryId && (
+                    <>
+                      <p className="text-muted-foreground mb-4">Our cooperative AI parsed your requirements:</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Category</p>
+                          <p className="text-lg font-bold text-primary">{aiAnalysis.category}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Urgency</p>
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            aiAnalysis.urgency === 'URGENT' ? 'bg-amber-500 text-white' : 'bg-emerald-600 text-white'
+                          }`}>
+                            {aiAnalysis.urgency}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Est. Duration</p>
+                          <p className="font-semibold text-foreground">{aiAnalysis.estimatedDuration}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Base Rate</p>
+                          <p className="font-semibold text-foreground">₹{bookingData.estimatedPrice}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Required Tools for Technician</p>
+                        <div className="flex flex-wrap gap-2">
+                          {aiAnalysis.toolsNeeded?.map((t: string) => (
+                            <span key={t} className="bg-secondary border border-border px-2.5 py-1 rounded-md text-xs font-medium text-foreground">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
 
-            <Button className="w-full h-12 mt-8" onClick={nextStep}>
-              Looks Good, Proceed to Location
-            </Button>
+            {aiAnalysis?.intent === 'SERVICE_REQUEST' && aiAnalysis?.categoryId && (
+              <Button className="w-full h-12 mt-8" onClick={nextStep}>
+                Looks Good, Proceed to Location
+              </Button>
+            )}
+            {aiAnalysis?.intent !== 'SERVICE_REQUEST' && (
+              <Button variant="outline" className="w-full h-12 mt-8" onClick={prevStep}>
+                Go Back
+              </Button>
+            )}
           </div>
         )}
 

@@ -4,7 +4,10 @@ import { matchWorkers } from '@/services/matching';
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const categoryId = searchParams.get('categoryId') || 'cat-ac';
+    const categoryId = searchParams.get('categoryId');
+    if (!categoryId) {
+      return NextResponse.json({ error: 'categoryId is required' }, { status: 400 });
+    }
     const latParam = searchParams.get('latitude');
     const lngParam = searchParams.get('longitude');
     const urgency = (searchParams.get('urgency') as any) || 'NORMAL';

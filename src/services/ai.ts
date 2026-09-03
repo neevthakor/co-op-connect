@@ -1,11 +1,14 @@
 import { generateGeminiContent } from '@/services/gemini';
+import { CLASSIFICATION_EXAMPLES } from './ai-prompts';
 
 export interface ParsedServiceRequest {
-  categoryId: string;
-  categoryName: string;
+  intent: 'SERVICE_REQUEST' | 'EMERGENCY' | 'MEDICAL_EMERGENCY' | 'OUT_OF_SCOPE' | 'GENERAL_QUERY' | 'CLARIFICATION_REQUIRED';
+  categoryId: string | null;
+  categoryName: string | null;
+  confidence: number;
   problem: string;
-  urgency: 'NORMAL' | 'URGENT' | 'EMERGENCY';
-  estimatedDuration: string;
+  urgency: 'NORMAL' | 'URGENT' | 'EMERGENCY' | 'CRITICAL';
+  estimatedDuration: string | null;
   toolsNeeded: string[];
   clarificationQuestions: string[];
   parsedData: {
@@ -17,103 +20,63 @@ export interface ParsedServiceRequest {
 }
 
 const CATEGORY_MAP: Record<string, { id: string; name: string; tools: string[]; duration: string }> = {
-  ac: {
-    id: 'cat-ac',
-    name: 'AC Repair',
-    tools: ['Pressure Gauge', 'Vacuum Pump', 'Refrigerant R32/R410A', 'Fin Comb', 'Multimeter'],
-    duration: '1.5 - 2.5 hours',
-  },
-  plumber: {
-    id: 'cat-plumber',
-    name: 'Plumber',
-    tools: ['Pipe Wrench', 'Teflon Tape', 'Drain Auger', 'Hex Keys', 'Replacement Washers'],
-    duration: '1 - 2 hours',
-  },
-  electrician: {
-    id: 'cat-electrician',
-    name: 'Electrician',
-    tools: ['Digital Multimeter', 'Insulated Screwdrivers', 'Wire Stripper', 'Voltage Tester', 'Insulation Tape'],
-    duration: '1 - 2 hours',
-  },
-  carpenter: {
-    id: 'cat-carpenter',
-    name: 'Carpenter',
-    tools: ['Wood Chisel Set', 'Cordless Drill', 'Hand Saw', 'Level Tool', 'Wood Screws'],
-    duration: '2 - 4 hours',
-  },
-  painter: {
-    id: 'cat-painter',
-    name: 'Painter',
-    tools: ['Roller Brushes', 'Sanding Paper', 'Masking Tape', 'Drop Cloths', 'Primer Spray'],
-    duration: '4 - 8 hours',
-  },
-  cleaner: {
-    id: 'cat-cleaner',
-    name: 'Cleaner',
-    tools: ['Industrial Vacuum', 'Microfiber Cloths', 'Eco-friendly Degreaser', 'Squeegee'],
-    duration: '2 - 3 hours',
-  },
-  appliance: {
-    id: 'cat-appliance',
-    name: 'Appliance Repair',
-    tools: ['Component Tester', 'Thermal Sensor', 'Socket Set', 'Replacement Fuses'],
-    duration: '1.5 - 2.5 hours',
-  },
-  pest: {
-    id: 'cat-pest',
-    name: 'Pest Control',
-    tools: ['ULV Fogger', 'Gel Applicator', 'Protective Respirator Mask', 'Certified Insecticide'],
-    duration: '1.5 - 2 hours',
-  },
-  waterproofing: {
-    id: 'cat-waterproofing',
-    name: 'Waterproofing',
-    tools: ['Moisture Meter', 'Chemical Sealant Spray', 'Crack Filler Compound', 'Polymer Coating'],
-    duration: '3 - 6 hours',
-  },
-  gardener: {
-    id: 'cat-gardener',
-    name: 'Gardener',
-    tools: ['Pruning Shears', 'Hedge Trimmer', 'Trowel', 'Organic Fertilizer'],
-    duration: '2 - 4 hours',
-  },
+  ac: { id: 'cat-ac', name: 'AC Repair', tools: ['Pressure Gauge', 'Vacuum Pump'], duration: '1.5 - 2.5 hours' },
+  plumber: { id: 'cat-plumber', name: 'Plumber', tools: ['Pipe Wrench', 'Teflon Tape'], duration: '1 - 2 hours' },
+  electrician: { id: 'cat-electrician', name: 'Electrician', tools: ['Digital Multimeter', 'Insulated Screwdrivers'], duration: '1 - 2 hours' },
+  carpenter: { id: 'cat-carpenter', name: 'Carpenter', tools: ['Wood Chisel Set', 'Cordless Drill'], duration: '2 - 4 hours' },
+  painter: { id: 'cat-painter', name: 'Painter', tools: ['Roller Brushes', 'Sanding Paper'], duration: '4 - 8 hours' },
+  cleaner: { id: 'cat-cleaner', name: 'Cleaner', tools: ['Industrial Vacuum', 'Microfiber Cloths'], duration: '2 - 3 hours' },
+  appliance: { id: 'cat-appliance', name: 'Appliance Repair', tools: ['Component Tester'], duration: '1.5 - 2.5 hours' },
+  pest: { id: 'cat-pest', name: 'Pest Control', tools: ['ULV Fogger'], duration: '1.5 - 2 hours' },
+  waterproofing: { id: 'cat-waterproofing', name: 'Waterproofing', tools: ['Moisture Meter'], duration: '3 - 6 hours' },
+  gardener: { id: 'cat-gardener', name: 'Gardener', tools: ['Pruning Shears'], duration: '2 - 4 hours' },
 };
 
-// ============================================================
-// 1. AI SERVICE CONCIERGE
-// ============================================================
 export async function parseServiceRequest(text: string, language?: string): Promise<ParsedServiceRequest> {
-  const prompt = `You are the AI Concierge for Co-opConnect, a cooperative platform for household skilled trades in Ahmedabad, India.
-Analyze the customer's natural-language service inquiry (which may be in English, Hindi, or Gujarati):
-"${text}"
+  const prompt = `You are the AI Concierge intent classification system for Co-opConnect (a household skilled trades cooperative in Ahmedabad).
+You are a classification system, NOT a forced category selector.
 
-Categories available:
-- cat-ac: AC Repair & Servicing
+Supported categories:
+- cat-ac: AC Repair
 - cat-plumber: Plumbing & Leakages
-- cat-electrician: Electrical & Wiring
-- cat-carpenter: Carpentry & Woodwork
-- cat-painter: Painting & Whitewash
+- cat-electrician: Electrical
+- cat-carpenter: Carpentry
+- cat-painter: Painting
 - cat-cleaner: Home Cleaning
-- cat-appliance: Appliance Repair (Refrigerator, Washing Machine, Geyser, Microwave)
+- cat-appliance: Appliance Repair
 - cat-pest: Pest Control
-- cat-waterproofing: Waterproofing & Dampness Seepage
-- cat-gardener: Gardening & Landscaping
-- cat-technician: General Household Maintenance
+- cat-waterproofing: Waterproofing
+- cat-gardener: Gardening
 
-Respond with a valid JSON object only with this exact schema:
+CRITICAL RULES:
+1. Never force an input into a category. Return categoryId: null if uncertain or if it's an emergency/out of scope.
+2. Emergency/Medical requests take priority over services. (e.g. "accident hua hai" -> MEDICAL_EMERGENCY, categoryId null).
+3. Out-of-scope requests (lawyer, restaurant, etc.) -> OUT_OF_SCOPE, categoryId null.
+4. Ambiguous ("help", "worker chahiye") -> CLARIFICATION_REQUIRED, categoryId null.
+5. Consider the entire context, not just keywords.
+6. Support English, Hindi, Hinglish, Gujarati.
+
+Respond strictly with this JSON format:
 {
-  "categoryId": "one of the category IDs above",
-  "categoryName": "name of category",
-  "problem": "concise summary of the problem",
-  "urgency": "NORMAL" | "URGENT" | "EMERGENCY",
-  "estimatedDuration": "estimated duration string e.g. 1.5 - 2.5 hours",
-  "toolsNeeded": ["list of 3-5 necessary tools"],
-  "clarificationQuestions": ["2-3 helpful clarifying questions for the customer"],
-  "detectedKeywords": ["detected keywords from user input"]
-}`;
+  "intent": "SERVICE_REQUEST" | "EMERGENCY" | "MEDICAL_EMERGENCY" | "OUT_OF_SCOPE" | "GENERAL_QUERY" | "CLARIFICATION_REQUIRED",
+  "categoryId": "one of the supported category IDs, or null",
+  "categoryName": "name of category, or null",
+  "confidence": 0.0 to 1.0,
+  "problem": "concise summary",
+  "urgency": "NORMAL" | "URGENT" | "EMERGENCY" | "CRITICAL",
+  "estimatedDuration": "estimated duration string or null",
+  "toolsNeeded": ["list of tools"],
+  "clarificationQuestions": ["1-2 helpful questions if clarification is needed"],
+  "detectedKeywords": ["keywords"]
+}
+
+Examples (English, Hindi, Hinglish, Gujarati):
+${CLASSIFICATION_EXAMPLES}
+
+User Input: "${text}"`;
 
   const geminiResponse = await generateGeminiContent(prompt, {
-    systemInstruction: 'You are an expert domestic service triage assistant. Output only JSON.',
+    systemInstruction: 'You are an expert intent classification system. Output only valid JSON.',
     jsonMode: true,
     temperature: 0.1,
   });
@@ -121,25 +84,37 @@ Respond with a valid JSON object only with this exact schema:
   if (geminiResponse) {
     try {
       const parsed = JSON.parse(geminiResponse);
-      if (parsed.categoryId && parsed.categoryName) {
-        return {
-          categoryId: parsed.categoryId,
-          categoryName: parsed.categoryName,
-          problem: parsed.problem || text,
-          urgency: parsed.urgency || 'NORMAL',
-          estimatedDuration: parsed.estimatedDuration || '1 - 2 hours',
-          toolsNeeded: Array.isArray(parsed.toolsNeeded) ? parsed.toolsNeeded : ['Standard Toolset'],
-          clarificationQuestions: Array.isArray(parsed.clarificationQuestions)
-            ? parsed.clarificationQuestions
-            : ['Please specify your exact address and landmark.'],
-          parsedData: {
-            text,
-            language: language || 'en',
-            detectedKeywords: Array.isArray(parsed.detectedKeywords) ? parsed.detectedKeywords : [],
-            aiProvider: 'gemini',
-          },
-        };
+      
+      // Category Validation against allowed list
+      let finalCategoryId = parsed.categoryId;
+      let finalIntent = parsed.intent || 'CLARIFICATION_REQUIRED';
+      let confidence = parsed.confidence || 0.5;
+
+      const isValidCategory = Object.values(CATEGORY_MAP).some(c => c.id === finalCategoryId);
+      if (!isValidCategory || finalIntent !== 'SERVICE_REQUEST' || confidence < 0.85) {
+        finalCategoryId = null;
+        if (finalIntent === 'SERVICE_REQUEST') {
+            finalIntent = 'CLARIFICATION_REQUIRED';
+        }
       }
+
+      return {
+        intent: finalIntent,
+        categoryId: finalCategoryId,
+        categoryName: isValidCategory && finalCategoryId ? Object.values(CATEGORY_MAP).find(c => c.id === finalCategoryId)?.name || null : null,
+        confidence,
+        problem: parsed.problem || text,
+        urgency: parsed.urgency || 'NORMAL',
+        estimatedDuration: parsed.estimatedDuration || null,
+        toolsNeeded: Array.isArray(parsed.toolsNeeded) ? parsed.toolsNeeded : [],
+        clarificationQuestions: Array.isArray(parsed.clarificationQuestions) ? parsed.clarificationQuestions : [],
+        parsedData: {
+          text,
+          language: language || 'en',
+          detectedKeywords: Array.isArray(parsed.detectedKeywords) ? parsed.detectedKeywords : [],
+          aiProvider: 'gemini',
+        },
+      };
     } catch {
       // Fallback to rule engine on JSON parse error
     }
@@ -151,74 +126,53 @@ Respond with a valid JSON object only with this exact schema:
 
 function fallbackParseServiceRequest(text: string, language?: string): ParsedServiceRequest {
   const lower = text.toLowerCase();
-
-  let categoryKey = 'technician';
-  const detectedKeywords: string[] = [];
-
-  if (lower.includes('ac') || lower.includes('air condition') || lower.includes('cooling') || lower.includes('cool') || lower.includes('filter') || lower.includes('gas refill') || lower.includes('compressor') || lower.includes('એસી') || lower.includes('ઠંડક') || lower.includes('कूलिंग') || lower.includes('एसी') || lower.includes('ठंडा') || lower.includes('ठंडी')) {
-    categoryKey = 'ac';
-    detectedKeywords.push('AC', 'Cooling');
-  } else if (lower.includes('plumb') || lower.includes('leak') || lower.includes('tap') || lower.includes('faucet') || lower.includes('pipe') || lower.includes('sink') || lower.includes('drain') || lower.includes('flush') || lower.includes('bathroom') || lower.includes('નળ') || lower.includes('ટપકે') || lower.includes('પાણી') || lower.includes('પાઈપ') || lower.includes('नल') || lower.includes('लीक')) {
-    categoryKey = 'plumber';
-    detectedKeywords.push('Plumbing', 'Water / Leakage');
-  } else if (lower.includes('electric') || lower.includes('wire') || lower.includes('switch') || lower.includes('short circuit') || lower.includes('fuse') || lower.includes('mcb') || lower.includes('fan') || lower.includes('light') || lower.includes('power') || lower.includes('વીજળી') || lower.includes('પંખો') || lower.includes('સ્વિચ') || lower.includes('वायरिंग') || lower.includes('बिजली')) {
-    categoryKey = 'electrician';
-    detectedKeywords.push('Electrical', 'Wiring');
-  } else if (lower.includes('carpent') || lower.includes('wood') || lower.includes('door') || lower.includes('furniture') || lower.includes('table') || lower.includes('chair') || lower.includes('hinge') || lower.includes('lock') || lower.includes('કબાટ') || lower.includes('દરવાજો') || lower.includes('ફર્નિચર') || lower.includes('लकड़ी') || lower.includes('दरवाजा')) {
-    categoryKey = 'carpenter';
-    detectedKeywords.push('Carpentry', 'Woodwork');
-  } else if (lower.includes('paint') || lower.includes('whitewash') || lower.includes('color') || lower.includes('wall') || lower.includes('texture') || lower.includes('રંગ') || lower.includes('કલર') || lower.includes('દીવાલ') || lower.includes('पेंटिंग') || lower.includes('रंग')) {
-    categoryKey = 'painter';
-    detectedKeywords.push('Painting', 'Surface Treatment');
-  } else if (lower.includes('clean') || lower.includes('dust') || lower.includes('deep clean') || lower.includes('mop') || lower.includes('સફાઈ') || lower.includes('સાફ') || lower.includes('सफाई')) {
-    categoryKey = 'cleaner';
-    detectedKeywords.push('Cleaning', 'Hygiene');
-  } else if (lower.includes('fridge') || lower.includes('refrigerator') || lower.includes('washing machine') || lower.includes('microwave') || lower.includes('oven') || lower.includes('geyser') || lower.includes('વોશિંગ મશીન') || lower.includes('ફ્રિજ') || lower.includes('ગીઝર')) {
-    categoryKey = 'appliance';
-    detectedKeywords.push('Appliance', 'Hardware Diagnostics');
-  } else if (lower.includes('pest') || lower.includes('termite') || lower.includes('cockroach') || lower.includes('જીવાત') || lower.includes('દીવેલ')) {
-    categoryKey = 'pest';
-    detectedKeywords.push('Pest Control');
-  } else if (lower.includes('waterproof') || lower.includes('seepage') || lower.includes('dampness') || lower.includes('લીકેજ') || lower.includes('ભેજ')) {
-    categoryKey = 'waterproofing';
-    detectedKeywords.push('Waterproofing', 'Seepage Prevention');
-  } else if (lower.includes('garden') || lower.includes('plant') || lower.includes('lawn') || lower.includes('બગીચો') || lower.includes('છોડ')) {
-    categoryKey = 'gardener';
-    detectedKeywords.push('Gardening', 'Plant Care');
+  
+  // Emergency Detection First
+  if (lower.includes('accident') || lower.includes('chot') || lower.includes('injured') || lower.includes('ambulance') || lower.includes('doctor') || lower.includes('hospital') || lower.includes('gir gayi')) {
+      return createDeterministicFallback(text, language, 'MEDICAL_EMERGENCY', null, 0.99, 'CRITICAL');
+  }
+  if (lower.includes('aag') || lower.includes('fire') || lower.includes('police')) {
+      return createDeterministicFallback(text, language, 'EMERGENCY', null, 0.99, 'CRITICAL');
   }
 
-  let urgency: 'NORMAL' | 'URGENT' | 'EMERGENCY' = 'NORMAL';
-  if (lower.includes('emergency') || lower.includes('immediately') || lower.includes('burst') || lower.includes('danger') || lower.includes('sparking') || lower.includes('હમણાં જ') || lower.includes('ઇમરજન્સી') || lower.includes('तुरंत')) {
-    urgency = 'EMERGENCY';
-  } else if (lower.includes('urgent') || lower.includes('today') || lower.includes('asap') || lower.includes('soon') || lower.includes('આજે જ') || lower.includes('જલ્દી') || lower.includes('जल्दी') || lower.includes('आज')) {
-    urgency = 'URGENT';
+  // Out of Scope
+  if (lower.includes('lawyer') || lower.includes('visa') || lower.includes('restaurant') || lower.includes('ticket') || lower.includes('movie')) {
+      return createDeterministicFallback(text, language, 'OUT_OF_SCOPE', null, 0.95, 'NORMAL');
   }
 
-  const cat = CATEGORY_MAP[categoryKey] || {
-    id: 'cat-technician',
-    name: 'General Technician',
-    tools: ['Basic Toolkit', 'Safety Gloves'],
-    duration: '1-2 hours',
-  };
+  // Service Mapping
+  let categoryKey: string | null = null;
+  if (lower.includes('ac') || lower.includes('cooling') || lower.includes('એસી') || lower.includes('एसी')) categoryKey = 'ac';
+  else if (lower.includes('plumb') || lower.includes('leak') || lower.includes('tap') || lower.includes('pipe') || lower.includes('નળ') || lower.includes('नल')) categoryKey = 'plumber';
+  else if (lower.includes('electric') || lower.includes('wire') || lower.includes('switch') || lower.includes('fan') || lower.includes('વીજળી') || lower.includes('बिजली')) categoryKey = 'electrician';
+  else if (lower.includes('carpent') || lower.includes('wood') || lower.includes('door') || lower.includes('ફર્નિચર') || lower.includes('लकड़ी')) categoryKey = 'carpenter';
+  else if (lower.includes('paint') || lower.includes('wall') || lower.includes('રંગ') || lower.includes('पेंटिंग')) categoryKey = 'painter';
+  
+  if (categoryKey) {
+      return createDeterministicFallback(text, language, 'SERVICE_REQUEST', CATEGORY_MAP[categoryKey], 0.90, 'NORMAL');
+  }
 
+  // Unknown -> Clarification
+  return createDeterministicFallback(text, language, 'CLARIFICATION_REQUIRED', null, 0.50, 'NORMAL');
+}
+
+function createDeterministicFallback(text: string, language: string | undefined, intent: any, cat: any, confidence: number, urgency: any): ParsedServiceRequest {
   return {
-    categoryId: cat.id,
-    categoryName: cat.name,
+    intent,
+    categoryId: cat?.id || null,
+    categoryName: cat?.name || null,
+    confidence,
     problem: text,
     urgency,
-    estimatedDuration: cat.duration,
-    toolsNeeded: cat.tools,
-    clarificationQuestions: [
-      'What is the precise address or landmark for the worker?',
-      'Would you like to attach any photos of the issue?',
-      'Are there any specific timing preferences or building access requirements?',
-    ],
+    estimatedDuration: cat?.duration || null,
+    toolsNeeded: cat?.tools || [],
+    clarificationQuestions: intent === 'CLARIFICATION_REQUIRED' ? ['Could you please provide more details about the service you need?'] : [],
     parsedData: {
       text,
       language: language || 'en',
-      detectedKeywords,
+      detectedKeywords: [],
       aiProvider: 'mock',
-    },
+    }
   };
 }
 
