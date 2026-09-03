@@ -31,6 +31,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Fallback to empty object if body is missing or invalid JSON
     const body = await req.json().catch(() => ({}));
     const { notificationId, markAll = false } = body;
 
@@ -43,6 +44,11 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (notificationId) {
+      const existing = await prisma.notification.findUnique({ where: { id: notificationId } });
+      if (!existing || existing.userId !== session.user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
       await prisma.notification.update({
         where: { id: notificationId },
         data: { readAt: new Date() },

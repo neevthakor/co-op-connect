@@ -45,7 +45,7 @@ export default function ForecastPage() {
           ]);
         }
       })
-      .catch(() => {})
+      .catch((e) => { console.error('Error:', e); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -141,4 +141,5 @@ export default function ForecastPage() {
     </div>
   );
 }
+
 

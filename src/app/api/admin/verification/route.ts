@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { approveWorker, rejectWorker, requestMoreInfo, suspendWorker } from '@/services/verification';
@@ -46,10 +46,17 @@ export async function PATCH(req: NextRequest) {
 
     const body = await req.json();
     const { workerId, action, reason, note } = body;
-    const adminId = session.user.id || 'admin';
+    const adminId = session.user.id as string;
 
     if (!workerId || !action) {
       return NextResponse.json({ error: 'workerId and action are required' }, { status: 400 });
+    }
+
+    if (userRole === 'COOPERATIVE_ADMIN') {
+      const worker = await prisma.worker.findUnique({ where: { id: workerId } });
+      if (!worker || worker.cooperativeId !== (session.user as any).cooperativeId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     let updatedWorker;

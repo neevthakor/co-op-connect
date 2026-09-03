@@ -76,7 +76,7 @@ export default async function CalendarPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-3.5 w-3.5 text-primary" />
-                      <span>{b.address || 'Ahmedabad, Gujarat'}</span>
+                      <span>{b.address || 'Address not provided'}</span>
                     </div>
                   </div>
 
@@ -106,7 +106,7 @@ export default async function CalendarPage() {
             <div key={b.id} className="p-4 flex justify-between items-center text-xs">
               <div>
                 <p className="font-bold text-sm text-foreground">{b.category.name}</p>
-                <p className="text-muted-foreground">{b.scheduledDate ? new Date(b.scheduledDate).toLocaleDateString() : 'Completed'} • {b.address || 'Ahmedabad'}</p>
+                <p className="text-muted-foreground">{b.scheduledDate ? new Date(b.scheduledDate).toLocaleDateString() : 'Completed'} • {b.address || 'Address not provided'}</p>
               </div>
               <div className="text-right">
                 <span className="font-bold text-green-600">₹{b.estimatedPrice || 450}</span>
@@ -121,4 +121,5 @@ export default async function CalendarPage() {
     </div>
   );
 }
+
 

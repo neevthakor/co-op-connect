@@ -75,17 +75,20 @@ export async function GET(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    if (userRole === 'CUSTOMER' && booking.customerId !== customerId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    if (userRole === 'WORKER' && booking.workerId !== workerId) {
+    const isCustomer = userRole === 'CUSTOMER' && booking.customerId === customerId;
+    const isWorker = userRole === 'WORKER' && booking.workerId === workerId;
+    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(userRole);
+
+    if (!isCustomer && !isWorker && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    if (userRole === 'WORKER' && booking.workerId === workerId && booking.status === 'REQUESTED') {
-      if (booking.customer && booking.customer.user) {
+    if (userRole === 'WORKER') {
+      if (booking.status === 'REQUESTED' && booking.customer && booking.customer.user) {
         booking.customer.user.phone = null;
       }
+      // Strip servicePin from response for workers
+      (booking as any).servicePin = undefined;
     }
 
     return NextResponse.json(booking);
@@ -122,15 +125,22 @@ export async function PATCH(
     const workerId = (session.user as any).workerId;
     const customerId = (session.user as any).customerId;
 
-    if (userRole === 'CUSTOMER' && booking.customerId !== customerId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    if (userRole === 'WORKER' && booking.workerId !== workerId) {
+    const isCustomer = userRole === 'CUSTOMER' && booking.customerId === customerId;
+    const isWorker = userRole === 'WORKER' && booking.workerId === workerId;
+    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(userRole);
+
+    if (!isCustomer && !isWorker && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Handle PIN verification
     if (pin) {
+      if (!isWorker) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      if (booking.status !== 'ARRIVED') {
+        return NextResponse.json({ error: 'PIN can only be verified when worker has arrived' }, { status: 400 });
+      }
       const pinResult = await verifyServicePin(bookingId, pin);
       if (!pinResult.success) {
         return NextResponse.json({ error: pinResult.message }, { status: 400 });
@@ -148,12 +158,22 @@ export async function PATCH(
 
     // Handle cancellation
     if (status === 'CANCELLED') {
+      if (!isCustomer && !isAdmin) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
       const updated = await cancelBooking(bookingId, reason || note || 'User cancelled booking');
       return NextResponse.json({ success: true, booking: updated });
     }
 
     // Handle normal status transition
     if (status) {
+      if (!isWorker) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      const allowedWorkerStatuses = ['ACCEPTED', 'TRAVELLING', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'];
+      if (!allowedWorkerStatuses.includes(status)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
       const updated = await updateBookingStatus(bookingId, status, note);
       return NextResponse.json({ success: true, booking: updated });
     }

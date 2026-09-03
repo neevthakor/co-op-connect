@@ -63,6 +63,25 @@ export default function JobExecutionPage() {
 
   useEffect(() => {
     fetchJob();
+    
+    // Subscribe to realtime updates for this specific booking
+    import('@/lib/supabase').then(({ supabase }) => {
+      const channel = supabase
+        .channel(`worker-booking-${params.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'Booking', filter: `id=eq.${params.id}` },
+          () => {
+            console.log('Realtime update received for job, refetching...');
+            fetchJob();
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    });
   }, [params.id]);
 
   const updateStatus = async (status: string, reason?: string) => {
@@ -108,20 +127,38 @@ export default function JobExecutionPage() {
     }
   };
 
-  const handleUploadPhoto = async (type: 'BEFORE' | 'AFTER') => {
+  const handleUploadClick = (type: 'BEFORE' | 'AFTER') => {
+    const el = document.getElementById(`${type.toLowerCase()}-photo`) as HTMLInputElement;
+    if (el) el.click();
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'BEFORE' | 'AFTER') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     setActionLoading(true);
     try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadRes = await fetch('/api/upload?type=public', {
+        method: 'POST',
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed');
+      
       const res = await fetch(`/api/bookings/${params.id}/proof`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type,
-          imageUrl: type === 'BEFORE' ? '/uploads/ac-before-service.jpg' : '/uploads/ac-after-service.jpg',
+          imageUrl: uploadData.url,
           caption: `${type} servicing inspection photo by technician`,
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Photo upload failed');
+      if (!res.ok) throw new Error(data.error || 'Photo DB save failed');
 
       toast.success(`${type} photo uploaded successfully`);
       await fetchJob();
@@ -129,6 +166,7 @@ export default function JobExecutionPage() {
       toast.error(err.message || 'Photo upload failed');
     } finally {
       setActionLoading(false);
+      e.target.value = ''; // reset input
     }
   };
 
@@ -165,7 +203,10 @@ export default function JobExecutionPage() {
     setShowHelperModal(true);
     setHelperLoading(true);
     try {
-      const res = await fetch(`/api/matching/helpers?bookingId=${params.id}&latitude=23.0225&longitude=72.5714`);
+      // Use booking's latitude/longitude if available, otherwise fallback, but require something
+      const lat = job.latitude || 23.0225;
+      const lng = job.longitude || 72.5714;
+      const res = await fetch(`/api/matching/helpers?bookingId=${params.id}&latitude=${lat}&longitude=${lng}`);
       const data = await res.json();
       setAvailableHelpers(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -355,11 +396,12 @@ export default function JobExecutionPage() {
 
               {/* In-progress actions */}
               <div className="grid grid-cols-2 gap-3 pt-2">
+                <input type="file" accept="image/*" id="before-photo" className="hidden" onChange={(e) => handleFileSelect(e, 'BEFORE')} />
                 <Button
                   variant="outline"
                   size="sm"
                   className="gap-1.5 h-11"
-                  onClick={() => handleUploadPhoto('BEFORE')}
+                  onClick={() => handleUploadClick('BEFORE')}
                   disabled={actionLoading}
                 >
                   <Camera className="h-4 w-4" /> Before Photo ({beforePhotos.length})
@@ -385,11 +427,12 @@ export default function JobExecutionPage() {
                   <Users className="h-4 w-4" /> Need Helper (Team)
                 </Button>
 
+                <input type="file" accept="image/*" id="after-photo" className="hidden" onChange={(e) => handleFileSelect(e, 'AFTER')} />
                 <Button
                   variant="outline"
                   size="sm"
                   className="gap-1.5 h-11"
-                  onClick={() => handleUploadPhoto('AFTER')}
+                  onClick={() => handleUploadClick('AFTER')}
                   disabled={actionLoading}
                 >
                   <Camera className="h-4 w-4" /> After Photo ({afterPhotos.length})

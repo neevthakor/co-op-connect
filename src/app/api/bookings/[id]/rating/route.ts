@@ -48,7 +48,7 @@ export async function POST(
 
     // 2. Prevent reviewing a job that does not belong to this customer
     const sessionCustomerId = (session.user as any).customerId;
-    if (sessionCustomerId && sessionCustomerId !== booking.customerId) {
+    if (!sessionCustomerId || sessionCustomerId !== booking.customerId) {
       return NextResponse.json(
         { error: 'Unauthorized: You can only review your own bookings' },
         { status: 403 }
@@ -66,7 +66,7 @@ export async function POST(
       );
     }
 
-    const customerId = sessionCustomerId || booking.customerId;
+    const customerId = booking.customerId;
     const computedScore = overall !== undefined && overall !== null
       ? parseFloat(overall.toString())
       : ((Number(technicalQuality) + Number(punctuality) + Number(communication) + Number(professionalism) + Number(priceTransparency)) / 5);

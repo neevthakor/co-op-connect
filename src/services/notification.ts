@@ -22,12 +22,12 @@ export async function sendNotification(
 
 export async function sendSMS(phone: string, message: string) {
   console.log(`[MOCK SMS] To: ${phone} -> Message: ${message}`);
-  return { success: true, mode: "MOCK" };
+  return { success: false, mode: "MOCK", message: 'SMS provider not configured' };
 }
 
 export async function sendEmail(email: string, subject: string, body: string) {
   console.log(`[MOCK EMAIL] To: ${email} -> Subject: ${subject} -> Body: ${body}`);
-  return { success: true, mode: "MOCK" };
+  return { success: false, mode: "MOCK", message: 'Email provider not configured' };
 }
 
 export async function markAsRead(notificationId: string) {

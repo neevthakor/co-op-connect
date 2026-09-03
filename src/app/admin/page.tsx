@@ -1,4 +1,4 @@
-﻿import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -110,7 +110,7 @@ export default async function AdminDashboardPage() {
                     <p className="text-sm text-red-700">Requires admin mediation.</p>
                   </div>
                 </div>
-                <Link href="/admin/complaints" className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg text-sm font-semibold hover:bg-red-100">
+                <Link href="/admin/disputes" className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg text-sm font-semibold hover:bg-red-100">
                   Resolve
                 </Link>
               </div>

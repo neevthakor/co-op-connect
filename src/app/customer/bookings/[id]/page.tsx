@@ -10,6 +10,7 @@ import { RatingInput } from '@/components/shared/rating-input';
 import { MaterialApproval } from '@/components/shared/material-approval';
 import { WorkerCard } from '@/components/shared/worker-card';
 import { CustomerBookingActions } from '@/components/customer/customer-booking-actions';
+import { RealtimeBookingListener } from '@/components/shared/realtime-listeners';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Map, ShieldCheck } from 'lucide-react';
@@ -59,6 +60,8 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="flex flex-col gap-6 p-4 pb-20 md:p-8 max-w-3xl mx-auto w-full">
+      <RealtimeBookingListener userId={session.user?.id as string} role="customer" />
+      
       <header className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2">

@@ -17,7 +17,7 @@ export default function SkillGapsPage() {
       .then((data) => {
         setSkillGaps(data.skillGaps || []);
       })
-      .catch(() => {})
+      .catch((e) => { console.error('Error:', e); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -113,4 +113,5 @@ export default function SkillGapsPage() {
     </div>
   );
 }
+
 

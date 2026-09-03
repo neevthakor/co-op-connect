@@ -77,7 +77,7 @@ export async function createBooking(params: {
       booking.worker.user.id,
       "BOOKING",
       "New Job Request",
-      `You have a new ${booking.category.name} booking request at ${booking.address || 'Ahmedabad'}.`,
+      `You have a new ${booking.category.name} booking request at ${booking.address || 'your location'}.`,
       { bookingId: booking.id, category: booking.category.name }
     );
   }
@@ -230,4 +230,5 @@ export async function verifyServicePin(bookingId: string, enteredPin: string) {
 export async function cancelBooking(bookingId: string, reason: string) {
   return updateBookingStatus(bookingId, "CANCELLED", reason);
 }
+
 

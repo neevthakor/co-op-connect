@@ -29,7 +29,15 @@ export async function POST(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const customerId = (session.user as any).customerId || booking.customerId;
+    const sessionUser = session.user as any;
+    const isCustomer = sessionUser.customerId && sessionUser.customerId === booking.customerId;
+    const isAdmin = sessionUser.role === 'ADMIN' || sessionUser.role === 'COOPERATIVE_ADMIN';
+
+    if (!isCustomer && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const customerId = booking.customerId;
 
     const complaint = await prisma.complaint.create({
       data: {

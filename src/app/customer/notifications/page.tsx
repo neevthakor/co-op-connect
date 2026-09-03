@@ -12,11 +12,36 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let channel: any;
+
     async function fetchNotifications() {
       try {
+        const sessionRes = await fetch('/api/auth/session');
+        const sessionData = await sessionRes.json();
+        const userId = sessionData?.user?.id;
+
         const res = await fetch('/api/notifications');
         const data = await res.json();
         setNotifications(data.notifications || []);
+
+        if (userId) {
+          import('@/lib/supabase').then(({ supabase }) => {
+            channel = supabase
+              .channel(`customer-notifications-${userId}`)
+              .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'Notification', filter: `userId=eq.${userId}` },
+                () => {
+                  console.log('Realtime update received for notifications, refetching...');
+                  // Re-fetch notifications
+                  fetch('/api/notifications')
+                    .then(r => r.json())
+                    .then(d => setNotifications(d.notifications || []));
+                }
+              )
+              .subscribe();
+          });
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -24,11 +49,23 @@ export default function NotificationsPage() {
       }
     }
     fetchNotifications();
+
+    return () => {
+      if (channel) {
+        import('@/lib/supabase').then(({ supabase }) => {
+          supabase.removeChannel(channel);
+        });
+      }
+    };
   }, []);
 
   const markAllAsRead = async () => {
     try {
-      await fetch('/api/notifications/mark-read', { method: 'POST' });
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAll: true }),
+      });
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
     } catch (err) {
       console.error(err);

@@ -19,7 +19,9 @@ function BookServiceContent() {
   const [loading, setLoading] = useState(false);
   const [bookingData, setBookingData] = useState({
     description: '',
-    address: 'Vastrapur, Ahmedabad, Gujarat',
+    address: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
     date: new Date().toISOString().split('T')[0],
     time: '11:00 AM',
     workerId: null as string | null,
@@ -27,6 +29,7 @@ function BookServiceContent() {
     categoryName: 'AC Repair',
     estimatedPrice: 450,
     isEmergency: false,
+    imageUrls: [] as string[],
   });
 
   useEffect(() => {
@@ -54,6 +57,31 @@ function BookServiceContent() {
 
   const nextStep = () => setStep((prev) => Math.min(prev + 1, totalSteps));
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const toastId = toast.loading('Uploading photo...');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadRes = await fetch('/api/upload?type=public', {
+        method: 'POST',
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed');
+      
+      setBookingData((prev) => ({ ...prev, imageUrls: [...(prev.imageUrls || []), uploadData.url] }));
+      toast.success('Photo attached!', { id: toastId });
+    } catch (err: any) {
+      toast.error(err.message || 'Photo upload failed', { id: toastId });
+    } finally {
+      e.target.value = ''; // reset
+    }
+  };
 
   const handleAnalyze = async () => {
     if (!bookingData.description.trim()) return toast.error('Please describe what you need');
@@ -86,6 +114,38 @@ function BookServiceContent() {
   const handleMatchWorkers = async () => {
     if (!bookingData.address.trim()) return toast.error('Please enter an address');
     setLoading(true);
+
+    let lat = bookingData.latitude;
+    let lng = bookingData.longitude;
+
+    if (!lat || !lng) {
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          if (!navigator.geolocation) {
+            reject(new Error('Geolocation not supported'));
+          } else {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+          }
+        });
+        lat = position.coords.latitude;
+        lng = position.coords.longitude;
+      } catch (geoError) {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(bookingData.address)}&format=json&limit=1`);
+          const geoData = await res.json();
+          if (geoData && geoData.length > 0) {
+            lat = parseFloat(geoData[0].lat);
+            lng = parseFloat(geoData[0].lon);
+          } else {
+            throw new Error('Address not found');
+          }
+        } catch (apiError) {
+          setLoading(false);
+          return toast.error('Could not find location. Please enter a valid address.');
+        }
+      }
+    }
+
     try {
       const res = await fetch('/api/matching', {
         method: 'POST',
@@ -93,8 +153,8 @@ function BookServiceContent() {
         body: JSON.stringify({
           categoryId: bookingData.categoryId,
           urgency: bookingData.isEmergency ? 'EMERGENCY' : 'NORMAL',
-          latitude: 23.0225,
-          longitude: 72.5714,
+          latitude: lat,
+          longitude: lng,
         }),
       });
       const data = await res.json();
@@ -108,7 +168,11 @@ function BookServiceContent() {
           ...prev,
           workerId: matches[0].worker?.id || matches[0].id,
           estimatedPrice: matches[0].estimatedPrice || prev.estimatedPrice,
+          latitude: lat,
+          longitude: lng,
         }));
+      } else {
+        setBookingData((prev) => ({ ...prev, latitude: lat, longitude: lng }));
       }
       nextStep();
     } catch (err: any) {
@@ -135,6 +199,8 @@ function BookServiceContent() {
           scheduledTime: bookingData.time,
           estimatedPrice: bookingData.estimatedPrice,
           address: bookingData.address,
+          latitude: bookingData.latitude,
+          longitude: bookingData.longitude,
           isEmergency: bookingData.isEmergency,
         }),
       });
@@ -195,9 +261,14 @@ function BookServiceContent() {
               </div>
             </div>
 
-            <Button variant="outline" className="w-full gap-2 h-12 border-dashed">
+            <input type="file" accept="image/*" id="booking-photo" className="hidden" onChange={handlePhotoUpload} />
+            <Button
+              variant="outline"
+              className="w-full gap-2 h-12 border-dashed"
+              onClick={() => document.getElementById('booking-photo')?.click()}
+            >
               <Upload className="h-4 w-4" />
-              Attach Photos (Optional)
+              Attach Photos {bookingData.imageUrls?.length > 0 ? `(${bookingData.imageUrls.length})` : '(Optional)'}
             </Button>
 
             <Button className="w-full h-12 mt-8" onClick={handleAnalyze} disabled={loading || !bookingData.description}>
@@ -263,7 +334,7 @@ function BookServiceContent() {
         {step === 3 && (
           <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
             <h1 className="text-2xl font-bold">Where is the service needed?</h1>
-            <p className="text-muted-foreground">Confirm your service address in Ahmedabad.</p>
+            <p className="text-muted-foreground">Confirm your service address.</p>
 
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -274,6 +345,34 @@ function BookServiceContent() {
                 className="pl-10 h-12 text-base"
               />
             </div>
+            
+            <Button
+              variant="outline"
+              className="w-full h-12 gap-2"
+              onClick={async () => {
+                try {
+                  const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject);
+                  });
+                  const lat = position.coords.latitude;
+                  const lng = position.coords.longitude;
+                  
+                  const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+                  const data = await res.json();
+                  if (data && data.display_name) {
+                    setBookingData({ ...bookingData, address: data.display_name, latitude: lat, longitude: lng });
+                    toast.success("Location updated!");
+                  } else {
+                    setBookingData({ ...bookingData, latitude: lat, longitude: lng });
+                    toast.error("Got location but couldn't reverse geocode address.");
+                  }
+                } catch (e) {
+                  toast.error("Could not get your location");
+                }
+              }}
+            >
+              <MapPin className="h-4 w-4" /> Use My Location
+            </Button>
 
             <Button className="w-full h-12 mt-8" onClick={handleMatchWorkers} disabled={loading || !bookingData.address}>
               {loading ? 'Finding Verified Cooperative Workers...' : 'Find Verified Workers'}

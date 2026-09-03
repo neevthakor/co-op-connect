@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
@@ -59,7 +59,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userRole = (session?.user as any)?.role;
+    
+    if (!session?.user?.id || !['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN', 'WORKER'].includes(userRole)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -67,16 +69,22 @@ export async function POST(req: NextRequest) {
     const { action = 'VOTE', proposalId, vote, title, description, cooperativeId } = body;
 
     if (action === 'CREATE_PROPOSAL') {
+      if (!['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(userRole)) {
+        return NextResponse.json({ error: 'Only admins can create proposals' }, { status: 403 });
+      }
+
       if (!title || !description) {
         return NextResponse.json({ error: 'Title and description are required' }, { status: 400 });
       }
 
       const coopId = cooperativeId || (session.user as any).cooperativeId;
-      const defaultCoop = coopId ? null : await prisma.cooperative.findFirst();
+      if (!coopId) {
+        return NextResponse.json({ error: 'cooperativeId is required' }, { status: 400 });
+      }
 
       const proposal = await prisma.cooperativeProposal.create({
         data: {
-          cooperativeId: coopId || defaultCoop?.id || 'coop-1',
+          cooperativeId: coopId,
           createdById: session.user.id,
           title,
           description,

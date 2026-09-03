@@ -139,7 +139,7 @@ export default async function WorkerHomePage() {
                     <h3 className="font-bold text-gray-900">{b.description || 'Household Service Request'}</h3>
                     <p className="text-xs text-gray-500 flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                      {b.address || 'Ahmedabad'} • Customer: {b.customer?.user?.name || 'Customer'}
+                      {b.address || 'Address not provided'} • Customer: {b.customer?.user?.name || 'Customer'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -158,3 +158,4 @@ export default async function WorkerHomePage() {
     </div>
   );
 }
+

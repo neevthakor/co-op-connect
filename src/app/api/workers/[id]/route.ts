@@ -37,6 +37,14 @@ export async function PATCH(
 
     const resolvedParams = await Promise.resolve(params);
     const workerId = resolvedParams.id;
+
+    const u = session.user as any;
+    const isOwner = u.workerId === workerId;
+    const isAdmin = u.role === 'ADMIN' || u.role === 'COOPERATIVE_ADMIN';
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await req.json();
     const { availabilityStatus, serviceRadius, bio, isEmergencyAvailable, workingHoursStart, workingHoursEnd } = body;
 

@@ -72,15 +72,19 @@ export function calculateETA(distanceKm: number): number {
 
 export async function getDemandHeatmapData(categoryId?: string) {
   const demand = await prisma.demandHistory.findMany({
-    where: categoryId ? { categoryId } : undefined,
+    where: {
+      ...(categoryId ? { categoryId } : {}),
+      latitude: { not: null },
+      longitude: { not: null },
+    },
     take: 100,
     orderBy: { date: "desc" },
   });
 
   return demand.map((d) => ({
     area: d.area,
-    latitude: d.latitude || 23.0225,
-    longitude: d.longitude || 72.5714,
+    latitude: d.latitude!,
+    longitude: d.longitude!,
     count: d.count,
   }));
 }

@@ -43,7 +43,7 @@ export default async function WorkerJobsPage() {
           <h3 className="font-bold text-gray-900">{b.description || 'Household Service Request'}</h3>
           <p className="text-xs text-gray-500 flex items-center gap-1">
             <MapPin className="w-3.5 h-3.5 text-gray-400" />
-            {b.address || 'Ahmedabad'} • Customer: {b.customer?.user?.name || 'Customer'}
+            {b.address || 'Address not provided'} • Customer: {b.customer?.user?.name || 'Customer'}
           </p>
           <div className="flex items-center gap-3 pt-1 text-xs text-gray-600">
             <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(b.createdAt)}</span>
@@ -113,3 +113,4 @@ export default async function WorkerJobsPage() {
     </div>
   );
 }
+

@@ -17,7 +17,7 @@ export default function FinancePage() {
     fetch('/api/admin/finance')
       .then((res) => res.json())
       .then((resData) => setData(resData))
-      .catch(() => {})
+      .catch((e) => { console.error('Error:', e); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -138,4 +138,5 @@ export default function FinancePage() {
     </div>
   );
 }
+
 

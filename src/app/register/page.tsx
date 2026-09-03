@@ -18,7 +18,7 @@ export default function CustomerRegisterPage() {
     phone: '',
     password: '',
     confirmPassword: '',
-    address: 'Vastrapur, Ahmedabad',
+    address: '',
   });
   const [error, setError] = useState('');
 
@@ -202,3 +202,4 @@ export default function CustomerRegisterPage() {
     </div>
   );
 }
+

@@ -8,9 +8,17 @@ export interface ProcessPaymentParams {
   provider?: string;
 }
 
-export async function processPayment(params: ProcessPaymentParams) {
-  const { bookingId, amount, method = "UPI", provider = "SANDBOX" } = params;
+export interface PaymentProvider {
+  processPayment(params: ProcessPaymentParams): Promise<any>;
+}
 
+export async function completePaymentTransaction(
+  bookingId: string,
+  amount: number,
+  method: string,
+  providerName: string,
+  transactionId: string
+) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
@@ -33,7 +41,10 @@ export async function processPayment(params: ProcessPaymentParams) {
     throw new Error("Booking not found");
   }
 
-  const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substring(7).toUpperCase()}`;
+  // Idempotency check
+  if (booking.invoice?.status === "PAID") {
+    throw new Error("Payment already completed for this booking");
+  }
 
   // 1. Create or update Payment
   const payment = await prisma.payment.upsert({
@@ -42,7 +53,7 @@ export async function processPayment(params: ProcessPaymentParams) {
       bookingId,
       amount,
       method,
-      provider,
+      provider: providerName,
       status: "COMPLETED",
       transactionId,
       paidAt: new Date(),
@@ -50,20 +61,24 @@ export async function processPayment(params: ProcessPaymentParams) {
     update: {
       amount,
       method,
-      provider,
+      provider: providerName,
       status: "COMPLETED",
       transactionId,
       paidAt: new Date(),
     },
   });
 
-  // 2. Mark Invoice as PAID
-  if (booking.invoice) {
-    await prisma.invoice.update({
-      where: { id: booking.invoice.id },
+  // 2. Mark Invoice as PAID and Booking as COMPLETED
+  await prisma.$transaction([
+    prisma.invoice.update({
+      where: { id: booking.invoice?.id || "" }, // Handle safely if missing? It should exist if paid.
       data: { status: "PAID" },
-    });
-  }
+    }),
+    prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: "COMPLETED" },
+    }),
+  ]);
 
   // 3. Record Worker Earnings
   const labourCharge = booking.invoice?.labourCharge || Math.round(amount * 0.7);
@@ -165,6 +180,50 @@ export async function processPayment(params: ProcessPaymentParams) {
     amount,
     status: "COMPLETED",
   };
+}
+
+export class SandboxProvider implements PaymentProvider {
+  async processPayment(params: ProcessPaymentParams) {
+    const { bookingId, amount, method = "UPI" } = params;
+    const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substring(7).toUpperCase()}`;
+    return completePaymentTransaction(bookingId, amount, method, "SANDBOX", transactionId);
+  }
+}
+
+export class RazorpayProvider implements PaymentProvider {
+  async processPayment(params: ProcessPaymentParams) {
+    const { bookingId, amount } = params;
+    
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { invoice: true },
+    });
+
+    if (!booking) throw new Error("Booking not found");
+    if (booking.invoice?.status === "PAID") {
+      throw new Error("Payment already completed for this booking");
+    }
+
+    // Stub: create an order using Razorpay logic
+    const orderId = `order_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+    return {
+      success: true,
+      provider: "RAZORPAY",
+      orderId,
+      amount: amount * 100, // Razorpay expects paise
+      currency: "INR",
+      status: "CREATED",
+    };
+  }
+}
+
+export async function processPayment(params: ProcessPaymentParams) {
+  // Idempotency check is handled in completePaymentTransaction or provider
+  const useRazorpay = !!process.env.RAZORPAY_KEY_ID;
+  const provider = useRazorpay ? new RazorpayProvider() : new SandboxProvider();
+  
+  return provider.processPayment(params);
 }
 
 export async function getPaymentStatus(bookingId: string) {

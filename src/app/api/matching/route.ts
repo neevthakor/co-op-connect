@@ -5,10 +5,21 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const categoryId = searchParams.get('categoryId') || 'cat-ac';
-    const latitude = parseFloat(searchParams.get('latitude') || '23.0225');
-    const longitude = parseFloat(searchParams.get('longitude') || '72.5714');
+    const latParam = searchParams.get('latitude');
+    const lngParam = searchParams.get('longitude');
     const urgency = (searchParams.get('urgency') as any) || 'NORMAL';
     const cooperativeId = searchParams.get('cooperativeId') || undefined;
+
+    if (!latParam || !lngParam) {
+      return NextResponse.json({ error: 'latitude and longitude are required' }, { status: 400 });
+    }
+
+    const latitude = parseFloat(latParam);
+    const longitude = parseFloat(lngParam);
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+      return NextResponse.json({ error: 'latitude and longitude must be valid numbers' }, { status: 400 });
+    }
 
     const matches = await matchWorkers({
       categoryId,
@@ -28,16 +39,26 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { categoryId, latitude = 23.0225, longitude = 72.5714, urgency = 'NORMAL', cooperativeId } = body;
+    const { categoryId, latitude, longitude, urgency = 'NORMAL', cooperativeId } = body;
 
     if (!categoryId) {
       return NextResponse.json({ error: 'categoryId is required' }, { status: 400 });
     }
+    if (latitude === undefined || longitude === undefined) {
+      return NextResponse.json({ error: 'latitude and longitude are required' }, { status: 400 });
+    }
+
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return NextResponse.json({ error: 'latitude and longitude must be valid numbers' }, { status: 400 });
+    }
 
     const matches = await matchWorkers({
       categoryId,
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
+      latitude: lat,
+      longitude: lng,
       urgency,
       cooperativeId,
     });

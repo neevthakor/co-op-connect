@@ -7,6 +7,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const resolvedParams = await Promise.resolve(params);
     const invoiceId = resolvedParams.id;
 
@@ -30,6 +35,15 @@ export async function GET(
 
     if (!invoice) {
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+    }
+
+    const u = session.user as any;
+    const isCustomer = u.customerId && invoice.booking?.customerId === u.customerId;
+    const isWorker = u.workerId && invoice.booking?.workerId === u.workerId;
+    const isAdmin = u.role === 'ADMIN' || u.role === 'COOPERATIVE_ADMIN';
+
+    if (!isCustomer && !isWorker && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     return NextResponse.json(invoice);

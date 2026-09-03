@@ -15,6 +15,18 @@ export async function GET(req: NextRequest) {
     const otherUserId = searchParams.get('otherUserId');
 
     if (bookingId) {
+      const booking = await prisma.booking.findUnique({
+        where: { id: bookingId },
+        include: {
+          customer: { select: { userId: true } },
+          worker: { select: { userId: true } },
+        }
+      });
+      if (!booking) return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+      if (booking.customer?.userId !== session.user.id && booking.worker?.userId !== session.user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
       const messages = await prisma.message.findMany({
         where: { bookingId },
         include: {

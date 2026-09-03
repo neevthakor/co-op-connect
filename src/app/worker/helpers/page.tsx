@@ -18,9 +18,21 @@ export default function HelpersPage() {
 
   const fetchTeams = async () => {
     try {
+      // First get worker profile to get location
+      const profileRes = await fetch('/api/worker/profile');
+      let lat = 23.0225;
+      let lng = 72.5714;
+      if (profileRes.ok) {
+        const profile = await profileRes.json();
+        if (profile.latitude && profile.longitude) {
+          lat = profile.latitude;
+          lng = profile.longitude;
+        }
+      }
+
       const [resTeams, resHelpers] = await Promise.all([
         fetch('/api/teams'),
-        fetch('/api/matching/helpers?latitude=23.0225&longitude=72.5714'),
+        fetch(`/api/matching/helpers?latitude=${lat}&longitude=${lng}`),
       ]);
       const teamsData = await resTeams.json();
       const helpersData = await resHelpers.json();

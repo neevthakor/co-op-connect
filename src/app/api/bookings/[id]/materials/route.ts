@@ -8,8 +8,29 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const resolvedParams = await Promise.resolve(params);
     const bookingId = resolvedParams.id;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId }
+    });
+
+    if (!booking) {
+      return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+    }
+
+    const isCustomer = (session.user as any).customerId === booking.customerId;
+    const isWorker = (session.user as any).workerId === booking.workerId;
+    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes((session.user as any).role);
+
+    if (!isCustomer && !isWorker && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const materials = await prisma.materialRequest.findMany({
       where: { bookingId },
@@ -53,7 +74,11 @@ export async function POST(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const workerId = (session.user as any).workerId || booking.workerId;
+    const workerId = (session.user as any).workerId;
+    if (workerId !== booking.workerId) {
+      return NextResponse.json({ error: 'Forbidden: Only the assigned worker can request materials' }, { status: 403 });
+    }
+
     const qty = parseInt(quantity.toString()) || 1;
     const price = parseFloat(unitPrice.toString());
     const totalPrice = qty * price;
@@ -106,6 +131,22 @@ export async function PATCH(
 
     if (!materialId || !status) {
       return NextResponse.json({ error: 'materialId and status are required' }, { status: 400 });
+    }
+
+    const existingMaterial = await prisma.materialRequest.findUnique({
+      where: { id: materialId },
+      include: { booking: true },
+    });
+
+    if (!existingMaterial || existingMaterial.bookingId !== bookingId) {
+      return NextResponse.json({ error: 'Material not found for this booking' }, { status: 404 });
+    }
+
+    const isCustomer = (session.user as any).customerId === existingMaterial.booking.customerId;
+    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes((session.user as any).role);
+
+    if (!isCustomer && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const updated = await prisma.materialRequest.update({

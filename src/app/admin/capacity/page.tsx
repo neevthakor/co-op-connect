@@ -15,7 +15,7 @@ export default function CapacityPage() {
     fetch('/api/admin/capacity')
       .then((res) => res.json())
       .then((data) => setCapacityData(data))
-      .catch(() => {})
+      .catch((e) => { console.error('Error:', e); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -159,4 +159,5 @@ export default function CapacityPage() {
     </div>
   );
 }
+
 

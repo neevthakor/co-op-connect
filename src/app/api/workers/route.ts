@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+import { auth } from '@/lib/auth';
+
 export async function GET(req: NextRequest) {
   try {
+    const session = await auth();
     const { searchParams } = new URL(req.url);
     const categoryId = searchParams.get('categoryId');
     const trade = searchParams.get('trade');
     const cooperativeId = searchParams.get('cooperativeId');
-    const status = searchParams.get('status') || 'VERIFIED';
+    let status = searchParams.get('status') || 'VERIFIED';
+    
+    const u = session?.user as any;
+    const isAdmin = u?.role === 'ADMIN' || u?.role === 'COOPERATIVE_ADMIN';
+    if (!session || !isAdmin) {
+      status = 'VERIFIED';
+    }
     const emergency = searchParams.get('emergency');
 
     const workers = await prisma.worker.findMany({

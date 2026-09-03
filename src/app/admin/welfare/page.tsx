@@ -15,7 +15,7 @@ export default function WelfarePage() {
     fetch('/api/admin/welfare')
       .then((res) => res.json())
       .then((resData) => setData(resData))
-      .catch(() => {})
+      .catch((e) => { console.error('Error:', e); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -118,4 +118,5 @@ export default function WelfarePage() {
     </div>
   );
 }
+
 

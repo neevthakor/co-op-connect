@@ -7,8 +7,26 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const resolvedParams = await Promise.resolve(params);
     const bookingId = resolvedParams.id;
+
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking) {
+      return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+    }
+
+    const u = session.user as any;
+    const isCustomer = u.customerId === booking.customerId;
+    const isWorker = u.workerId === booking.workerId;
+    const isAdmin = u.role === 'ADMIN' || u.role === 'COOPERATIVE_ADMIN';
+    if (!isCustomer && !isWorker && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const proofs = await prisma.jobProof.findMany({
       where: { bookingId },
@@ -44,7 +62,12 @@ export async function POST(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const workerId = (session.user as any).workerId || booking.workerId;
+    const sessionWorkerId = (session.user as any).workerId;
+    if (!sessionWorkerId || sessionWorkerId !== booking.workerId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const workerId = booking.workerId;
 
     const proof = await prisma.jobProof.create({
       data: {

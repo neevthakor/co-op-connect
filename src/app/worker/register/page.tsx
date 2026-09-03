@@ -19,7 +19,7 @@ export default function RegisterPage() {
     role: 'WORKER',
     primaryTrade: 'AC Repair',
     experience: '3',
-    address: 'Vastrapur, Ahmedabad',
+    address: '',
     isEmergencyAvailable: false,
   });
 
@@ -263,4 +263,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
 
