@@ -19,8 +19,14 @@ export default async function ProfilePage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: {
-      customer: true,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      avatar: true,
+      role: true,
+      customer: { select: { id: true, address: true } },
     },
   });
 
@@ -28,16 +34,17 @@ export default async function ProfilePage() {
 
   const customerId = user.customer?.id;
 
-  const totalBookings = customerId
-    ? await prisma.booking.count({ where: { customerId } })
-    : 0;
-
-  const completedBookings = customerId
-    ? await prisma.booking.findMany({
-        where: { customerId, status: 'COMPLETED' },
-        select: { finalPrice: true, estimatedPrice: true },
-      })
-    : [];
+  const [totalBookings, completedBookings] = await Promise.all([
+    customerId
+      ? prisma.booking.count({ where: { customerId } })
+      : 0,
+    customerId
+      ? prisma.booking.findMany({
+          where: { customerId, status: 'COMPLETED' },
+          select: { finalPrice: true, estimatedPrice: true },
+        })
+      : [],
+  ]);
 
   const totalSpent = completedBookings.reduce(
     (sum, b) => sum + (b.finalPrice || b.estimatedPrice || 0),

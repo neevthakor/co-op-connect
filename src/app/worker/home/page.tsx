@@ -15,38 +15,55 @@ export default async function WorkerHomePage() {
   
   const workerId = (session.user as any).workerId;
   
-  const worker = workerId
-    ? await prisma.worker.findUnique({
+  let worker: any = null;
+  let todayEarnings = 0;
+  let activeBookings: any[] = [];
+  let completedJobsCount = 0;
+
+  if (workerId) {
+    const [workerData, bookingsData, earningsAgg, jobsCount] = await Promise.all([
+      prisma.worker.findUnique({
         where: { id: workerId },
-        include: {
-          cooperative: true,
-          earnings: {
-            where: {
-              date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
-            },
-          },
-          bookings: {
-            where: {
-              status: { in: ['REQUESTED', 'ACCEPTED', 'TRAVELLING', 'ARRIVED', 'IN_PROGRESS'] },
-            },
-            include: {
-              category: true,
-              customer: { include: { user: true } },
-            },
-            orderBy: { createdAt: 'desc' },
-          },
+        select: {
+          id: true,
+          primaryTrade: true,
+          averageRating: true,
+          verificationStatus: true,
+          cooperative: { select: { id: true, name: true } },
         },
-      })
-    : null;
-
-  const todayEarnings = worker?.earnings.reduce((sum, e) => sum + e.netAmount, 0) || 0;
-  const activeBookings = worker?.bookings || [];
-
-  const completedJobsCount = workerId
-    ? await prisma.booking.count({
+      }),
+      prisma.booking.findMany({
+        where: {
+          workerId,
+          status: { in: ['REQUESTED', 'ACCEPTED', 'TRAVELLING', 'ARRIVED', 'IN_PROGRESS'] },
+        },
+        select: {
+          id: true,
+          description: true,
+          address: true,
+          status: true,
+          category: { select: { name: true } },
+          customer: { select: { user: { select: { name: true } } } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.workerEarning.aggregate({
+        where: {
+          workerId,
+          date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+        },
+        _sum: { netAmount: true },
+      }),
+      prisma.booking.count({
         where: { workerId, status: 'COMPLETED' },
       })
-    : 0;
+    ]);
+
+    worker = workerData;
+    activeBookings = bookingsData;
+    todayEarnings = earningsAgg._sum.netAmount || 0;
+    completedJobsCount = jobsCount;
+  }
 
   const ratingDisplay =
     worker?.averageRating && worker.averageRating > 0

@@ -16,10 +16,25 @@ export async function createBooking(params: {
   longitude?: number;
   isEmergency?: boolean;
 }) {
-  // Validate worker eligibility and verification
-  const worker = await prisma.worker.findUnique({
-    where: { id: params.workerId },
-  });
+  // Validate worker eligibility and check for scheduling conflicts in parallel
+  console.time('[booking] worker and conflict check (parallel)');
+  const [worker, conflicting] = await Promise.all([
+    prisma.worker.findUnique({
+      where: { id: params.workerId },
+    }),
+    (params.scheduledDate && params.scheduledTime) ? prisma.booking.findFirst({
+      where: {
+        workerId: params.workerId,
+        scheduledDate: params.scheduledDate,
+        scheduledTime: params.scheduledTime,
+        status: {
+          in: ["REQUESTED", "ACCEPTED", "TRAVELLING", "ARRIVED", "IN_PROGRESS"]
+        }
+      },
+      select: { id: true },
+    }) : null
+  ]);
+  console.timeEnd('[booking] worker and conflict check (parallel)');
 
   if (!worker) {
     throw new Error("Worker not found");
@@ -29,26 +44,13 @@ export async function createBooking(params: {
     throw new Error("Worker is not currently eligible for new bookings");
   }
 
-  // Check for scheduling conflicts
-  if (params.scheduledDate && params.scheduledTime) {
-    const conflicting = await prisma.booking.findFirst({
-      where: {
-        workerId: params.workerId,
-        scheduledDate: params.scheduledDate,
-        scheduledTime: params.scheduledTime,
-        status: {
-          in: ["REQUESTED", "ACCEPTED", "TRAVELLING", "ARRIVED", "IN_PROGRESS"]
-        }
-      }
-    });
-
-    if (conflicting) {
-      throw new Error("This worker is no longer available for the selected time. Please choose another worker or time.");
-    }
+  if (conflicting) {
+    throw new Error("This worker is no longer available for the selected time. Please choose another worker or time.");
   }
 
   const servicePin = generatePin();
 
+  console.time('[booking] insert booking');
   const booking = await prisma.booking.create({
     data: {
       ...params,
@@ -62,7 +64,9 @@ export async function createBooking(params: {
       customer: { include: { user: true } },
     },
   });
+  console.timeEnd('[booking] insert booking');
 
+  console.time('[booking] insert status history');
   await prisma.bookingStatusHistory.create({
     data: {
       bookingId: booking.id,
@@ -70,9 +74,11 @@ export async function createBooking(params: {
       note: "Booking created by customer",
     },
   });
+  console.timeEnd('[booking] insert status history');
 
   // Notify worker of new booking
   if (booking.worker?.user?.id) {
+    console.time('[booking] send notification');
     await sendNotification(
       booking.worker.user.id,
       "BOOKING",
@@ -80,6 +86,7 @@ export async function createBooking(params: {
       `You have a new ${booking.category.name} booking request at ${booking.address || 'your location'}.`,
       { bookingId: booking.id, category: booking.category.name }
     );
+    console.timeEnd('[booking] send notification');
   }
 
   return booking;

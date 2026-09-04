@@ -73,9 +73,11 @@ export async function POST(req: NextRequest) {
     let customerId = (session.user as any).customerId;
     if (!customerId) {
       // Find or create customer record for this user
+      console.time('[booking] customer lookup');
       const customer = await prisma.customer.findUnique({
         where: { userId: session.user.id },
       });
+      console.timeEnd('[booking] customer lookup');
       if (customer) {
         customerId = customer.id;
       } else {
@@ -107,19 +109,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'workerId and categoryId are required', code: 'MISSING_FIELDS' }, { status: 400 });
     }
 
-    // Safely ensure reference data exists without destroying data
-    await ensureServiceCategories();
+    // Removed ensureServiceCategories() from the hot path to avoid 10 sequential upserts on every booking
 
-    // Defensive validation: ensure the category exists in the database
-    // to prevent Prisma P2003 Foreign Key constraint errors.
+    console.time('[booking] category check');
     const categoryExists = await prisma.serviceCategory.findUnique({
       where: { id: categoryId }
     });
+    console.timeEnd('[booking] category check');
     
     if (!categoryExists) {
       return NextResponse.json({ success: false, error: 'Selected service category is no longer available. Please select another service.', code: 'INVALID_CATEGORY' }, { status: 400 });
     }
 
+    console.time('[booking] createBooking function');
     const booking = await createBooking({
       customerId,
       workerId,
@@ -133,22 +135,21 @@ export async function POST(req: NextRequest) {
       longitude: longitude ? parseFloat(longitude) : undefined,
       isEmergency: !!isEmergency,
     });
+    console.timeEnd('[booking] createBooking function');
 
     const imageUrls = body.imageUrls;
     if (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0) {
-      for (const url of imageUrls) {
-        await prisma.jobProof.create({
-          data: {
-            bookingId: booking.id,
-            workerId: booking.workerId,
-            type: 'BEFORE',
-            imageUrl: url,
-            caption: 'Customer uploaded BEFORE photo during booking',
-            latitude: latitude ? parseFloat(latitude) : undefined,
-            longitude: longitude ? parseFloat(longitude) : undefined,
-          }
-        });
-      }
+      await prisma.jobProof.createMany({
+        data: imageUrls.map((url: string) => ({
+          bookingId: booking.id,
+          workerId: booking.workerId,
+          type: 'BEFORE',
+          imageUrl: url,
+          caption: 'Customer uploaded BEFORE photo during booking',
+          latitude: latitude ? parseFloat(latitude) : undefined,
+          longitude: longitude ? parseFloat(longitude) : undefined,
+        }))
+      });
     }
 
     return NextResponse.json({ success: true, booking }, { status: 201 });
@@ -156,11 +157,12 @@ export async function POST(req: NextRequest) {
     console.error('Booking Creation Error:', error);
     
     let errorCode = 'INTERNAL_ERROR';
-    if (error.message === 'Worker not found') errorCode = 'WORKER_NOT_FOUND';
-    if (error.message.includes('not currently eligible')) errorCode = 'WORKER_UNAVAILABLE';
-    if (error.message.includes('no longer available for the selected time')) errorCode = 'SCHEDULING_CONFLICT';
+    let status = 500;
+    if (error.message === 'Worker not found') { errorCode = 'WORKER_NOT_FOUND'; status = 404; }
+    if (error.message.includes('not currently eligible')) { errorCode = 'WORKER_UNAVAILABLE'; status = 403; }
+    if (error.message.includes('no longer available for the selected time')) { errorCode = 'SCHEDULING_CONFLICT'; status = 409; }
     
-    return NextResponse.json({ success: false, error: error.message || 'Failed to create booking', code: errorCode }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message || 'Failed to create booking', code: errorCode }, { status });
   }
 }
 

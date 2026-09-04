@@ -15,21 +15,50 @@ export default async function WorkerJobsPage() {
 
   const workerId = (session.user as any).workerId;
 
-  const bookings = workerId
-    ? await prisma.booking.findMany({
-        where: { workerId },
-        include: {
-          category: true,
-          customer: { include: { user: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-      })
-    : [];
+  const [activeBookings, completedBookings] = workerId
+    ? await Promise.all([
+        prisma.booking.findMany({
+          where: {
+            workerId,
+            status: { in: ['REQUESTED', 'ACCEPTED', 'TRAVELLING', 'ARRIVED', 'IN_PROGRESS'] },
+          },
+          select: {
+            id: true,
+            description: true,
+            address: true,
+            status: true,
+            createdAt: true,
+            estimatedPrice: true,
+            category: { select: { name: true, basePrice: true } },
+            customer: { select: { user: { select: { name: true } } } },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        prisma.booking.findMany({
+          where: {
+            workerId,
+            status: { in: ['COMPLETED', 'CANCELLED'] },
+          },
+          select: {
+            id: true,
+            description: true,
+            address: true,
+            status: true,
+            createdAt: true,
+            estimatedPrice: true,
+            category: { select: { name: true, basePrice: true } },
+            customer: { select: { user: { select: { name: true } } } },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        }),
+      ])
+    : [[], []];
 
-  const requested = bookings.filter((b) => b.status === 'REQUESTED');
-  const accepted = bookings.filter((b) => b.status === 'ACCEPTED');
-  const active = bookings.filter((b) => ['TRAVELLING', 'ARRIVED', 'IN_PROGRESS'].includes(b.status));
-  const completed = bookings.filter((b) => ['COMPLETED', 'CANCELLED'].includes(b.status));
+  const requested = activeBookings.filter((b) => b.status === 'REQUESTED');
+  const accepted = activeBookings.filter((b) => b.status === 'ACCEPTED');
+  const active = activeBookings.filter((b) => ['TRAVELLING', 'ARRIVED', 'IN_PROGRESS'].includes(b.status));
+  const completed = completedBookings;
 
   const renderJobCard = (b: any) => (
     <Card key={b.id} className="bg-white border shadow-xs">

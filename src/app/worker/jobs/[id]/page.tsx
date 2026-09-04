@@ -68,26 +68,36 @@ export default function JobExecutionPage() {
   };
 
   useEffect(() => {
+    let cancelled = false;
     fetchJob();
     
     // Subscribe to realtime updates for this specific booking
+    let channelInstance: any = null;
     import('@/lib/supabase').then(({ supabase }) => {
-      const channel = supabase
+      if (cancelled) return;
+      channelInstance = supabase
         .channel(`worker-booking-${params.id}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'Booking', filter: `id=eq.${params.id}` },
           () => {
-            console.log('Realtime update received for job, refetching...');
-            fetchJob();
+            if (!cancelled) {
+              console.log('Realtime update received for job, refetching...');
+              fetchJob();
+            }
           }
         )
         .subscribe();
-        
-      return () => {
-        supabase.removeChannel(channel);
-      };
     });
+
+    return () => {
+      cancelled = true;
+      if (channelInstance) {
+        import('@/lib/supabase').then(({ supabase }) => {
+          supabase.removeChannel(channelInstance);
+        });
+      }
+    };
   }, [params.id]);
 
   const updateStatus = async (status: string, reason?: string) => {

@@ -393,6 +393,10 @@ model Booking {
   societyRequestId     String?
   institutionRequest   InstitutionServiceRequest? @relation(fields: [institutionRequestId], references: [id])
   institutionRequestId String?
+
+  @@index([workerId, status])
+  @@index([workerId, scheduledDate, scheduledTime])
+  @@index([customerId, status, createdAt(sort: Desc)])
 }
 
 model BookingStatusHistory {
@@ -641,6 +645,8 @@ model Notification {
   data      String? // JSON
   readAt    DateTime?
   createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 // ============================================================
@@ -661,6 +667,8 @@ model WorkerEarning {
   welfareDeduction     Float    @default(0)
   netAmount            Float    @default(0)
   description          String?
+
+  @@index([workerId, date])
 }
 
 model WelfareRecord {

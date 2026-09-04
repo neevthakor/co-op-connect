@@ -18,15 +18,23 @@ export default function HelpersPage() {
 
   const fetchTeams = async () => {
     try {
-      // First get worker profile to get location
-      const profileRes = await fetch('/api/worker/profile');
+      // Get session to retrieve workerId
+      const sessionRes = await fetch('/api/auth/session');
+      const sessionData = await sessionRes.json();
+      const workerId = sessionData?.user?.workerId;
+
       let lat = 23.0225;
       let lng = 72.5714;
-      if (profileRes.ok) {
-        const profile = await profileRes.json();
-        if (profile.latitude && profile.longitude) {
-          lat = profile.latitude;
-          lng = profile.longitude;
+
+      if (workerId) {
+        // Fetch worker profile using the correct endpoint
+        const profileRes = await fetch(`/api/workers/${workerId}`);
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          if (profileData?.worker?.latitude && profileData?.worker?.longitude) {
+            lat = profileData.worker.latitude;
+            lng = profileData.worker.longitude;
+          }
         }
       }
 

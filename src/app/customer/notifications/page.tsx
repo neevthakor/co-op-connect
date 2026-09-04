@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { NotificationItem } from '@/components/shared/notification-item';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -10,50 +10,59 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
-    let channel: any;
+    let cancelled = false;
 
-    async function fetchNotifications() {
+    async function init() {
       try {
-        const sessionRes = await fetch('/api/auth/session');
+        const [sessionRes, notifRes] = await Promise.all([
+          fetch('/api/auth/session'),
+          fetch('/api/notifications'),
+        ]);
         const sessionData = await sessionRes.json();
-        const userId = sessionData?.user?.id;
+        const data = await notifRes.json();
 
-        const res = await fetch('/api/notifications');
-        const data = await res.json();
+        if (cancelled) return;
         setNotifications(data.notifications || []);
 
+        const userId = sessionData?.user?.id;
         if (userId) {
-          import('@/lib/supabase').then(({ supabase }) => {
-            channel = supabase
-              .channel(`customer-notifications-${userId}`)
-              .on(
-                'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'Notification', filter: `userId=eq.${userId}` },
-                () => {
-                  console.log('Realtime update received for notifications, refetching...');
-                  // Re-fetch notifications
-                  fetch('/api/notifications')
-                    .then(r => r.json())
-                    .then(d => setNotifications(d.notifications || []));
-                }
-              )
-              .subscribe();
-          });
+          const { supabase } = await import('@/lib/supabase');
+          if (cancelled) return;
+
+          const ch = supabase
+            .channel(`customer-notifications-${userId}`)
+            .on(
+              'postgres_changes',
+              { event: 'INSERT', schema: 'public', table: 'Notification', filter: `userId=eq.${userId}` },
+              () => {
+                fetch('/api/notifications')
+                  .then(r => r.json())
+                  .then(d => {
+                    if (!cancelled) setNotifications(d.notifications || []);
+                  });
+              }
+            )
+            .subscribe();
+
+          channelRef.current = ch;
         }
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
-    fetchNotifications();
+    init();
 
     return () => {
-      if (channel) {
+      cancelled = true;
+      if (channelRef.current) {
         import('@/lib/supabase').then(({ supabase }) => {
-          supabase.removeChannel(channel);
+          supabase.removeChannel(channelRef.current);
+          channelRef.current = null;
         });
       }
     };
