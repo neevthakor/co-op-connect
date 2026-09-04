@@ -251,7 +251,11 @@ function BookServiceContent() {
             <p className="text-muted-foreground">Describe your problem in detail, or use voice input in English, Hindi, or Gujarati.</p>
 
             <div className="relative">
+              <label htmlFor="problem-description" className="sr-only">Problem Description</label>
               <Textarea
+                id="problem-description"
+                name="description"
+                autoComplete="off"
                 value={bookingData.description}
                 onChange={(e) => setBookingData({ ...bookingData, description: e.target.value })}
                 placeholder="E.g., My AC cooling is very low and making a strange buzzing sound. Need urgent checkup..."
@@ -262,7 +266,8 @@ function BookServiceContent() {
               </div>
             </div>
 
-            <input type="file" accept="image/*" id="booking-photo" className="hidden" onChange={handlePhotoUpload} />
+            <label htmlFor="booking-photo" className="sr-only">Upload Photo</label>
+            <input type="file" name="booking-photo" accept="image/*" id="booking-photo" className="hidden" onChange={handlePhotoUpload} />
             <Button
               variant="outline"
               className="w-full gap-2 h-12 border-dashed"
@@ -375,8 +380,12 @@ function BookServiceContent() {
             <p className="text-muted-foreground">Confirm your service address.</p>
 
             <div className="relative">
+              <label htmlFor="service-address" className="sr-only">Service Address</label>
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
+                id="service-address"
+                name="address"
+                autoComplete="street-address"
                 value={bookingData.address}
                 onChange={(e) => setBookingData({ ...bookingData, address: e.target.value })}
                 placeholder="Full address (e.g., Flat 402, Vastrapur, Ahmedabad)"
@@ -498,10 +507,13 @@ function BookServiceContent() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Date</label>
+                <label htmlFor="service-date" className="text-sm font-medium">Date</label>
                 <div className="relative">
                   <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    id="service-date"
+                    name="date"
+                    autoComplete="off"
                     type="date"
                     value={bookingData.date}
                     onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
@@ -510,10 +522,13 @@ function BookServiceContent() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Time Slot</label>
+                <label htmlFor="service-time" className="text-sm font-medium">Time Slot</label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    id="service-time"
+                    name="time"
+                    autoComplete="off"
                     type="text"
                     value={bookingData.time}
                     onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
