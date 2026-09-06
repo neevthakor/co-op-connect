@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:organization": "tsx scripts/seed-organization-demo.ts",
+    "db:verify:organization": "tsx scripts/verify-organization-demo.ts",
     "db:push": "npx prisma db push",
     "db:studio": "npx prisma studio",
     "postinstall": "npx prisma generate"

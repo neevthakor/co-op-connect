@@ -16,17 +16,17 @@ datasource db {
 // ============================================================
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  phone         String?  @unique
-  passwordHash  String
-  name          String
-  avatar        String?
-  role          String   @default("CUSTOMER") // CUSTOMER, WORKER, HELPER, COOPERATIVE_ADMIN, FEDERATION_ADMIN, SOCIETY_ADMIN, INSTITUTIONAL_CUSTOMER
-  language      String   @default("en")
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?  @unique
+  passwordHash String
+  name         String
+  avatar       String?
+  role         String   @default("CUSTOMER") // CUSTOMER, WORKER, HELPER, COOPERATIVE_ADMIN, FEDERATION_ADMIN, SOCIETY_ADMIN, INSTITUTIONAL_CUSTOMER
+  language     String   @default("en")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   customer              Customer?
   worker                Worker?
@@ -70,6 +70,12 @@ model Customer {
   ratings         Rating[]
   complaints      Complaint[]
   trustedWorkers  TrustedWorker[]
+
+  locations        CustomerLocation[]
+  housingSocietyId String?
+  housingSociety   HousingSociety?    @relation(fields: [housingSocietyId], references: [id])
+  institutionId    String?
+  institution      Institution?       @relation(fields: [institutionId], references: [id])
 }
 
 model Worker {
@@ -179,6 +185,7 @@ model HousingSociety {
   admins               SocietyAdmin[]
   serviceRequests      SocietyServiceRequest[]
   maintenanceContracts MaintenanceContract[]
+  members              Customer[]
 }
 
 model Institution {
@@ -196,6 +203,7 @@ model Institution {
   admins          InstitutionalCustomer[]
   contracts       InstitutionContract[]
   serviceRequests InstitutionServiceRequest[]
+  members         Customer[]
 }
 
 model CooperativeAdmin {
@@ -905,4 +913,18 @@ model InstitutionServiceRequest {
   bookings Booking[]
 }
 
+model CustomerLocation {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  address    String
+  city       String?  @default("Ahmedabad")
+  state      String?  @default("Gujarat")
+  pincode    String?
+  latitude   Float?
+  longitude  Float?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
+  @@index([customerId])
+}

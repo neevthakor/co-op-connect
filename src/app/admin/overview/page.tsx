@@ -43,6 +43,38 @@ async function getOverviewData() {
 
   const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
 
+  // Chart data
+  const bookings = await prisma.booking.findMany({
+    where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+    select: { createdAt: true }
+  });
+  
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const barChartData = days.map(d => ({ name: d, bookings: 0 }));
+  bookings.forEach(b => {
+    const day = days[new Date(b.createdAt).getDay()];
+    const entry = barChartData.find(d => d.name === day);
+    if (entry) entry.bookings++;
+  });
+
+  const allPayments = await prisma.payment.findMany({
+    where: { status: 'COMPLETED', createdAt: { gte: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000) } },
+    select: { amount: true, createdAt: true }
+  });
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const lineChartData = Array.from({length: 6}).map((_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i));
+    return { name: months[d.getMonth()], revenue: 0, month: d.getMonth(), year: d.getFullYear() };
+  });
+
+  allPayments.forEach(p => {
+    const d = new Date(p.createdAt);
+    const entry = lineChartData.find(m => m.month === d.getMonth() && m.year === d.getFullYear());
+    if (entry) entry.revenue += p.amount;
+  });
+
   return {
     activeWorkers,
     pendingVerification,
@@ -50,7 +82,9 @@ async function getOverviewData() {
     activeJobs,
     revenue: totalRevenue,
     openComplaints,
-    recentBookings
+    recentBookings,
+    barChartData,
+    lineChartData
   }
 }
 
@@ -75,11 +109,11 @@ export default async function OverviewPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-xl border bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-gray-900 mb-4">Bookings (Recent Trend)</h3>
-          <BarChart className="h-[280px] w-full" />
+          <BarChart data={data.barChartData} className="h-[280px] w-full" />
         </div>
         <div className="rounded-xl border bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-gray-900 mb-4">Revenue Trend (Monthly)</h3>
-          <LineChart className="h-[280px] w-full" />
+          <LineChart data={data.lineChartData} className="h-[280px] w-full" />
         </div>
       </div>
 

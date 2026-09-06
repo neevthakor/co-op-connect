@@ -149,6 +149,12 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
       );
     }
     const maxRadius = worker.serviceRadius || 15;
+    
+    // EXCLUDE DISTANT WORKERS
+    if (distanceKm > maxRadius) {
+      continue;
+    }
+
     const distanceScore = Math.max(0, Math.round((1 - Math.min(distanceKm, maxRadius) / maxRadius) * 100));
 
     // 4. Reliability (0 - 100)
