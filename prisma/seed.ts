@@ -7,59 +7,25 @@ async function main() {
   console.log('🌱 Seeding Co-opConnect database...');
 
   // Clear existing data
-  await prisma.$executeRawUnsafe(`DELETE FROM "Vote"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "CooperativeProposal"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "FraudAlert"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "AuditLog"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "SkillGapRecord"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "DemandForecast"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "DemandHistory"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "WelfareRecord"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "InsuranceRecord"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "TrainingRecord"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "WorkerEarning"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "JobTeamMember"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "JobTeam"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "HelperRequest"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "JobReferral"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "JobProof"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "MaterialRequest"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "InvoiceItem"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Invoice"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Payment"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Warranty"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Complaint"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Rating"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "TrustedWorker"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "BookingStatusHistory"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Booking"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "ServiceRequest"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Message"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Notification"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "PortfolioItem"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "WorkerCertification"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "WorkerSkill"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "WorkerAvailability"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Certification"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Skill"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "SharedWorkforceRequest"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "MatchingWeights"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "MaintenanceContract"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "SocietyServiceRequest"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "InstitutionServiceRequest"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "InstitutionContract"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "CooperativeAdmin"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "FederationAdmin"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "SocietyAdmin"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "InstitutionalCustomer"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Worker"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Customer"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "HousingSociety"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Institution"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Cooperative"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "Federation"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "ServiceCategory"`);
-  await prisma.$executeRawUnsafe(`DELETE FROM "User"`);
+  const tables = [
+    "Vote", "CooperativeProposal", "FraudAlert", "AuditLog", "SkillGapRecord", 
+    "DemandForecast", "DemandHistory", "WelfareRecord", "InsuranceRecord", 
+    "TrainingRecord", "WorkerEarning", "JobTeamMember", "JobTeam", "HelperRequest", 
+    "JobReferral", "JobProof", "MaterialRequest", "InvoiceItem", "Invoice", 
+    "Payment", "Warranty", "Complaint", "Rating", "TrustedWorker", 
+    "BookingStatusHistory", "Booking", "ServiceRequest", "Message", "Notification", 
+    "PortfolioItem", "WorkerCertification", "WorkerSkill", "WorkerAvailability", 
+    "SharedWorkforceRequest", "MatchingWeights", "MaintenanceContract", 
+    "SocietyServiceRequest", "InstitutionServiceRequest", "OrganizationLocation", 
+    "InstitutionContract", "CooperativeAdmin", "FederationAdmin", "SocietyAdmin", 
+    "InstitutionalCustomer", "Worker", "Customer", "HousingSociety", "Institution", 
+    "Cooperative", "Federation", "PasswordResetToken", "User"
+  ];
+
+  for (const table of tables) {
+    await prisma.$executeRawUnsafe(`DELETE FROM "${table}" WHERE id LIKE 'demo-%'`);
+  }
+  // Note: ServiceCategory, Skill, and Certification are preserved as core data.
 
   const passwordHash = await bcrypt.hash('[REDACTED]', 10);
 
@@ -68,7 +34,7 @@ async function main() {
   // ============================================================
   const federation = await prisma.federation.create({
     data: {
-      id: 'fed-1',
+      id: 'demo-fed-1',
       name: 'Gujarat Cooperative Services Federation',
       description: 'Federation of cooperative societies providing household and community services across Gujarat',
     },
@@ -80,7 +46,7 @@ async function main() {
   const cooperatives = await Promise.all([
     prisma.cooperative.create({
       data: {
-        id: 'coop-1',
+        id: 'demo-coop-1',
         name: 'Ahmedabad Home Services Cooperative',
         registrationNo: 'GJ/AHM/COOP/2022/1001',
         address: 'Paldi, Ahmedabad',
@@ -96,7 +62,7 @@ async function main() {
     }),
     prisma.cooperative.create({
       data: {
-        id: 'coop-2',
+        id: 'demo-coop-2',
         name: 'Maninagar Skilled Workers Society',
         registrationNo: 'GJ/AHM/COOP/2022/1002',
         address: 'Maninagar, Ahmedabad',
@@ -112,7 +78,7 @@ async function main() {
     }),
     prisma.cooperative.create({
       data: {
-        id: 'coop-3',
+        id: 'demo-coop-3',
         name: 'Satellite Care Workers Cooperative',
         registrationNo: 'GJ/AHM/COOP/2023/1003',
         address: 'Satellite, Ahmedabad',
@@ -128,7 +94,7 @@ async function main() {
     }),
     prisma.cooperative.create({
       data: {
-        id: 'coop-4',
+        id: 'demo-coop-4',
         name: 'Navrangpura Technicians Guild',
         registrationNo: 'GJ/AHM/COOP/2023/1004',
         address: 'Navrangpura, Ahmedabad',
@@ -144,7 +110,7 @@ async function main() {
     }),
     prisma.cooperative.create({
       data: {
-        id: 'coop-5',
+        id: 'demo-coop-5',
         name: 'Gandhinagar Multi-Service Cooperative',
         registrationNo: 'GJ/GNR/COOP/2023/1005',
         address: 'Sector 21, Gandhinagar',
@@ -164,22 +130,22 @@ async function main() {
   // SERVICE CATEGORIES
   // ============================================================
   const categories = await Promise.all([
-    prisma.serviceCategory.create({ data: { id: 'cat-electrician', name: 'Electrician', icon: 'Zap', description: 'Electrical wiring, repairs, installation', basePrice: 300, sortOrder: 1 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-plumber', name: 'Plumber', icon: 'Droplets', description: 'Pipe repairs, tap installation, leakage fixing', basePrice: 250, sortOrder: 2 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-carpenter', name: 'Carpenter', icon: 'Hammer', description: 'Furniture repair, wooden work, installation', basePrice: 350, sortOrder: 3 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-painter', name: 'Painter', icon: 'Paintbrush', description: 'Wall painting, whitewashing, texture work', basePrice: 400, sortOrder: 4 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-cleaner', name: 'Cleaner', icon: 'Sparkles', description: 'Deep cleaning, home cleaning, office cleaning', basePrice: 200, sortOrder: 5 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-caregiver', name: 'Caregiver', icon: 'Heart', description: 'Elder care, patient care, child care', basePrice: 500, sortOrder: 6 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-driver', name: 'Driver', icon: 'Car', description: 'Personal driver, delivery, chauffeur service', basePrice: 300, sortOrder: 7 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-technician', name: 'Technician', icon: 'Wrench', description: 'General repair and maintenance', basePrice: 300, sortOrder: 8 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-gardener', name: 'Gardener', icon: 'Flower2', description: 'Garden maintenance, landscaping, plant care', basePrice: 250, sortOrder: 9 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-ac', name: 'AC Repair', icon: 'Snowflake', description: 'AC servicing, repair, gas refilling, installation', basePrice: 400, sortOrder: 10 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-appliance', name: 'Appliance Repair', icon: 'Tv', description: 'Washing machine, refrigerator, microwave repair', basePrice: 350, sortOrder: 11 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-emergency-electrical', name: 'Electrical Emergency', icon: 'AlertTriangle', description: 'Emergency electrical repairs', basePrice: 500, isEmergency: true, sortOrder: 12 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-emergency-plumbing', name: 'Plumbing Emergency', icon: 'AlertTriangle', description: 'Emergency plumbing - water leakage, pipe burst', basePrice: 450, isEmergency: true, sortOrder: 13 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-emergency-water', name: 'Water Leakage Emergency', icon: 'AlertTriangle', description: 'Emergency water leakage repair', basePrice: 400, isEmergency: true, sortOrder: 14 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-pest', name: 'Pest Control', icon: 'Bug', description: 'Pest control and fumigation services', basePrice: 600, sortOrder: 15 } }),
-    prisma.serviceCategory.create({ data: { id: 'cat-waterproofing', name: 'Waterproofing', icon: 'Umbrella', description: 'Waterproofing and seepage treatment', basePrice: 800, sortOrder: 16 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-electrician' }, update: { name: 'Electrician', icon: 'Zap', description: 'Electrical wiring, repairs, installation', basePrice: 300, sortOrder: 1 }, create: { id: 'cat-electrician', name: 'Electrician', icon: 'Zap', description: 'Electrical wiring, repairs, installation', basePrice: 300, sortOrder: 1 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-plumber' }, update: { name: 'Plumber', icon: 'Droplets', description: 'Pipe repairs, tap installation, leakage fixing', basePrice: 250, sortOrder: 2 }, create: { id: 'cat-plumber', name: 'Plumber', icon: 'Droplets', description: 'Pipe repairs, tap installation, leakage fixing', basePrice: 250, sortOrder: 2 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-carpenter' }, update: { name: 'Carpenter', icon: 'Hammer', description: 'Furniture repair, wooden work, installation', basePrice: 350, sortOrder: 3 }, create: { id: 'cat-carpenter', name: 'Carpenter', icon: 'Hammer', description: 'Furniture repair, wooden work, installation', basePrice: 350, sortOrder: 3 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-painter' }, update: { name: 'Painter', icon: 'Paintbrush', description: 'Wall painting, whitewashing, texture work', basePrice: 400, sortOrder: 4 }, create: { id: 'cat-painter', name: 'Painter', icon: 'Paintbrush', description: 'Wall painting, whitewashing, texture work', basePrice: 400, sortOrder: 4 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-cleaner' }, update: { name: 'Cleaner', icon: 'Sparkles', description: 'Deep cleaning, home cleaning, office cleaning', basePrice: 200, sortOrder: 5 }, create: { id: 'cat-cleaner', name: 'Cleaner', icon: 'Sparkles', description: 'Deep cleaning, home cleaning, office cleaning', basePrice: 200, sortOrder: 5 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-caregiver' }, update: { name: 'Caregiver', icon: 'Heart', description: 'Elder care, patient care, child care', basePrice: 500, sortOrder: 6 }, create: { id: 'cat-caregiver', name: 'Caregiver', icon: 'Heart', description: 'Elder care, patient care, child care', basePrice: 500, sortOrder: 6 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-driver' }, update: { name: 'Driver', icon: 'Car', description: 'Personal driver, delivery, chauffeur service', basePrice: 300, sortOrder: 7 }, create: { id: 'cat-driver', name: 'Driver', icon: 'Car', description: 'Personal driver, delivery, chauffeur service', basePrice: 300, sortOrder: 7 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-technician' }, update: { name: 'Technician', icon: 'Wrench', description: 'General repair and maintenance', basePrice: 300, sortOrder: 8 }, create: { id: 'cat-technician', name: 'Technician', icon: 'Wrench', description: 'General repair and maintenance', basePrice: 300, sortOrder: 8 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-gardener' }, update: { name: 'Gardener', icon: 'Flower2', description: 'Garden maintenance, landscaping, plant care', basePrice: 250, sortOrder: 9 }, create: { id: 'cat-gardener', name: 'Gardener', icon: 'Flower2', description: 'Garden maintenance, landscaping, plant care', basePrice: 250, sortOrder: 9 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-ac' }, update: { name: 'AC Repair', icon: 'Snowflake', description: 'AC servicing, repair, gas refilling, installation', basePrice: 400, sortOrder: 10 }, create: { id: 'cat-ac', name: 'AC Repair', icon: 'Snowflake', description: 'AC servicing, repair, gas refilling, installation', basePrice: 400, sortOrder: 10 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-appliance' }, update: { name: 'Appliance Repair', icon: 'Tv', description: 'Washing machine, refrigerator, microwave repair', basePrice: 350, sortOrder: 11 }, create: { id: 'cat-appliance', name: 'Appliance Repair', icon: 'Tv', description: 'Washing machine, refrigerator, microwave repair', basePrice: 350, sortOrder: 11 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-emergency-electrical' }, update: { name: 'Electrical Emergency', icon: 'AlertTriangle', description: 'Emergency electrical repairs', basePrice: 500, isEmergency: true, sortOrder: 12 }, create: { id: 'cat-emergency-electrical', name: 'Electrical Emergency', icon: 'AlertTriangle', description: 'Emergency electrical repairs', basePrice: 500, isEmergency: true, sortOrder: 12 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-emergency-plumbing' }, update: { name: 'Plumbing Emergency', icon: 'AlertTriangle', description: 'Emergency plumbing - water leakage, pipe burst', basePrice: 450, isEmergency: true, sortOrder: 13 }, create: { id: 'cat-emergency-plumbing', name: 'Plumbing Emergency', icon: 'AlertTriangle', description: 'Emergency plumbing - water leakage, pipe burst', basePrice: 450, isEmergency: true, sortOrder: 13 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-emergency-water' }, update: { name: 'Water Leakage Emergency', icon: 'AlertTriangle', description: 'Emergency water leakage repair', basePrice: 400, isEmergency: true, sortOrder: 14 }, create: { id: 'cat-emergency-water', name: 'Water Leakage Emergency', icon: 'AlertTriangle', description: 'Emergency water leakage repair', basePrice: 400, isEmergency: true, sortOrder: 14 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-pest' }, update: { name: 'Pest Control', icon: 'Bug', description: 'Pest control and fumigation services', basePrice: 600, sortOrder: 15 }, create: { id: 'cat-pest', name: 'Pest Control', icon: 'Bug', description: 'Pest control and fumigation services', basePrice: 600, sortOrder: 15 } }),
+    prisma.serviceCategory.upsert({ where: { id: 'cat-waterproofing' }, update: { name: 'Waterproofing', icon: 'Umbrella', description: 'Waterproofing and seepage treatment', basePrice: 800, sortOrder: 16 }, create: { id: 'cat-waterproofing', name: 'Waterproofing', icon: 'Umbrella', description: 'Waterproofing and seepage treatment', basePrice: 800, sortOrder: 16 } }),
   ]);
 
   // ============================================================
@@ -187,53 +153,53 @@ async function main() {
   // ============================================================
   const skills = await Promise.all([
     // Electrician skills
-    prisma.skill.create({ data: { id: 'skill-wiring', name: 'House Wiring', categoryId: 'cat-electrician' } }),
-    prisma.skill.create({ data: { id: 'skill-switchboard', name: 'Switchboard Installation', categoryId: 'cat-electrician' } }),
-    prisma.skill.create({ data: { id: 'skill-fan', name: 'Fan Installation & Repair', categoryId: 'cat-electrician' } }),
-    prisma.skill.create({ data: { id: 'skill-lighting', name: 'Lighting Installation', categoryId: 'cat-electrician' } }),
+    prisma.skill.upsert({ where: { id: 'skill-wiring' }, update: { name: 'House Wiring', categoryId: 'cat-electrician' }, create: { id: 'skill-wiring', name: 'House Wiring', categoryId: 'cat-electrician' } }),
+    prisma.skill.upsert({ where: { id: 'skill-switchboard' }, update: { name: 'Switchboard Installation', categoryId: 'cat-electrician' }, create: { id: 'skill-switchboard', name: 'Switchboard Installation', categoryId: 'cat-electrician' } }),
+    prisma.skill.upsert({ where: { id: 'skill-fan' }, update: { name: 'Fan Installation & Repair', categoryId: 'cat-electrician' }, create: { id: 'skill-fan', name: 'Fan Installation & Repair', categoryId: 'cat-electrician' } }),
+    prisma.skill.upsert({ where: { id: 'skill-lighting' }, update: { name: 'Lighting Installation', categoryId: 'cat-electrician' }, create: { id: 'skill-lighting', name: 'Lighting Installation', categoryId: 'cat-electrician' } }),
     // Plumber skills
-    prisma.skill.create({ data: { id: 'skill-pipe', name: 'Pipe Repair', categoryId: 'cat-plumber' } }),
-    prisma.skill.create({ data: { id: 'skill-tap', name: 'Tap Installation', categoryId: 'cat-plumber' } }),
-    prisma.skill.create({ data: { id: 'skill-drainage', name: 'Drainage Cleaning', categoryId: 'cat-plumber' } }),
+    prisma.skill.upsert({ where: { id: 'skill-pipe' }, update: { name: 'Pipe Repair', categoryId: 'cat-plumber' }, create: { id: 'skill-pipe', name: 'Pipe Repair', categoryId: 'cat-plumber' } }),
+    prisma.skill.upsert({ where: { id: 'skill-tap' }, update: { name: 'Tap Installation', categoryId: 'cat-plumber' }, create: { id: 'skill-tap', name: 'Tap Installation', categoryId: 'cat-plumber' } }),
+    prisma.skill.upsert({ where: { id: 'skill-drainage' }, update: { name: 'Drainage Cleaning', categoryId: 'cat-plumber' }, create: { id: 'skill-drainage', name: 'Drainage Cleaning', categoryId: 'cat-plumber' } }),
     // Carpenter skills
-    prisma.skill.create({ data: { id: 'skill-furniture', name: 'Furniture Repair', categoryId: 'cat-carpenter' } }),
-    prisma.skill.create({ data: { id: 'skill-cabinet', name: 'Cabinet Making', categoryId: 'cat-carpenter' } }),
-    prisma.skill.create({ data: { id: 'skill-door', name: 'Door & Window Repair', categoryId: 'cat-carpenter' } }),
+    prisma.skill.upsert({ where: { id: 'skill-furniture' }, update: { name: 'Furniture Repair', categoryId: 'cat-carpenter' }, create: { id: 'skill-furniture', name: 'Furniture Repair', categoryId: 'cat-carpenter' } }),
+    prisma.skill.upsert({ where: { id: 'skill-cabinet' }, update: { name: 'Cabinet Making', categoryId: 'cat-carpenter' }, create: { id: 'skill-cabinet', name: 'Cabinet Making', categoryId: 'cat-carpenter' } }),
+    prisma.skill.upsert({ where: { id: 'skill-door' }, update: { name: 'Door & Window Repair', categoryId: 'cat-carpenter' }, create: { id: 'skill-door', name: 'Door & Window Repair', categoryId: 'cat-carpenter' } }),
     // Painter skills
-    prisma.skill.create({ data: { id: 'skill-interior', name: 'Interior Painting', categoryId: 'cat-painter' } }),
-    prisma.skill.create({ data: { id: 'skill-exterior', name: 'Exterior Painting', categoryId: 'cat-painter' } }),
-    prisma.skill.create({ data: { id: 'skill-texture', name: 'Texture Painting', categoryId: 'cat-painter' } }),
+    prisma.skill.upsert({ where: { id: 'skill-interior' }, update: { name: 'Interior Painting', categoryId: 'cat-painter' }, create: { id: 'skill-interior', name: 'Interior Painting', categoryId: 'cat-painter' } }),
+    prisma.skill.upsert({ where: { id: 'skill-exterior' }, update: { name: 'Exterior Painting', categoryId: 'cat-painter' }, create: { id: 'skill-exterior', name: 'Exterior Painting', categoryId: 'cat-painter' } }),
+    prisma.skill.upsert({ where: { id: 'skill-texture' }, update: { name: 'Texture Painting', categoryId: 'cat-painter' }, create: { id: 'skill-texture', name: 'Texture Painting', categoryId: 'cat-painter' } }),
     // AC skills
-    prisma.skill.create({ data: { id: 'skill-ac-repair', name: 'AC Repair', categoryId: 'cat-ac' } }),
-    prisma.skill.create({ data: { id: 'skill-ac-service', name: 'AC Servicing', categoryId: 'cat-ac' } }),
-    prisma.skill.create({ data: { id: 'skill-ac-install', name: 'AC Installation', categoryId: 'cat-ac' } }),
-    prisma.skill.create({ data: { id: 'skill-ac-gas', name: 'AC Gas Refilling', categoryId: 'cat-ac' } }),
+    prisma.skill.upsert({ where: { id: 'skill-ac-repair' }, update: { name: 'AC Repair', categoryId: 'cat-ac' }, create: { id: 'skill-ac-repair', name: 'AC Repair', categoryId: 'cat-ac' } }),
+    prisma.skill.upsert({ where: { id: 'skill-ac-service' }, update: { name: 'AC Servicing', categoryId: 'cat-ac' }, create: { id: 'skill-ac-service', name: 'AC Servicing', categoryId: 'cat-ac' } }),
+    prisma.skill.upsert({ where: { id: 'skill-ac-install' }, update: { name: 'AC Installation', categoryId: 'cat-ac' }, create: { id: 'skill-ac-install', name: 'AC Installation', categoryId: 'cat-ac' } }),
+    prisma.skill.upsert({ where: { id: 'skill-ac-gas' }, update: { name: 'AC Gas Refilling', categoryId: 'cat-ac' }, create: { id: 'skill-ac-gas', name: 'AC Gas Refilling', categoryId: 'cat-ac' } }),
     // Cleaning skills
-    prisma.skill.create({ data: { id: 'skill-deep-clean', name: 'Deep Cleaning', categoryId: 'cat-cleaner' } }),
-    prisma.skill.create({ data: { id: 'skill-bathroom-clean', name: 'Bathroom Cleaning', categoryId: 'cat-cleaner' } }),
-    prisma.skill.create({ data: { id: 'skill-kitchen-clean', name: 'Kitchen Cleaning', categoryId: 'cat-cleaner' } }),
+    prisma.skill.upsert({ where: { id: 'skill-deep-clean' }, update: { name: 'Deep Cleaning', categoryId: 'cat-cleaner' }, create: { id: 'skill-deep-clean', name: 'Deep Cleaning', categoryId: 'cat-cleaner' } }),
+    prisma.skill.upsert({ where: { id: 'skill-bathroom-clean' }, update: { name: 'Bathroom Cleaning', categoryId: 'cat-cleaner' }, create: { id: 'skill-bathroom-clean', name: 'Bathroom Cleaning', categoryId: 'cat-cleaner' } }),
+    prisma.skill.upsert({ where: { id: 'skill-kitchen-clean' }, update: { name: 'Kitchen Cleaning', categoryId: 'cat-cleaner' }, create: { id: 'skill-kitchen-clean', name: 'Kitchen Cleaning', categoryId: 'cat-cleaner' } }),
     // Appliance skills
-    prisma.skill.create({ data: { id: 'skill-washing', name: 'Washing Machine Repair', categoryId: 'cat-appliance' } }),
-    prisma.skill.create({ data: { id: 'skill-fridge', name: 'Refrigerator Repair', categoryId: 'cat-appliance' } }),
-    prisma.skill.create({ data: { id: 'skill-microwave', name: 'Microwave Repair', categoryId: 'cat-appliance' } }),
+    prisma.skill.upsert({ where: { id: 'skill-washing' }, update: { name: 'Washing Machine Repair', categoryId: 'cat-appliance' }, create: { id: 'skill-washing', name: 'Washing Machine Repair', categoryId: 'cat-appliance' } }),
+    prisma.skill.upsert({ where: { id: 'skill-fridge' }, update: { name: 'Refrigerator Repair', categoryId: 'cat-appliance' }, create: { id: 'skill-fridge', name: 'Refrigerator Repair', categoryId: 'cat-appliance' } }),
+    prisma.skill.upsert({ where: { id: 'skill-microwave' }, update: { name: 'Microwave Repair', categoryId: 'cat-appliance' }, create: { id: 'skill-microwave', name: 'Microwave Repair', categoryId: 'cat-appliance' } }),
     // Caregiving
-    prisma.skill.create({ data: { id: 'skill-elder-care', name: 'Elder Care', categoryId: 'cat-caregiver' } }),
-    prisma.skill.create({ data: { id: 'skill-patient-care', name: 'Patient Care', categoryId: 'cat-caregiver' } }),
+    prisma.skill.upsert({ where: { id: 'skill-elder-care' }, update: { name: 'Elder Care', categoryId: 'cat-caregiver' }, create: { id: 'skill-elder-care', name: 'Elder Care', categoryId: 'cat-caregiver' } }),
+    prisma.skill.upsert({ where: { id: 'skill-patient-care' }, update: { name: 'Patient Care', categoryId: 'cat-caregiver' }, create: { id: 'skill-patient-care', name: 'Patient Care', categoryId: 'cat-caregiver' } }),
     // Gardening
-    prisma.skill.create({ data: { id: 'skill-lawn', name: 'Lawn Maintenance', categoryId: 'cat-gardener' } }),
-    prisma.skill.create({ data: { id: 'skill-plant-care', name: 'Plant Care', categoryId: 'cat-gardener' } }),
+    prisma.skill.upsert({ where: { id: 'skill-lawn' }, update: { name: 'Lawn Maintenance', categoryId: 'cat-gardener' }, create: { id: 'skill-lawn', name: 'Lawn Maintenance', categoryId: 'cat-gardener' } }),
+    prisma.skill.upsert({ where: { id: 'skill-plant-care' }, update: { name: 'Plant Care', categoryId: 'cat-gardener' }, create: { id: 'skill-plant-care', name: 'Plant Care', categoryId: 'cat-gardener' } }),
   ]);
 
   // ============================================================
   // CERTIFICATIONS
   // ============================================================
   const certs = await Promise.all([
-    prisma.certification.create({ data: { id: 'cert-electrical-safety', name: 'Electrical Safety Certificate', skillId: 'skill-wiring', issuingAuthority: 'Gujarat Skill Development Board', validityMonths: 24, isMandatory: true } }),
-    prisma.certification.create({ data: { id: 'cert-ac-technician', name: 'HVAC Technician Certificate', skillId: 'skill-ac-repair', issuingAuthority: 'NSDC', validityMonths: 36, isMandatory: true } }),
-    prisma.certification.create({ data: { id: 'cert-plumbing-basic', name: 'Basic Plumbing Certification', skillId: 'skill-pipe', issuingAuthority: 'Gujarat ITI', validityMonths: 36 } }),
-    prisma.certification.create({ data: { id: 'cert-carpentry', name: 'Carpentry Skills Certificate', skillId: 'skill-furniture', issuingAuthority: 'NSDC', validityMonths: 36 } }),
-    prisma.certification.create({ data: { id: 'cert-painting', name: 'Professional Painting Certificate', skillId: 'skill-interior', issuingAuthority: 'Asian Paints Academy', validityMonths: 24 } }),
-    prisma.certification.create({ data: { id: 'cert-first-aid', name: 'First Aid Certificate', skillId: 'skill-elder-care', issuingAuthority: 'Red Cross India', validityMonths: 12 } }),
+    prisma.certification.upsert({ where: { id: 'cert-electrical-safety' }, update: { name: 'Electrical Safety Certificate', skillId: 'skill-wiring', issuingAuthority: 'Gujarat Skill Development Board', validityMonths: 24, isMandatory: true }, create: { id: 'cert-electrical-safety', name: 'Electrical Safety Certificate', skillId: 'skill-wiring', issuingAuthority: 'Gujarat Skill Development Board', validityMonths: 24, isMandatory: true } }),
+    prisma.certification.upsert({ where: { id: 'cert-ac-technician' }, update: { name: 'HVAC Technician Certificate', skillId: 'skill-ac-repair', issuingAuthority: 'NSDC', validityMonths: 36, isMandatory: true }, create: { id: 'cert-ac-technician', name: 'HVAC Technician Certificate', skillId: 'skill-ac-repair', issuingAuthority: 'NSDC', validityMonths: 36, isMandatory: true } }),
+    prisma.certification.upsert({ where: { id: 'cert-plumbing-basic' }, update: { name: 'Basic Plumbing Certification', skillId: 'skill-pipe', issuingAuthority: 'Gujarat ITI', validityMonths: 36 }, create: { id: 'cert-plumbing-basic', name: 'Basic Plumbing Certification', skillId: 'skill-pipe', issuingAuthority: 'Gujarat ITI', validityMonths: 36 } }),
+    prisma.certification.upsert({ where: { id: 'cert-carpentry' }, update: { name: 'Carpentry Skills Certificate', skillId: 'skill-furniture', issuingAuthority: 'NSDC', validityMonths: 36 }, create: { id: 'cert-carpentry', name: 'Carpentry Skills Certificate', skillId: 'skill-furniture', issuingAuthority: 'NSDC', validityMonths: 36 } }),
+    prisma.certification.upsert({ where: { id: 'cert-painting' }, update: { name: 'Professional Painting Certificate', skillId: 'skill-interior', issuingAuthority: 'Asian Paints Academy', validityMonths: 24 }, create: { id: 'cert-painting', name: 'Professional Painting Certificate', skillId: 'skill-interior', issuingAuthority: 'Asian Paints Academy', validityMonths: 24 } }),
+    prisma.certification.upsert({ where: { id: 'cert-first-aid' }, update: { name: 'First Aid Certificate', skillId: 'skill-elder-care', issuingAuthority: 'Red Cross India', validityMonths: 12 }, create: { id: 'cert-first-aid', name: 'First Aid Certificate', skillId: 'skill-elder-care', issuingAuthority: 'Red Cross India', validityMonths: 12 } }),
   ]);
 
   // ============================================================
@@ -293,14 +259,14 @@ async function main() {
 
     const user = await prisma.user.create({
       data: {
-        id: `user-worker-${i + 1}`,
+        id: `demo-user-worker-${i + 1}`,
         email: `worker${i + 1}@coopconnect.in`,
         phone: `+9198${String(70000000 + i).padStart(8, '0')}`,
         passwordHash,
         name: gujaratiNames[i],
         role: 'WORKER',
         language: i % 3 === 0 ? 'gu' : i % 3 === 1 ? 'hi' : 'en',
-        avatar: `/avatars/worker-${(i % 10) + 1}.jpg`,
+        avatar: null,
       },
     });
 
@@ -309,7 +275,7 @@ async function main() {
 
     const worker = await prisma.worker.create({
       data: {
-        id: `worker-${i + 1}`,
+        id: `demo-worker-${i + 1}`,
         userId: user.id,
         cooperativeId: cooperatives[coopIndex].id,
         primaryTrade: trade.trade,
@@ -410,20 +376,20 @@ async function main() {
     const area = ahmedabadAreas[i % ahmedabadAreas.length];
     const user = await prisma.user.create({
       data: {
-        id: `user-customer-${i + 1}`,
+        id: `demo-user-customer-${i + 1}`,
         email: `customer${i + 1}@gmail.com`,
         phone: `+9199${String(80000000 + i).padStart(8, '0')}`,
         passwordHash,
         name: customerNames[i],
         role: 'CUSTOMER',
         language: i % 2 === 0 ? 'en' : 'hi',
-        avatar: `/avatars/customer-${(i % 5) + 1}.jpg`,
+        avatar: null,
       },
     });
 
     await prisma.customer.create({
       data: {
-        id: `customer-${i + 1}`,
+        id: `demo-customer-${i + 1}`,
         userId: user.id,
         address: `${Math.floor(Math.random() * 500) + 1}, ${area.name}, Ahmedabad`,
         city: 'Ahmedabad',
@@ -443,7 +409,7 @@ async function main() {
   for (let i = 0; i < 5; i++) {
     const user = await prisma.user.create({
       data: {
-        id: `user-coopadmin-${i + 1}`,
+        id: `demo-user-coopadmin-${i + 1}`,
         email: `admin${i + 1}@coopconnect.in`,
         phone: `+9196${String(10000000 + i).padStart(8, '0')}`,
         passwordHash,
@@ -463,7 +429,7 @@ async function main() {
   // Federation admin
   const fedAdminUser = await prisma.user.create({
     data: {
-      id: 'user-fedadmin-1',
+      id: 'demo-user-fedadmin-1',
       email: 'federation@coopconnect.in',
       phone: '+919600000001',
       passwordHash,
@@ -484,7 +450,7 @@ async function main() {
   // ============================================================
   const society1 = await prisma.housingSociety.create({
     data: {
-      id: 'society-1',
+      id: 'demo-society-1',
       name: 'Sunrise Residency',
       address: 'SG Highway, Ahmedabad',
       city: 'Ahmedabad',
@@ -498,7 +464,7 @@ async function main() {
 
   const society2 = await prisma.housingSociety.create({
     data: {
-      id: 'society-2',
+      id: 'demo-society-2',
       name: 'Green Valley Apartments',
       address: 'Bopal, Ahmedabad',
       city: 'Ahmedabad',
@@ -514,7 +480,7 @@ async function main() {
   for (let i = 0; i < 2; i++) {
     const user = await prisma.user.create({
       data: {
-        id: `user-societyadmin-${i + 1}`,
+        id: `demo-user-societyadmin-${i + 1}`,
         email: `society${i + 1}@coopconnect.in`,
         phone: `+9195${String(20000000 + i).padStart(8, '0')}`,
         passwordHash,
@@ -536,7 +502,7 @@ async function main() {
   // ============================================================
   const inst1 = await prisma.institution.create({
     data: {
-      id: 'inst-1',
+      id: 'demo-inst-1',
       name: 'Ahmedabad International School',
       type: 'SCHOOL',
       address: 'Vastrapur, Ahmedabad',
@@ -550,7 +516,7 @@ async function main() {
 
   const instUser = await prisma.user.create({
     data: {
-      id: 'user-inst-1',
+      id: 'demo-user-inst-1',
       email: 'school@ahmedabad.edu',
       phone: '+919876543220',
       passwordHash,
@@ -595,9 +561,9 @@ async function main() {
 
     const booking = await prisma.booking.create({
       data: {
-        id: `booking-${i + 1}`,
-        customerId: `customer-${customerIndex + 1}`,
-        workerId: `worker-${workerIndex + 1}`,
+        id: `demo-booking-${i * 10 + 1}`,
+        customerId: `demo-customer-${customerIndex + 1}`,
+        workerId: `demo-worker-${workerIndex + 1}`,
         categoryId: categories[catIndex].id,
         description: descriptions[i % descriptions.length],
         scheduledDate: bookingDate,
@@ -640,8 +606,8 @@ async function main() {
       await prisma.rating.create({
         data: {
           bookingId: booking.id,
-          customerId: `customer-${customerIndex + 1}`,
-          workerId: `worker-${workerIndex + 1}`,
+          customerId: `demo-customer-${customerIndex + 1}`,
+          workerId: `demo-worker-${workerIndex + 1}`,
           technicalQuality: Math.round(3 + Math.random() * 2),
           punctuality: Math.round(3 + Math.random() * 2),
           communication: Math.round(3 + Math.random() * 2),
@@ -663,7 +629,7 @@ async function main() {
           amount: finalAmount,
           method: ['UPI', 'CARD', 'NET_BANKING', 'CASH'][i % 4],
           status: 'COMPLETED',
-          transactionId: `TXN-${Date.now()}-${i}`,
+          transactionId: `demo-TXN-${Date.now()}-${i}`,
           provider: 'SANDBOX',
           paidAt: new Date(bookingDate.getTime() + 3.5 * 60 * 60 * 1000),
         },
@@ -679,7 +645,7 @@ async function main() {
       await prisma.invoice.create({
         data: {
           bookingId: booking.id,
-          invoiceNumber: `INV-${String(10000 + i).slice(-5)}-${bookingDate.getFullYear()}`,
+          invoiceNumber: `demo-INV-${String(10000 + i).slice(-5)}-${bookingDate.getFullYear()}`,
           labourCharge,
           travelCharge,
           materialCharge,
@@ -696,7 +662,7 @@ async function main() {
       // Worker earning
       await prisma.workerEarning.create({
         data: {
-          workerId: `worker-${workerIndex + 1}`,
+          workerId: `demo-worker-${workerIndex + 1}`,
           bookingId: booking.id,
           date: bookingDate,
           grossAmount: finalAmount,
@@ -730,9 +696,9 @@ async function main() {
   for (let i = 0; i < 15; i++) {
     await prisma.complaint.create({
       data: {
-        bookingId: `booking-${i * 10 + 1}`,
-        customerId: `customer-${(i % 20) + 1}`,
-        workerId: `worker-${(i % 40) + 1}`,
+        bookingId: `demo-booking-${i * 10 + 1}`,
+        customerId: `demo-customer-${(i % 20) + 1}`,
+        workerId: `demo-worker-${(i % 40) + 1}`,
         category: complaintCategories[i % complaintCategories.length],
         description: `Issue with the service provided - ${complaintCategories[i % complaintCategories.length].toLowerCase().replace('_', ' ')}`,
         status: i < 5 ? 'OPEN' : i < 10 ? 'UNDER_REVIEW' : 'RESOLVED',
@@ -910,8 +876,8 @@ async function main() {
   for (let i = 0; i < 10; i++) {
     await prisma.trustedWorker.create({
       data: {
-        customerId: `customer-${(i % 20) + 1}`,
-        workerId: `worker-${(i * 3 % 40) + 1}`,
+        customerId: `demo-customer-${(i % 20) + 1}`,
+        workerId: `demo-worker-${(i * 3 % 40) + 1}`,
       },
     });
   }

@@ -82,9 +82,9 @@ export default async function SocietyDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid sm:grid-cols-2 gap-4 mb-8">
+      <div className="grid sm:grid-cols-3 gap-4 mb-8">
         <Link
-          href="/society/requests"
+          href="/society/requests/create"
           className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-amber-300 transition-colors"
         >
           <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -93,6 +93,18 @@ export default async function SocietyDashboard() {
           <div>
             <p className="font-medium text-gray-900">New Service Request</p>
             <p className="text-xs text-gray-500">Request maintenance or repair</p>
+          </div>
+        </Link>
+        <Link
+          href="/society/locations"
+          className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-amber-300 transition-colors"
+        >
+          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+            <ClipboardList className="w-5 h-5 text-green-700" />
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">Manage Locations</p>
+            <p className="text-xs text-gray-500">Add or edit society areas</p>
           </div>
         </Link>
         <Link

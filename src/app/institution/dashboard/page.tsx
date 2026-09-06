@@ -81,6 +81,33 @@ export default async function InstitutionDashboard() {
         </div>
       </div>
 
+      <div className="grid sm:grid-cols-2 gap-4 mb-8">
+        <Link
+          href="/institution/requests/create"
+          className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-teal-300 transition-colors"
+        >
+          <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+            <ClipboardList className="w-5 h-5 text-teal-700" />
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">New Service Request</p>
+            <p className="text-xs text-gray-500">Request service or repair</p>
+          </div>
+        </Link>
+        <Link
+          href="/institution/locations"
+          className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-teal-300 transition-colors"
+        >
+          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <ClipboardList className="w-5 h-5 text-blue-700" />
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">Manage Locations</p>
+            <p className="text-xs text-gray-500">Edit institution areas</p>
+          </div>
+        </Link>
+      </div>
+
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border">
           <div className="p-4 border-b"><h2 className="font-semibold text-gray-900">Active Contracts</h2></div>

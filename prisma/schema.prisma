@@ -158,6 +158,9 @@ model Cooperative {
   proposals       CooperativeProposal[]
   sharedRequests  SharedWorkforceRequest[] @relation("RequestingCooperative")
   sharedOffers    SharedWorkforceRequest[] @relation("OfferingCooperative")
+
+  societyRequests     SocietyServiceRequest[]
+  institutionRequests InstitutionServiceRequest[]
 }
 
 model Federation {
@@ -186,6 +189,7 @@ model HousingSociety {
   serviceRequests      SocietyServiceRequest[]
   maintenanceContracts MaintenanceContract[]
   members              Customer[]
+  locations            OrganizationLocation[]
 }
 
 model Institution {
@@ -204,6 +208,7 @@ model Institution {
   contracts       InstitutionContract[]
   serviceRequests InstitutionServiceRequest[]
   members         Customer[]
+  locations       OrganizationLocation[]
 }
 
 model CooperativeAdmin {
@@ -259,6 +264,8 @@ model ServiceCategory {
   demandHistory   DemandHistory[]
   demandForecasts DemandForecast[]
   skillGaps       SkillGapRecord[]
+  institutionRequests InstitutionServiceRequest[]
+  societyRequests     SocietyServiceRequest[]
 }
 
 model Skill {
@@ -857,12 +864,18 @@ model SocietyServiceRequest {
   societyId   String
   society     HousingSociety @relation(fields: [societyId], references: [id])
   categoryId  String?
+  category    ServiceCategory? @relation(fields: [categoryId], references: [id])
   title       String
   description String
   priority    String         @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
   area        String? // Common area, Unit, etc.
   status      String         @default("OPEN") // OPEN, SCHEDULED, IN_PROGRESS, COMPLETED
   createdAt   DateTime       @default(now())
+
+  locationId    String?
+  location      OrganizationLocation? @relation(fields: [locationId], references: [id])
+  cooperativeId String?
+  cooperative   Cooperative? @relation(fields: [cooperativeId], references: [id])
 
   bookings Booking[]
 }
@@ -904,11 +917,18 @@ model InstitutionServiceRequest {
   institutionId String
   institution   Institution @relation(fields: [institutionId], references: [id])
   contractId    String?
+  categoryId    String?
+  category      ServiceCategory? @relation(fields: [categoryId], references: [id])
   title         String
   description   String
   priority      String      @default("NORMAL")
   status        String      @default("OPEN") // OPEN, SCHEDULED, IN_PROGRESS, COMPLETED
   createdAt     DateTime    @default(now())
+
+  locationId    String?
+  location      OrganizationLocation? @relation(fields: [locationId], references: [id])
+  cooperativeId String?
+  cooperative   Cooperative? @relation(fields: [cooperativeId], references: [id])
 
   bookings Booking[]
 }
@@ -928,3 +948,23 @@ model CustomerLocation {
 
   @@index([customerId])
 }
+
+model OrganizationLocation {
+  id                 String   @id @default(cuid())
+  societyId          String?
+  society            HousingSociety? @relation(fields: [societyId], references: [id])
+  institutionId      String?
+  institution        Institution? @relation(fields: [institutionId], references: [id])
+  name               String
+  address            String?
+  latitude           Float?
+  longitude          Float?
+  buildingDetails    String?
+  accessInstructions String?
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  societyRequests     SocietyServiceRequest[]
+  institutionRequests InstitutionServiceRequest[]
+}
+

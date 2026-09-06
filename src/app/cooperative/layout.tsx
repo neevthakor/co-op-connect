@@ -3,18 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LayoutDashboard, ClipboardList, Wrench, FileText, Bell, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, ClipboardList, LogOut, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/society/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/society/locations", label: "Locations", icon: ClipboardList },
-  { href: "/society/requests", label: "Requests", icon: FileText },
-  { href: "/society/maintenance", label: "Maintenance", icon: Wrench },
-  { href: "/society/invoices", label: "Invoices", icon: FileText },
+  { href: "/cooperative/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/cooperative/requests", label: "Requests", icon: ClipboardList },
+  { href: "/cooperative/workers", label: "Workers", icon: Users },
 ];
 
-export default function SocietyLayout({ children }: { children: React.ReactNode }) {
+export default function CooperativeLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
@@ -22,13 +20,13 @@ export default function SocietyLayout({ children }: { children: React.ReactNode 
       {/* Desktop Sidebar */}
       <aside className="fixed top-0 left-0 bottom-0 w-60 bg-card border-r border-border/80 z-40 hidden md:flex flex-col">
         <div className="p-6 border-b border-border/40">
-          <Link href="/society/dashboard" className="flex items-center gap-3">
+          <Link href="/cooperative/dashboard" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center shadow-md shadow-amber-600/20">
               <span className="text-white font-bold">CC</span>
             </div>
             <div>
               <h1 className="font-bold text-foreground text-sm">Co-opConnect</h1>
-              <p className="text-[11px] text-amber-500 font-medium">Housing Society</p>
+              <p className="text-[11px] text-amber-500 font-medium">Cooperative</p>
             </div>
           </Link>
         </div>
@@ -67,7 +65,7 @@ export default function SocietyLayout({ children }: { children: React.ReactNode 
       <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card/90 backdrop-blur-md border-b border-border/80 z-40 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-amber-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">CC</div>
-          <span className="font-bold text-sm text-foreground">Housing Society</span>
+          <span className="font-bold text-sm text-foreground">Cooperative</span>
         </div>
         <div className="flex items-center gap-2">
           <button 
@@ -95,12 +93,12 @@ export default function SocietyLayout({ children }: { children: React.ReactNode 
 
       {/* Mobile bottom nav */}
       <nav 
-        aria-label="Society Navigation"
+        aria-label="Cooperative Navigation"
         className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border/80 z-40 pb-safe"
       >
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/society/dashboard" && pathname.startsWith(item.href));
+            const isActive = pathname === item.href || (item.href !== "/cooperative/dashboard" && pathname.startsWith(item.href));
             return (
               <Link
                 key={item.href}
