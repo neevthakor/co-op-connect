@@ -1,26 +1,41 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { StatCard } from '@/components/shared/stat-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Briefcase, CheckCircle2, Clock, MapPin, IndianRupee, ShieldCheck } from 'lucide-react';
+import { Briefcase, CheckCircle2, MapPin, ShieldCheck } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 export default async function WorkerHomePage() {
   const session = await auth();
   if (!session?.user) redirect('/login');
   
-  const workerId = (session.user as any).workerId;
+  const workerId = (session.user as { workerId?: string }).workerId;
   
-  let worker: any = null;
+  type WorkerSummary = {
+    primaryTrade: string | null;
+    averageRating: number;
+    verificationStatus: string;
+    cooperative: { id: string; name: string } | null;
+  };
+  type ActiveBooking = {
+    id: string;
+    description: string | null;
+    address: string | null;
+    status: string;
+    category: { name: string };
+    customer: { user: { name: string | null } } | null;
+  };
+
+  let worker: WorkerSummary | null = null;
   let todayEarnings = 0;
-  let activeBookings: any[] = [];
+  let activeBookings: ActiveBooking[] = [];
   let completedJobsCount = 0;
 
-  let topRequirements: any[] = [];
+  let topRequirements: { name: string; count: number }[] = [];
 
   if (workerId) {
     const [workerData, bookingsData, earningsAgg, jobsCount, topReqs, allCategories] = await Promise.all([
@@ -85,30 +100,30 @@ export default async function WorkerHomePage() {
       : 'No ratings yet';
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6 pb-24 lg:pb-8">
+    <div className="page-container space-y-6 py-5 pb-24 md:py-8 lg:pb-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border shadow-xs">
+      <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
               Welcome, {session.user.name || 'Worker'}!
             </h1>
-            <Badge className="bg-green-100 text-green-800 hover:bg-green-100 flex items-center gap-1">
+            <Badge className="flex items-center gap-1 border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300">
               <ShieldCheck className="w-3.5 h-3.5" />
               Verified Worker
             </Badge>
           </div>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="mt-1 text-sm text-muted-foreground">
             {worker?.primaryTrade || 'Technician'} • {worker?.cooperative?.name || 'Ahmedabad Cooperative'}
           </p>
         </div>
         <div className="flex items-center gap-3">
           {worker?.verificationStatus === 'VERIFIED' ? (
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+              <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
               ● AVAILABLE FOR JOBS
             </span>
           ) : (
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
+              <span className="rounded-full border border-orange-500/25 bg-orange-500/10 px-3 py-1.5 text-xs font-semibold text-orange-700 dark:text-orange-300">
               ● PENDING VERIFICATION
             </span>
           )}
@@ -116,11 +131,11 @@ export default async function WorkerHomePage() {
       </div>
 
       {worker?.verificationStatus !== 'VERIFIED' && (
-        <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl flex items-start gap-3">
-          <div className="text-orange-600 font-bold mt-0.5">!</div>
+        <div className="flex items-start gap-3 rounded-xl border border-orange-500/25 bg-orange-500/10 p-4">
+          <div className="mt-0.5 font-bold text-orange-700 dark:text-orange-300">!</div>
           <div>
-            <h3 className="text-sm font-bold text-orange-800">Your profile is pending verification</h3>
-            <p className="text-xs text-orange-700 mt-1">
+            <h3 className="text-sm font-bold text-orange-800 dark:text-orange-200">Your profile is pending verification</h3>
+            <p className="mt-1 text-xs text-orange-700 dark:text-orange-300">
               You will not be visible to customers until a cooperative admin verifies your identity and skills.
               Please ensure your profile is complete.
             </p>
@@ -139,42 +154,42 @@ export default async function WorkerHomePage() {
       {/* Active Jobs Queue */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
             <Briefcase className="w-5 h-5 text-green-600" />
             Assigned Work Orders
           </h2>
-          <Link href="/worker/jobs" className="text-sm font-semibold text-green-600 hover:underline">
+            <Link href="/worker/jobs" className="text-sm font-semibold text-emerald-700 hover:underline dark:text-emerald-300">
             View All Jobs →
           </Link>
         </div>
 
         {activeBookings.length === 0 ? (
-          <Card className="bg-white text-center p-8 border">
-            <CheckCircle2 className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-            <h3 className="font-semibold text-gray-700">No active work orders right now</h3>
-            <p className="text-xs text-gray-400 mt-1">You are available. New requests from cooperative customers will appear here.</p>
+          <Card className="border-border/80 bg-card p-8 text-center">
+            <CheckCircle2 className="mx-auto mb-2 h-10 w-10 text-muted-foreground/40" />
+            <h3 className="font-semibold text-foreground">No active work orders right now</h3>
+            <p className="mt-1 text-xs text-muted-foreground">You are available. New requests from cooperative customers will appear here.</p>
           </Card>
         ) : (
           <div className="space-y-3">
             {activeBookings.map((b) => (
-              <Card key={b.id} className="bg-white hover:border-green-300 transition-all border shadow-xs">
-                <CardContent className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <Card key={b.id} className="border-border/80 bg-card transition-all hover:border-emerald-500/40">
+                <CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Badge className="bg-blue-100 text-blue-800">{b.category.name}</Badge>
-                      <span className="text-xs font-bold text-orange-600 px-2 py-0.5 bg-orange-50 rounded">
+                      <Badge className="border border-blue-500/25 bg-blue-500/10 text-blue-700 dark:text-blue-300">{b.category.name}</Badge>
+                      <span className="rounded bg-orange-500/10 px-2 py-0.5 text-xs font-bold text-orange-700 dark:text-orange-300">
                         {b.status}
                       </span>
                     </div>
-                    <h3 className="font-bold text-gray-900">{b.description || 'Household Service Request'}</h3>
-                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                    <h3 className="font-bold text-foreground">{b.description || 'Household Service Request'}</h3>
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                       {b.address || 'Address not provided'} • Customer: {b.customer?.user?.name || 'Customer'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Link href={`/worker/jobs/${b.id}`} className="w-full sm:w-auto">
-                      <Button className="bg-green-600 hover:bg-green-700 text-white w-full">
+                      <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-700">
                         Open Job Console
                       </Button>
                     </Link>
@@ -189,23 +204,23 @@ export default async function WorkerHomePage() {
       {/* Top Customer Requirements */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
             <MapPin className="w-5 h-5 text-blue-600" />
             Top Customer Requirements (Overall Demand)
           </h2>
         </div>
         
         {topRequirements.length === 0 ? (
-          <Card className="bg-white text-center p-8 border">
-            <h3 className="font-semibold text-gray-700">No demand data available</h3>
+          <Card className="border-border/80 bg-card p-8 text-center">
+            <h3 className="font-semibold text-foreground">No demand data available</h3>
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {topRequirements.map((req, idx) => (
-              <Card key={idx} className="bg-blue-50/50 border border-blue-100 hover:border-blue-200 transition-all shadow-xs">
-                <CardContent className="p-4 flex justify-between items-center">
-                  <span className="font-semibold text-gray-800">{req.name}</span>
-                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{req.count} requests</Badge>
+              <Card key={idx} className="border-blue-500/20 bg-blue-500/5 transition-all hover:border-blue-500/40">
+                <CardContent className="flex items-center justify-between gap-3 p-4">
+                  <span className="font-semibold text-foreground">{req.name}</span>
+                  <Badge className="border border-blue-500/25 bg-blue-500/10 text-blue-700 hover:bg-blue-500/15 dark:text-blue-300">{req.count} requests</Badge>
                 </CardContent>
               </Card>
             ))}

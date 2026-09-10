@@ -126,12 +126,12 @@ export async function requireAuth(...requiredRoles: UserRole[]) {
     throw new Error('UNAUTHORIZED');
   }
 
-  const userRole = (session.user as any).role as string;
+  const userRole = session.user.role as string;
   if (requiredRoles.length > 0 && !requiredRoles.includes(userRole as UserRole)) {
     throw new Error('FORBIDDEN');
   }
 
-  return session.user as any;
+  return session.user;
 }
 
 export async function requirePermission(permission: Permission) {
@@ -140,12 +140,12 @@ export async function requirePermission(permission: Permission) {
     throw new Error('UNAUTHORIZED');
   }
 
-  const userRole = (session.user as any).role as string;
+  const userRole = session.user.role as string;
   if (!hasPermission(userRole, permission)) {
     throw new Error('FORBIDDEN');
   }
 
-  return session.user as any;
+  return session.user;
 }
 
 export function getRoleRedirect(role: string): string {

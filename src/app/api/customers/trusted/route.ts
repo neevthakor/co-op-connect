@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const customerId = (session.user as any).customerId;
+    const customerId = session.user.customerId;
     const trusted = await prisma.trustedWorker.findMany({
       where: customerId ? { customerId } : { customer: { userId: session.user.id } },
       include: {
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let customerId = (session.user as any).customerId;
+    let customerId = session.user.customerId;
     if (!customerId) {
       const cust = await prisma.customer.findUnique({ where: { userId: session.user.id } });
       customerId = cust?.id;
@@ -76,7 +76,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let customerId = (session.user as any).customerId;
+    let customerId = session.user.customerId;
     if (!customerId) {
       const cust = await prisma.customer.findUnique({ where: { userId: session.user.id } });
       customerId = cust?.id;

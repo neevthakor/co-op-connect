@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     }
     const latParam = searchParams.get('latitude');
     const lngParam = searchParams.get('longitude');
-    const urgency = (searchParams.get('urgency') as any) || 'NORMAL';
+    const urgency = (searchParams.get('urgency') as 'NORMAL' | 'URGENT' | 'EMERGENCY') || 'NORMAL';
     const cooperativeId = searchParams.get('cooperativeId') || undefined;
 
     if (!latParam || !lngParam) {

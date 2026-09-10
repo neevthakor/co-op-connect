@@ -11,7 +11,7 @@ export default async function TrustedWorkersPage() {
     redirect('/login');
   }
 
-  const customerId = (session.user as any).customerId;
+  const customerId = session.user.customerId;
 
   const trusted = customerId
     ? await prisma.trustedWorker.findMany({

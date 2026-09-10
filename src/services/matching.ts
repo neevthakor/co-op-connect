@@ -10,7 +10,7 @@ export interface MatchParams {
 }
 
 export interface WorkerMatchResult {
-  worker: any;
+  worker: { id: string; distance?: number; user?: { name?: string; avatar?: string | null }; averageRating?: number; [key: string]: unknown };
   match_score: number;
   score_breakdown: {
     skill: number;

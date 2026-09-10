@@ -37,7 +37,7 @@ export async function GET(
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     }
 
-    const u = session.user as any;
+    const u = session.user;
     const isCustomer = u.customerId && invoice.booking?.customerId === u.customerId;
     const isWorker = u.workerId && invoice.booking?.workerId === u.workerId;
     const isAdmin = u.role === 'ADMIN' || u.role === 'COOPERATIVE_ADMIN';

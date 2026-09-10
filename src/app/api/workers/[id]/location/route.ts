@@ -14,10 +14,10 @@ export async function PATCH(
 
     const resolvedParams = await Promise.resolve(params);
     const workerId = resolvedParams.id;
-    const sessionWorkerId = (session.user as any).workerId;
+    const sessionWorkerId = session.user.workerId;
 
     // Strict Authorization: A worker can only update their own location
-    if (sessionWorkerId !== workerId && (session.user as any).role !== 'ADMIN') {
+    if (sessionWorkerId !== workerId && session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

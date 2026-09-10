@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 
-export async function createAuditLog(userId: string, action: string, entityType: string, entityId: string, details?: any) {
+export async function createAuditLog(userId: string, action: string, entityType: string, entityId: string, details?: Record<string, unknown>) {
   return await prisma.auditLog.create({
     data: {
       userId,

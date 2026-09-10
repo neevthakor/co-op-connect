@@ -20,7 +20,7 @@ export async function GET(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const u = session.user as any;
+    const u = session.user;
     const isCustomer = u.customerId === booking.customerId;
     const isWorker = u.workerId === booking.workerId;
     const isAdmin = u.role === 'ADMIN' || u.role === 'COOPERATIVE_ADMIN';
@@ -62,7 +62,7 @@ export async function POST(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const u = session.user as any;
+    const u = session.user;
     const isCustomer = u.customerId === booking.customerId;
     const isWorker = u.workerId === booking.workerId;
     const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN'].includes(u.role);

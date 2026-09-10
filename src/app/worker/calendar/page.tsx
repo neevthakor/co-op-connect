@@ -14,7 +14,7 @@ export default async function CalendarPage() {
     redirect('/login');
   }
 
-  const workerId = (session.user as any).workerId;
+  const workerId = session.user.workerId;
 
   const bookings = await prisma.booking.findMany({
     where: workerId ? { workerId } : {},

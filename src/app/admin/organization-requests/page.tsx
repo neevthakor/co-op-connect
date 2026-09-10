@@ -9,7 +9,7 @@ import { MapPin, Building2, School } from 'lucide-react';
 
 export default async function OrganizationRequestsPage() {
   const session = await auth();
-  const userRole = (session?.user as any)?.role;
+  const userRole = session?.user?.role;
   if (!session?.user || userRole !== 'FEDERATION_ADMIN') {
     redirect('/login');
   }

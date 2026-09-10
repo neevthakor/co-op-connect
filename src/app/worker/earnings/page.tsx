@@ -12,7 +12,7 @@ export default async function EarningsPage() {
     redirect('/login');
   }
 
-  const workerId = (session.user as any).workerId;
+  const workerId = session.user.workerId;
 
   const earnings = await prisma.workerEarning.findMany({
     where: workerId ? { workerId } : {},

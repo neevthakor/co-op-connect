@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Shield, Loader2, UserPlus, Wrench, ChevronDown, ChevronUp } from "lucide-react";
 import { getRoleRedirect } from "@/lib/rbac";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const DEMO_ACCOUNTS = [
   { email: "customer1@gmail.com", role: "Customer", color: "bg-blue-500" },
@@ -285,7 +286,8 @@ export default function LoginPage() {
       </div>
 
       {/* Right panel - login form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-background">
+      <div className="relative flex-1 flex items-center justify-center p-6 bg-background">
+        <ThemeToggle compact className="absolute right-4 top-4" />
         <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading sign in...</div>}>
           <LoginForm />
         </Suspense>

@@ -47,7 +47,7 @@ export async function POST(
     }
 
     // 2. Prevent reviewing a job that does not belong to this customer
-    const sessionCustomerId = (session.user as any).customerId;
+    const sessionCustomerId = session.user.customerId;
     if (!sessionCustomerId || sessionCustomerId !== booking.customerId) {
       return NextResponse.json(
         { error: 'Unauthorized: You can only review your own bookings' },

@@ -1,21 +1,23 @@
 import Link from "next/link";
 import { Shield, Users, Scale, Brain, MapPin, Heart, Star, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       {/* Navbar */}
       <header className="sticky top-0 z-50 bg-card/90 backdrop-blur-md border-b border-border/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="page-container flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20">
               <span className="text-white font-bold text-sm">CC</span>
             </div>
-            <div>
+            <div className="whitespace-nowrap">
               <span className="font-bold text-foreground text-lg tracking-tight">Co-opConnect</span>
             </div>
           </Link>
           <div className="flex items-center gap-3">
+            <ThemeToggle compact />
             <Link
               href="/about"
               className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
@@ -24,13 +26,13 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/login"
-              className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              className="whitespace-nowrap px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
             >
               Sign In
             </Link>
             <Link
               href="/login"
-              className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
+              className="marketing-cta whitespace-nowrap rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary/90 sm:px-4"
             >
               Get Started
             </Link>
@@ -40,36 +42,61 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+        <div className="page-container grid items-center gap-12 py-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-20 lg:py-24">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/25 text-primary rounded-full text-xs font-semibold mb-6">
               <Shield className="w-3.5 h-3.5" />
               Cooperative-Owned Domestic Services Platform
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-foreground leading-tight tracking-tight">
+            <h1 className="text-4xl font-black leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Trusted Workers.{" "}
               <span className="text-primary">Fair Opportunities.</span>{" "}
               Stronger Cooperatives.
             </h1>
-            <p className="mt-6 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl">
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
               Co-opConnect is a cooperative-owned digital marketplace that connects you with 
               verified, trusted workers for household and community services. Every worker is 
               cooperative-verified. Every job is fairly allocated. Every earning is transparent.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 text-sm"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary/90"
               >
                 Find a Worker
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/worker/register"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/25 text-sm"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700"
               >
                 Join as a Worker
               </Link>
+            </div>
+          </div>
+          <div className="relative hidden lg:block">
+            <div className="absolute -inset-8 rounded-[2rem] bg-primary/10 blur-3xl" />
+            <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-card p-5 shadow-2xl shadow-primary/10">
+              <div className="flex items-center justify-between border-b border-border/70 pb-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Live cooperative network</p>
+                  <p className="mt-1 text-lg font-bold text-foreground">Service coverage near you</p>
+                </div>
+                <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600"><MapPin className="size-5" /></span>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-border/70 bg-background p-4"><p className="text-2xl font-black text-foreground">50+</p><p className="mt-1 text-xs text-muted-foreground">Verified workers</p></div>
+                <div className="rounded-2xl border border-border/70 bg-background p-4"><p className="text-2xl font-black text-foreground">4.8/5</p><p className="mt-1 text-xs text-muted-foreground">Community rating</p></div>
+              </div>
+              <div className="mt-3 space-y-2 rounded-2xl border border-border/70 bg-background p-4">
+                {[["Electrician", "Available now", "bg-emerald-500"], ["Plumber", "4 nearby", "bg-blue-500"], ["AC repair", "Next slot 2:30 PM", "bg-amber-500"]].map(([service, status, dot]) => (
+                  <div key={service} className="flex items-center justify-between gap-3 py-1">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-foreground"><span className={`size-2 rounded-full ${dot}`} />{service}</span>
+                    <span className="text-xs text-muted-foreground">{status}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex items-center gap-3 rounded-2xl bg-primary/10 p-3"><Shield className="size-5 shrink-0 text-primary" /><p className="text-xs leading-relaxed text-foreground">Every match is cooperative-verified and transparent about the work and pay.</p></div>
             </div>
           </div>
         </div>
@@ -79,7 +106,7 @@ export default function LandingPage() {
 
       {/* Trust indicators */}
       <section className="border-y border-border/80 bg-card/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="page-container py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
               <p className="text-3xl font-black text-foreground">50+</p>

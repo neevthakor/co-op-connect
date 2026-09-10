@@ -57,7 +57,7 @@ export async function createFraudAlert(
   entityId: string,
   riskLevel: string,
   reason: string,
-  evidence?: any
+  evidence?: Record<string, unknown>
 ) {
   return prisma.fraudAlert.create({
     data: {

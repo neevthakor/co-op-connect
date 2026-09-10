@@ -16,7 +16,7 @@ export default async function InstitutionRequestDetailsPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const institutionId = (session.user as any).institutionId;
+  const institutionId = session.user.institutionId;
   if (!institutionId) redirect("/login");
 
   const requestId = params.id;
@@ -41,7 +41,7 @@ export default async function InstitutionRequestDetailsPage({
   let error = "";
   if (request.status === "OPEN") {
     try {
-      matches = await findWorkersForOrganizationRequest(requestId, "INSTITUTION", request.priority as any);
+      matches = await findWorkersForOrganizationRequest(requestId, "INSTITUTION", request.priority as 'NORMAL' | 'URGENT' | 'EMERGENCY');
     } catch (e: any) {
       error = e.message;
     }

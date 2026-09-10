@@ -18,7 +18,7 @@ export default async function CustomerHomePage() {
     redirect('/login');
   }
 
-  const customerId = (session.user as any).customerId;
+  const customerId = session.user.customerId;
 
   const [activeBookings, popularServices, nearbyWorkers, recentBookings, latestLocation] = await Promise.all([
     customerId

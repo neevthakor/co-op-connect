@@ -7,7 +7,7 @@ export async function GET() {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const institutionId = (session.user as any).institutionId;
+    const institutionId = session.user.institutionId;
     if (!institutionId) return NextResponse.json({ error: "Not an institution admin" }, { status: 403 });
 
     const requests = await prisma.institutionServiceRequest.findMany({
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const institutionId = (session.user as any).institutionId;
+    const institutionId = session.user.institutionId;
     if (!institutionId) return NextResponse.json({ error: "Not an institution admin" }, { status: 403 });
 
     const body = await req.json();

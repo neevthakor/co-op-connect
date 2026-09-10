@@ -9,7 +9,7 @@ export interface ProcessPaymentParams {
 }
 
 export interface PaymentProvider {
-  processPayment(params: ProcessPaymentParams): Promise<any>;
+  processPayment(params: ProcessPaymentParams): Promise<Record<string, unknown>>;
 }
 
 export async function completePaymentTransaction(

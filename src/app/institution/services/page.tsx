@@ -16,7 +16,7 @@ export default async function InstitutionServicesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const institutionId = (session.user as any).institutionId;
+  const institutionId = session.user.institutionId;
   if (!institutionId) redirect("/login");
 
   const requests = await prisma.institutionServiceRequest.findMany({

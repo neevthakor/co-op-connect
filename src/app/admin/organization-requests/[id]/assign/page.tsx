@@ -9,7 +9,7 @@ import { MapPin, CheckCircle2, ShieldCheck, Clock, Award } from 'lucide-react';
 
 export default async function AssignWorkerPage({ params, searchParams }: { params: { id: string }, searchParams: { type?: string } }) {
   const session = await auth();
-  const userRole = (session?.user as any)?.role;
+  const userRole = session?.user?.role;
   if (!session?.user || userRole !== 'FEDERATION_ADMIN') {
     redirect('/login');
   }

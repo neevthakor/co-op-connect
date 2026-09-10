@@ -16,7 +16,7 @@ export default async function SocietyRequestsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const societyId = (session.user as any).societyId;
+  const societyId = session.user.societyId;
   if (!societyId) redirect("/login");
 
   const requests = await prisma.societyServiceRequest.findMany({

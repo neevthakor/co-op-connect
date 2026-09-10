@@ -13,7 +13,7 @@ export default async function WorkerJobsPage() {
   const session = await auth();
   if (!session?.user) redirect('/login');
 
-  const workerId = (session.user as any).workerId;
+  const workerId = session.user.workerId;
 
   const [activeBookings, completedBookings] = workerId
     ? await Promise.all([

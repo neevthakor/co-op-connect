@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -23,6 +25,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --background: #090d16;
   --foreground: #f8fafc;
   --card: #101726;
@@ -43,6 +46,40 @@
   --input: #1e293b;
   --ring: #3b82f6;
   --radius: 0.75rem;
+  --scrollbar-track: #090d16;
+  --scrollbar-thumb: #232f48;
+  --scrollbar-thumb-hover: #334366;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --background: #f5f7f8;
+  --foreground: #17232b;
+  --card: #ffffff;
+  --card-foreground: #17232b;
+  --popover: #ffffff;
+  --popover-foreground: #17232b;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #edf2f4;
+  --secondary-foreground: #24313a;
+  --muted: #edf2f4;
+  --muted-foreground: #5c6b78;
+  --accent: #e4ecef;
+  --accent-foreground: #17232b;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #dce5e9;
+  --input: #cbd8de;
+  --ring: #2563eb;
+  --scrollbar-track: #f5f7f8;
+  --scrollbar-thumb: #c5d1d7;
+  --scrollbar-thumb-hover: #aabac3;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
 }
 
 * {
@@ -50,8 +87,62 @@
 }
 
 body {
+  min-height: 100dvh;
   background-color: var(--background);
   color: var(--foreground);
+  overflow-x: hidden;
+}
+
+button,
+[role="button"],
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+input,
+select,
+textarea {
+  min-height: 2.75rem;
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.page-container {
+  box-sizing: border-box;
+  width: min(100%, 1440px);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 2.5vw, 2rem);
+}
+
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 374px) {
+  .marketing-cta {
+    display: none;
+  }
 }
 
 /* Custom scrollbar */
@@ -61,16 +152,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #232f48;
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334366;
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Leaflet overrides */

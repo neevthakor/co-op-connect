@@ -11,17 +11,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const customerId = (session.user as any).customerId;
-    const workerId = (session.user as any).workerId;
-    const role = (session.user as any).role;
+    const customerId = session.user.customerId;
+    const workerId = session.user.workerId;
+    const role = session.user.role;
 
-    let whereClause: any = {};
+    const whereClause: any = {};
     if (role === 'CUSTOMER' && customerId) {
       whereClause.customerId = customerId;
     } else if ((role === 'WORKER' || role === 'HELPER') && workerId) {
       whereClause.workerId = workerId;
     } else if (role === 'COOPERATIVE_ADMIN') {
-      const cooperativeId = (session.user as any).cooperativeId;
+      const cooperativeId = session.user.cooperativeId;
       if (cooperativeId) {
         whereClause.worker = { cooperativeId };
       }
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    let customerId = (session.user as any).customerId;
+    let customerId = session.user.customerId;
     if (!customerId) {
       // Find or create customer record for this user
       console.time('[booking] customer lookup');

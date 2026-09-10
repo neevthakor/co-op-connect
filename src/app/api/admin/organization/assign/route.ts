@@ -5,7 +5,7 @@ import { assignWorkerToOrganizationRequest } from '@/services/organization';
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    const userRole = (session?.user as any)?.role;
+    const userRole = session?.user?.role;
     if (!session?.user || userRole !== 'FEDERATION_ADMIN') {
       return NextResponse.redirect(new URL('/login', req.url));
     }

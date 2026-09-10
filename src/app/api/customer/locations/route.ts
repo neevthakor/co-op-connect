@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const customerId = (session.user as any).customerId;
+    const customerId = session.user.customerId;
     if (!customerId) {
       return NextResponse.json({ error: 'Customer ID required' }, { status: 400 });
     }
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const customerId = (session.user as any).customerId;
+    const customerId = session.user.customerId;
     if (!customerId) {
       return NextResponse.json({ error: 'Customer ID required' }, { status: 400 });
     }

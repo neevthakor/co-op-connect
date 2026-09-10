@@ -12,7 +12,7 @@ export default async function BookingsPage() {
     redirect('/login');
   }
 
-  const customerId = (session.user as any).customerId;
+  const customerId = session.user.customerId;
 
   const allBookings = customerId
     ? await prisma.booking.findMany({

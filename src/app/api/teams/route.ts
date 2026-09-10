@@ -13,8 +13,8 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const bookingId = searchParams.get('bookingId');
-    const workerId = (session.user as any).workerId;
-    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes((session.user as any).role);
+    const workerId = session.user.workerId;
+    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(session.user.role);
 
     if (bookingId) {
       const team = await prisma.jobTeam.findUnique({
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action = 'REQUEST_HELPER', bookingId, helperId, requiredSkillId } = body;
 
-    const leadWorkerId = (session.user as any).workerId;
+    const leadWorkerId = session.user.workerId;
     if (!leadWorkerId) {
       return NextResponse.json({ error: 'Only workers can request helpers or create teams' }, { status: 403 });
     }
@@ -164,8 +164,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Helper request not found' }, { status: 404 });
     }
 
-    const workerId = (session.user as any).workerId;
-    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes((session.user as any).role);
+    const workerId = session.user.workerId;
+    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(session.user.role);
     
     if (helperRequest.helperId !== workerId && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

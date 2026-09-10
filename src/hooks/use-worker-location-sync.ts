@@ -17,12 +17,14 @@ export function useWorkerLocationSync(workerId: string, isTrackingActive: boolea
     }
 
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser');
-      return;
+      const timeoutId = setTimeout(() => {
+        setError('Geolocation is not supported by your browser');
+      }, 0);
+      return () => clearTimeout(timeoutId);
     }
 
     let lastSyncTime = 0;
-    const syncThrottleMs = 15000; // Update backend every 15 seconds max
+    const syncThrottleMs = 15000;
 
     watchId.current = navigator.geolocation.watchPosition(
       async (position) => {
@@ -32,7 +34,7 @@ export function useWorkerLocationSync(workerId: string, isTrackingActive: boolea
         if (now - lastSyncTime >= syncThrottleMs) {
           lastSyncTime = now;
           try {
-            const res = await fetch(`/api/workers/${workerId}/location`, {
+            const res = await fetch('/api/workers/' + workerId + '/location', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ latitude, longitude }),

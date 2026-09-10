@@ -5,13 +5,13 @@ import { auth } from '@/lib/auth';
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    const userRole = (session?.user as any)?.role;
+    const userRole = session?.user?.role;
     if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
-    const cooperativeId = searchParams.get('cooperativeId') || (session.user as any).cooperativeId;
+    const cooperativeId = searchParams.get('cooperativeId') || session.user.cooperativeId;
 
     const [earningsSum, earnings, invoices, payments] = await Promise.all([
       prisma.workerEarning.aggregate({

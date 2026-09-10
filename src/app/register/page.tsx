@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Shield, UserPlus, Wrench, Building2, School } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function RegisterHubPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+    <div className="relative min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+      <ThemeToggle compact className="absolute right-4 top-4" />
       <div className="w-full max-w-4xl">
         <div className="text-center mb-10">
           <Link href="/" className="inline-flex items-center gap-2.5 mb-6">

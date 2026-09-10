@@ -7,7 +7,7 @@ import { FileText } from "lucide-react";
 export default async function InstitutionContractsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const institutionId = (session.user as any).institutionId;
+  const institutionId = session.user.institutionId;
   if (!institutionId) redirect("/login");
 
   const contracts = await prisma.institutionContract.findMany({

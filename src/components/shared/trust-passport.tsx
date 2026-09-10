@@ -204,9 +204,9 @@ export function TrustPassport({
             ) : (
               <div className="space-y-3">
                 {reviews.map((r) => {
-                  const customerName = r.customer?.name || (r.customer as any)?.user?.name || "Customer";
-                  const ratingScore = typeof r.rating === 'number' ? r.rating : (r as any).overall || 5;
-                  const commentText = r.comment || (r as any).review || null;
+                  const customerName = r.customer?.name || (r.customer as { user?: { name: string } })?.user?.name || "Customer";
+                  const ratingScore = typeof r.rating === 'number' ? r.rating : (r as { overall?: number }).overall || 5;
+                  const commentText = r.comment || (r as { review?: string }).review || null;
                   const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-IN', {
                     year: 'numeric',
                     month: 'short',

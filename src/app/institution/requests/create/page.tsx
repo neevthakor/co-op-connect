@@ -13,7 +13,7 @@ export const metadata = {
 export default async function CreateInstitutionRequestPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const institutionId = (session.user as any).institutionId;
+  const institutionId = session.user.institutionId as string;
   if (!institutionId) redirect("/login");
 
   const locations = await prisma.organizationLocation.findMany({
@@ -30,7 +30,7 @@ export default async function CreateInstitutionRequestPage() {
     "use server";
     const session = await auth();
     if (!session?.user) throw new Error("Unauthorized");
-    const institutionId = (session.user as any).institutionId;
+    const institutionId = session.user.institutionId as string;
     
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;

@@ -2,13 +2,13 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, ClipboardList, Wrench, CheckCircle, Clock, DollarSign } from "lucide-react";
+import { FileText, ClipboardList, CheckCircle, DollarSign } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function InstitutionDashboard() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const institutionId = (session.user as any).institutionId;
+  const institutionId = (session.user as { institutionId?: string }).institutionId;
   if (!institutionId) redirect("/login");
 
   const institution = await prisma.institution.findUnique({
@@ -21,136 +21,85 @@ export default async function InstitutionDashboard() {
 
   if (!institution) redirect("/login");
 
-  const openRequests = institution.serviceRequests.filter(r => r.status === "OPEN").length;
+  const openRequests = institution.serviceRequests.filter((r) => r.status === "OPEN").length;
   const activeContracts = institution.contracts.length;
   const totalContractValue = institution.contracts.reduce((sum, c) => sum + c.totalValue, 0);
+  const completedRequests = institution.serviceRequests.filter((r) => r.status === "COMPLETED").length;
+
+  const stats = [
+    { label: "Active contracts", value: activeContracts, icon: FileText, tone: "teal" },
+    { label: "Open requests", value: openRequests, icon: ClipboardList, tone: "blue" },
+    { label: "Contract value", value: formatCurrency(totalContractValue), icon: DollarSign, tone: "emerald" },
+    { label: "Completed", value: completedRequests, icon: CheckCircle, tone: "violet" },
+  ] as const;
+  const toneStyles = {
+    teal: "bg-teal-500/10 text-teal-700 dark:text-teal-300",
+    blue: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
+    emerald: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+    violet: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+  };
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{institution.name}</h1>
-        <p className="text-sm text-gray-500">{institution.type} • {institution.address}</p>
-      </div>
+    <div className="page-container space-y-6 py-5 md:py-8">
+      <header>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-700 dark:text-teal-300">Institution workspace</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">{institution.name}</h1>
+        <p className="text-sm text-muted-foreground">{institution.type} • {institution.address}</p>
+      </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center">
-              <FileText className="w-5 h-5 text-teal-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{activeContracts}</p>
-              <p className="text-xs text-gray-500">Active Contracts</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-              <ClipboardList className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{openRequests}</p>
-              <p className="text-xs text-gray-500">Open Requests</p>
+      <section aria-label="Institution overview" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {stats.map(({ label, value, icon: Icon, tone }) => (
+          <div key={label} className="rounded-xl border border-border/80 bg-card p-4">
+            <div className="flex items-center gap-3">
+              <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${toneStyles[tone].split(" ")[0]}`}>
+                <Icon className={`size-5 ${toneStyles[tone].split(" ").slice(1).join(" ")}`} />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-2xl font-bold text-foreground">{value}</p>
+                <p className="truncate text-xs text-muted-foreground">{label}</p>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalContractValue)}</p>
-              <p className="text-xs text-gray-500">Contract Value</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">
-                {institution.serviceRequests.filter(r => r.status === "COMPLETED").length}
-              </p>
-              <p className="text-xs text-gray-500">Completed</p>
-            </div>
-          </div>
-        </div>
-      </div>
+        ))}
+      </section>
 
-      <div className="grid sm:grid-cols-2 gap-4 mb-8">
-        <Link
-          href="/institution/requests/create"
-          className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-teal-300 transition-colors"
-        >
-          <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-            <ClipboardList className="w-5 h-5 text-teal-700" />
-          </div>
-          <div>
-            <p className="font-medium text-gray-900">New Service Request</p>
-            <p className="text-xs text-gray-500">Request service or repair</p>
-          </div>
+      <section aria-label="Quick actions" className="grid gap-3 sm:grid-cols-2">
+        <Link href="/institution/requests/create" className="flex min-h-20 items-center gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors hover:border-teal-500/50">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-teal-500/10"><ClipboardList className="size-5 text-teal-700 dark:text-teal-300" /></div>
+          <div><p className="font-medium text-foreground">New service request</p><p className="text-xs text-muted-foreground">Request service or repair</p></div>
         </Link>
-        <Link
-          href="/institution/locations"
-          className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-teal-300 transition-colors"
-        >
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <ClipboardList className="w-5 h-5 text-blue-700" />
-          </div>
-          <div>
-            <p className="font-medium text-gray-900">Manage Locations</p>
-            <p className="text-xs text-gray-500">Edit institution areas</p>
-          </div>
+        <Link href="/institution/locations" className="flex min-h-20 items-center gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors hover:border-teal-500/50">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/10"><ClipboardList className="size-5 text-blue-700 dark:text-blue-300" /></div>
+          <div><p className="font-medium text-foreground">Manage locations</p><p className="text-xs text-muted-foreground">Edit institution areas</p></div>
         </Link>
-      </div>
+      </section>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border">
-          <div className="p-4 border-b"><h2 className="font-semibold text-gray-900">Active Contracts</h2></div>
-          <div className="divide-y">
-            {institution.contracts.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">No active contracts</div>
-            ) : (
-              institution.contracts.map((c) => (
-                <div key={c.id} className="p-4">
-                  <p className="font-medium text-gray-900">{c.title}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {c.startDate ? new Date(c.startDate).toLocaleDateString("en-IN") : "—"} — {c.endDate ? new Date(c.endDate).toLocaleDateString("en-IN") : "—"}
-                  </p>
-                  <p className="text-sm font-medium text-teal-600 mt-1">{formatCurrency(c.totalValue)}</p>
-                </div>
-              ))
-            )}
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-border/80 bg-card">
+          <div className="border-b border-border/70 p-4"><h2 className="font-semibold text-foreground">Active contracts</h2></div>
+          <div className="divide-y divide-border/70">
+            {institution.contracts.length === 0 ? <div className="p-6 text-center text-muted-foreground">No active contracts</div> : institution.contracts.map((c) => (
+              <div key={c.id} className="p-4">
+                <p className="font-medium text-foreground">{c.title}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{c.startDate ? new Date(c.startDate).toLocaleDateString("en-IN") : "—"} — {c.endDate ? new Date(c.endDate).toLocaleDateString("en-IN") : "—"}</p>
+                <p className="mt-1 text-sm font-medium text-teal-700 dark:text-teal-300">{formatCurrency(c.totalValue)}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border">
-          <div className="p-4 border-b"><h2 className="font-semibold text-gray-900">Recent Requests</h2></div>
-          <div className="divide-y">
-            {institution.serviceRequests.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">No service requests</div>
-            ) : (
-              institution.serviceRequests.map((req) => (
-                <div key={req.id} className="p-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">{req.title}</p>
-                    <p className="text-xs text-gray-500">{new Date(req.createdAt).toLocaleDateString("en-IN")}</p>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    req.status === "OPEN" ? "bg-blue-100 text-blue-700" :
-                    req.status === "COMPLETED" ? "bg-green-100 text-green-700" :
-                    "bg-amber-100 text-amber-700"
-                  }`}>{req.status}</span>
-                </div>
-              ))
-            )}
+        <div className="rounded-xl border border-border/80 bg-card">
+          <div className="border-b border-border/70 p-4"><h2 className="font-semibold text-foreground">Recent requests</h2></div>
+          <div className="divide-y divide-border/70">
+            {institution.serviceRequests.length === 0 ? <div className="p-6 text-center text-muted-foreground">No service requests</div> : institution.serviceRequests.map((req) => (
+              <div key={req.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div><p className="text-sm font-medium text-foreground">{req.title}</p><p className="text-xs text-muted-foreground">{new Date(req.createdAt).toLocaleDateString("en-IN")}</p></div>
+                <span className={`w-fit rounded px-2 py-1 text-xs font-medium ${req.status === "OPEN" ? "bg-blue-500/10 text-blue-700 dark:text-blue-300" : req.status === "COMPLETED" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-amber-500/10 text-amber-700 dark:text-amber-300"}`}>{req.status}</span>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

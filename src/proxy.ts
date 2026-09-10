@@ -12,7 +12,7 @@ const ROUTE_PERMISSIONS: { prefix: string; roles: string[] }[] = [
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
-  const userRole = (req.auth?.user as any)?.role;
+  const userRole = req.auth?.user?.role;
 
   // Public routes
   if (
@@ -43,7 +43,7 @@ export default auth((req) => {
       return NextResponse.redirect(new URL(`/login?callbackUrl=${callbackUrl}`, nextUrl));
     }
 
-    if (!matchedRoute.roles.includes(userRole)) {
+    if (userRole && !matchedRoute.roles.includes(userRole)) {
       // Redirect to their appropriate dashboard
       const roleRedirects: Record<string, string> = {
         CUSTOMER: "/customer/home",
@@ -54,7 +54,7 @@ export default auth((req) => {
         SOCIETY_ADMIN: "/society/dashboard",
         INSTITUTIONAL_CUSTOMER: "/institution/dashboard",
       };
-      const redirect = roleRedirects[userRole] || "/login";
+      const redirect = (userRole && roleRedirects[userRole]) || "/login";
       return NextResponse.redirect(new URL(redirect, nextUrl));
     }
   }

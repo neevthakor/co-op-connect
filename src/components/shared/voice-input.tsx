@@ -3,7 +3,33 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
+
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: {
+    [index: number]: { [index: number]: { transcript: string; }; isFinal?: boolean; };
+  };
+}
+
+interface ISpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: { error: string }) => void;
+  onend: () => void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: { new(): ISpeechRecognition };
+    webkitSpeechRecognition: { new(): ISpeechRecognition };
+  }
+}
+
 
 interface VoiceInputProps {
   onResult?: (text: string) => void;
@@ -16,7 +42,7 @@ export function VoiceInput({ onResult, onTranscription, language = "en-IN", clas
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSupported, setIsSupported] = useState(true);
-  const [recognition, setRecognition] = useState<any>(null);
+  const [recognition, setRecognition] = useState<ISpeechRecognition | null>(null);
 
   const handleResult = useCallback((text: string) => {
     if (onResult) onResult(text);
@@ -26,7 +52,7 @@ export function VoiceInput({ onResult, onTranscription, language = "en-IN", clas
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         const reco = new SpeechRecognition();
         reco.continuous = false;
@@ -42,7 +68,7 @@ export function VoiceInput({ onResult, onTranscription, language = "en-IN", clas
     if (recognition) {
       recognition.lang = language;
       
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         const current = event.resultIndex;
         const result = event.results[current];
         const text = result[0].transcript;
@@ -55,7 +81,7 @@ export function VoiceInput({ onResult, onTranscription, language = "en-IN", clas
         }
       };
 
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: { error: string }) => {
         console.error("Speech recognition error", event.error);
         setIsRecording(false);
       };

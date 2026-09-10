@@ -88,7 +88,7 @@ export async function generateGeminiContent(
     const cleanModel = config.model.replace(/^models\//, '');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cleanModel)}:generateContent`;
 
-    const contents: any[] = [
+    const contents: Record<string, unknown>[] = [
       {
         role: 'user',
         parts: [{ text: prompt }],
@@ -97,7 +97,7 @@ export async function generateGeminiContent(
 
     const isGemini3 = cleanModel.toLowerCase().includes('gemini-3') || cleanModel.toLowerCase().includes('3.');
 
-    const generationConfig: Record<string, any> = {
+    const generationConfig: Record<string, unknown> = {
       maxOutputTokens: options?.maxOutputTokens ?? 1024,
     };
 
@@ -118,7 +118,7 @@ export async function generateGeminiContent(
       };
     }
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       contents,
       generationConfig,
     };
@@ -211,9 +211,9 @@ export async function generateGeminiContent(
     // Filter out thought parts (Gemini 3.x thinking parts) and extract clean response text
     let candidateText: string | null = null;
     if (Array.isArray(parts)) {
-      const nonThoughtParts = parts.filter((p: any) => !p.thought && typeof p.text === 'string');
+      const nonThoughtParts = parts.filter((p: { inlineData?: unknown; text?: string; thought?: boolean }) => !p.thought && typeof p.text === 'string');
       if (nonThoughtParts.length > 0) {
-        candidateText = nonThoughtParts.map((p: any) => p.text).join('');
+        candidateText = nonThoughtParts.map((p: { inlineData?: unknown; text?: string; thought?: boolean }) => p.text).join('');
       } else if (typeof parts[0]?.text === 'string') {
         candidateText = parts[0].text;
       }
@@ -235,12 +235,12 @@ export async function generateGeminiContent(
     }
 
     return resultText || null;
-  } catch (err: any) {
+  } catch (err: unknown) {
     clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
+    if ((err as Error).name === 'AbortError') {
       console.warn(`[Gemini API] Timeout: Request timed out after ${timeoutMs}ms. Falling back to rule-based engine.`);
     } else {
-      console.warn(`[Gemini API] Other Gemini Failure: Connection or network error: ${err.message}. Falling back to rule-based engine.`);
+      console.warn(`[Gemini API] Other Gemini Failure: Connection or network error: ${(err as Error).message}. Falling back to rule-based engine.`);
     }
     return null;
   }

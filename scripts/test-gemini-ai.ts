@@ -30,7 +30,7 @@ async function testAIServices() {
   // 2. Explainable Worker Match Test
   console.log('--- 2. Explainable Worker Match (FairMatch Natural Language Insight) ---');
   const workerSample = {
-    user: { name: 'Karan Desai' },
+    id: 'w1', user: { name: 'Karan Desai' },
     primaryTrade: 'AC Technician',
     averageRating: 4.9,
     punctualityScore: 98,

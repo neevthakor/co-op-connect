@@ -16,7 +16,7 @@ export default async function SocietyRequestDetailsPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const societyId = (session.user as any).societyId;
+  const societyId = session.user.societyId;
   if (!societyId) redirect("/login");
 
   const requestId = params.id;
@@ -41,7 +41,7 @@ export default async function SocietyRequestDetailsPage({
   let error = "";
   if (request.status === "OPEN") {
     try {
-      matches = await findWorkersForOrganizationRequest(requestId, "SOCIETY", request.priority as any);
+      matches = await findWorkersForOrganizationRequest(requestId, "SOCIETY", request.priority as 'NORMAL' | 'URGENT' | 'EMERGENCY');
     } catch (e: any) {
       error = e.message;
     }

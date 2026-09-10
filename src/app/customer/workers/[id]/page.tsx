@@ -20,7 +20,7 @@ export default async function CustomerWorkerProfilePage({
 
   const resolvedParams = await Promise.resolve(params);
   const workerId = resolvedParams.id;
-  const customerId = (session.user as any).customerId;
+  const customerId = session.user.customerId;
 
   const profileData = await getWorkerProfile(workerId);
 
@@ -46,7 +46,7 @@ export default async function CustomerWorkerProfilePage({
     <div className="flex flex-col gap-6 p-4 pb-20 md:p-8 max-w-3xl mx-auto w-full">
       <header className="flex justify-between items-start mb-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight mb-1">{worker.user.name}'s Profile</h1>
+          <h1 className="text-2xl font-bold tracking-tight mb-1">{worker.user?.name}'s Profile</h1>
           <p className="text-muted-foreground">
             {worker.primaryTrade || 'Technician'} • Member of {worker.cooperative?.name || 'Cooperative'}
           </p>

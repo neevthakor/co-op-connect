@@ -5,13 +5,13 @@ import { auth } from '@/lib/auth';
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    const userRole = (session?.user as any)?.role;
+    const userRole = session?.user?.role;
     if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
-    const cooperativeId = searchParams.get('cooperativeId') || (session.user as any).cooperativeId;
+    const cooperativeId = searchParams.get('cooperativeId') || (session.user.cooperativeId as string);
 
     const proposals = await prisma.cooperativeProposal.findMany({
       where: cooperativeId ? { cooperativeId } : {},
@@ -59,9 +59,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    const userRole = (session?.user as any)?.role;
+    const userRole = session?.user?.role;
     
-    if (!session?.user?.id || !['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN', 'WORKER'].includes(userRole)) {
+    if (!session?.user?.id || !['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN', 'WORKER'].includes(userRole as string)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     const { action = 'VOTE', proposalId, vote, title, description, cooperativeId } = body;
 
     if (action === 'CREATE_PROPOSAL') {
-      if (!['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(userRole)) {
+      if (!['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(userRole as string)) {
         return NextResponse.json({ error: 'Only admins can create proposals' }, { status: 403 });
       }
 
@@ -77,14 +77,14 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Title and description are required' }, { status: 400 });
       }
 
-      const coopId = cooperativeId || (session.user as any).cooperativeId;
+      const coopId = cooperativeId || (session.user.cooperativeId as string);
       if (!coopId) {
         return NextResponse.json({ error: 'cooperativeId is required' }, { status: 400 });
       }
 
       const proposal = await prisma.cooperativeProposal.create({
         data: {
-          cooperativeId: coopId,
+          cooperativeId: coopId as string,
           createdById: session.user.id,
           title,
           description,

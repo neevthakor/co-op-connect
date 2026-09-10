@@ -29,7 +29,7 @@ export async function POST(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const sessionUser = session.user as any;
+    const sessionUser = session.user;
     const isCustomer = sessionUser.customerId && sessionUser.customerId === booking.customerId;
     const isAdmin = sessionUser.role === 'ADMIN' || sessionUser.role === 'COOPERATIVE_ADMIN';
 

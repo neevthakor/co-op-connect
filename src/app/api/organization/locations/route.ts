@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const role = (session.user as any).role;
+    const role = session.user.role;
     const isSociety = role === "SOCIETY_ADMIN";
     const isInstitution = role === "INSTITUTIONAL_CUSTOMER";
 
@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
     }
 
     const organizationId = isSociety 
-      ? (session.user as any).societyId 
-      : (session.user as any).institutionId;
+      ? session.user.societyId
+      : session.user.institutionId;
 
     if (!organizationId) {
       return NextResponse.json({ error: "No organization linked" }, { status: 400 });

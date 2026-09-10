@@ -2,15 +2,20 @@ import { prisma } from '@/lib/prisma';
 import { WorkerReview } from '@/types/review';
 
 export interface WorkerProfileData {
-  worker: any;
+  worker: { id: string; user?: { name: string; avatar?: string | null; email?: string; phone?: string | null; }; cooperative?: { name: string } | null; verificationStatus?: string | null; primaryTrade?: string | null; hourlyRate?: number | null; availabilityStatus?: string | null; [key: string]: unknown };
   completedJobsCount: number;
   averageRating: number | null;
   totalRatingsCount: number;
   punctualityScore: number | null;
-  skills: any[];
-  certifications: any[];
+  skills: {
+    id: string;
+    skill: { name: string };
+    proficiencyLevel: string;
+    verified: boolean;
+  }[];
+  certifications: Record<string, unknown>[];
   recentReviews: WorkerReview[];
-  availability: any[];
+  availability: { id: string; [key: string]: unknown }[];
   earningsSummary: {
     grossTotal: number;
     cooperativeTotal: number;

@@ -15,7 +15,7 @@ export default async function CooperativeRequestMatchPage({
 }) {
   const session = await auth();
 
-  if (!session?.user || (session.user as any).role !== "COOPERATIVE_ADMIN") {
+  if (!session?.user || session.user.role !== "COOPERATIVE_ADMIN") {
     redirect("/login");
   }
 
@@ -67,7 +67,7 @@ export default async function CooperativeRequestMatchPage({
   let error = "";
   if (request.status === "OPEN") {
     try {
-      matches = await findWorkersForOrganizationRequest(requestId, type, request.priority as any);
+      matches = await findWorkersForOrganizationRequest(requestId, type, request.priority as 'NORMAL' | 'URGENT' | 'EMERGENCY');
       // Filter for this cooperative only
       matches = matches.filter(m => m.worker.cooperativeId === admin.cooperativeId);
     } catch (e: any) {

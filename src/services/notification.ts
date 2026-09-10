@@ -5,7 +5,7 @@ export async function sendNotification(
   type: string,
   title: string,
   body: string,
-  data?: any
+  data?: Record<string, unknown>
 ) {
   const notification = await prisma.notification.create({
     data: {

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const cooperativeId = searchParams.get('cooperativeId');
     let status = searchParams.get('status') || 'VERIFIED';
     
-    const u = session?.user as any;
+    const u = session?.user;
     const isAdmin = u?.role === 'ADMIN' || u?.role === 'COOPERATIVE_ADMIN';
     if (!session || !isAdmin) {
       status = 'VERIFIED';

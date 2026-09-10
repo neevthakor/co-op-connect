@@ -14,7 +14,7 @@ export default async function ProfilePage() {
     redirect('/login');
   }
 
-  const workerId = (session.user as any).workerId;
+  const workerId = session.user.workerId;
 
   if (!workerId) {
     return (
@@ -53,7 +53,7 @@ export default async function ProfilePage() {
       <header className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">{worker.user.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{worker.user?.name}</h1>
             <Badge
               className={
                 isVerified
@@ -116,7 +116,7 @@ export default async function ProfilePage() {
               className="mt-2"
               variant={worker.availabilityStatus === 'AVAILABLE' ? 'default' : 'secondary'}
             >
-              {worker.availabilityStatus}
+              {(worker.availabilityStatus as string)}
             </Badge>
           </CardContent>
         </Card>
@@ -184,8 +184,8 @@ export default async function ProfilePage() {
               <p className="text-xs text-muted-foreground">No certifications added</p>
             ) : (
               certifications.map((c) => (
-                <div key={c.id} className="flex justify-between items-center text-xs p-2 bg-muted/40 rounded">
-                  <span className="font-semibold">{c.certification.name}</span>
+                <div key={(c.id as string)} className="flex justify-between items-center text-xs p-2 bg-muted/40 rounded">
+                  <span className="font-semibold">{(c.certification as { name: string }).name}</span>
                   <Badge variant="outline" className={c.verified ? 'text-green-700' : 'text-muted-foreground'}>
                     {c.verified ? 'Verified' : 'Pending'}
                   </Badge>

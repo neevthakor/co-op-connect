@@ -6,7 +6,7 @@ import { Wrench, Calendar, DollarSign } from "lucide-react";
 export default async function SocietyMaintenancePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const societyId = (session.user as any).societyId;
+  const societyId = session.user.societyId;
   if (!societyId) redirect("/login");
 
   const contracts = await prisma.maintenanceContract.findMany({

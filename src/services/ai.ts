@@ -1,3 +1,50 @@
+export interface AIWorker {
+  user?: { name: string; avatar?: string | null };
+  id: string;
+  name?: string;
+  averageRating?: number;
+  totalJobs?: number;
+  punctualityScore?: number;
+  primaryTrade?: string;
+  [key: string]: unknown;
+}
+
+export interface AIScores {
+  compositeScore?: number;
+  match_score?: number;
+  distanceKm?: number;
+  [key: string]: unknown;
+}
+
+export interface AIEstimate {
+  basePrice?: number;
+  labour?: number;
+  travel?: number;
+  amount?: number;
+  currency?: string;
+  [key: string]: unknown;
+}
+
+export interface AIDisputeData {
+  category?: string;
+  description?: string;
+  customerName?: string;
+  workerName?: string;
+  [key: string]: unknown;
+}
+
+export interface AIFraudData {
+  [key: string]: unknown;
+}
+
+export interface AIDemandData {
+  [key: string]: unknown;
+}
+
+export interface AISkillGapsData {
+  [key: string]: unknown;
+}
+
 import { generateGeminiContent } from '@/services/gemini';
 import { CLASSIFICATION_EXAMPLES } from './ai-prompts';
 
@@ -88,7 +135,7 @@ User Input: "${text}"`;
       // Category Validation against allowed list
       let finalCategoryId = parsed.categoryId;
       let finalIntent = parsed.intent || 'CLARIFICATION_REQUIRED';
-      let confidence = parsed.confidence || 0.5;
+      const confidence = parsed.confidence || 0.5;
 
       const isValidCategory = Object.values(CATEGORY_MAP).some(c => c.id === finalCategoryId);
       if (!isValidCategory || finalIntent !== 'SERVICE_REQUEST' || confidence < 0.85) {
@@ -156,7 +203,7 @@ function fallbackParseServiceRequest(text: string, language?: string): ParsedSer
   return createDeterministicFallback(text, language, 'CLARIFICATION_REQUIRED', null, 0.50, 'NORMAL');
 }
 
-function createDeterministicFallback(text: string, language: string | undefined, intent: any, cat: any, confidence: number, urgency: any): ParsedServiceRequest {
+function createDeterministicFallback(text: string, language: string | undefined, intent: ParsedServiceRequest['intent'], cat: { id: string; name: string; duration?: string; tools?: string[] } | null, confidence: number, urgency: ParsedServiceRequest['urgency']): ParsedServiceRequest {
   return {
     intent,
     categoryId: cat?.id || null,
@@ -179,7 +226,7 @@ function createDeterministicFallback(text: string, language: string | undefined,
 // ============================================================
 // 2. EXPLAINABLE WORKER MATCH
 // ============================================================
-export async function generateMatchExplanation(worker: any, scores: any): Promise<string> {
+export async function generateMatchExplanation(worker: AIWorker, scores: AIScores): Promise<string> {
   const workerName = worker?.user?.name || worker?.name || 'The technician';
   const trade = worker?.primaryTrade || 'Technician';
   const matchScore = scores?.match_score || scores?.compositeScore || 92;
@@ -201,7 +248,7 @@ Facts: Match Score: ${matchScore}%, Distance: ${distance}, Rating: ${rating}, Pu
 // ============================================================
 // 3. PRICE ESTIMATE EXPLANATION
 // ============================================================
-export async function generatePriceExplanation(estimate: any): Promise<string> {
+export async function generatePriceExplanation(estimate: AIEstimate): Promise<string> {
   const basePrice = estimate?.basePrice || estimate?.labour || 350;
   const travel = estimate?.travel || 50;
 
@@ -218,7 +265,7 @@ export async function generatePriceExplanation(estimate: any): Promise<string> {
 // ============================================================
 // 4. DEMAND FORECASTING ASSISTANCE
 // ============================================================
-export async function analyzeDemand(data: any): Promise<{ insights: string; trend: 'INCREASING' | 'STABLE' | 'DECREASING'; aiProvider?: string }> {
+export async function analyzeDemand(data: AIDemandData): Promise<{ insights: string; trend: 'INCREASING' | 'STABLE' | 'DECREASING'; aiProvider?: string }> {
   const area = data?.area || 'Ahmedabad';
   const category = data?.category || 'All Trades';
   const totalVolume = data?.totalVolume || 120;
@@ -251,7 +298,7 @@ Format as JSON: { "insights": "text", "trend": "INCREASING" | "STABLE" | "DECREA
 // ============================================================
 // 5. SKILL-GAP ANALYSIS
 // ============================================================
-export async function analyzeSkillGaps(skillGaps: any): Promise<{ recommendations: string[]; summary: string; aiProvider?: string }> {
+export async function analyzeSkillGaps(skillGaps: string[]): Promise<{ recommendations: string[]; summary: string; aiProvider?: string }> {
   const prompt = `You are a vocational training advisor for Gujarat labor cooperatives.
 Review these detected skill gap categories: ${JSON.stringify(skillGaps || ['AC Inverter Diagnostics', 'Solar Inverter Wiring'])}.
 Provide a 2-sentence summary and 3 concrete cooperative upskilling workshop modules.
@@ -285,7 +332,7 @@ Format as JSON: { "summary": "text", "recommendations": ["module 1", "module 2",
 // ============================================================
 // 6. AI DISPUTE ASSISTANT
 // ============================================================
-export async function assistDispute(disputeData: any): Promise<{
+export async function assistDispute(disputeData: AIDisputeData): Promise<{
   summary: string;
   timeline: string[];
   possibleResolutions: string[];
@@ -344,9 +391,9 @@ Format as JSON:
 }
 
 // ============================================================
-// 7. FRAUD & ANOMALY DETECTION
+// 7. Fraud Detection Placeholder
 // ============================================================
-export async function detectFraud(data: any): Promise<{ riskScore: number; anomalies: string[]; isSuspicious: boolean }> {
+export async function detectFraud(_data: AIFraudData): Promise<{ riskScore: number; anomalies: string[]; isSuspicious: boolean }> {
   return {
     riskScore: 0.05,
     anomalies: [],

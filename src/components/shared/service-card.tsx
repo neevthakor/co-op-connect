@@ -2,11 +2,20 @@ import React from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatCurrency } from "@/lib/utils";
-import * as LucideIcons from "lucide-react";
+import { icons } from "lucide-react";
 
-export function ServiceCard({ service, href, className }: { service: any; href?: string; className?: string }) {
+type ServiceCardService = {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  basePrice: number;
+  priceRange?: string;
+};
+
+export function ServiceCard({ service, href, className }: { service: ServiceCardService; href?: string; className?: string }) {
   const iconName = service.icon || "Wrench";
-  const IconComponent = (LucideIcons as any)[iconName] || LucideIcons.Wrench;
+  const IconComponent = icons[iconName as keyof typeof icons] || icons.Wrench;
   const targetHref = href || `/customer/book?category=${service.id}`;
 
   return (

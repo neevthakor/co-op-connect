@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { matchWorkers, MatchParams, WorkerMatchResult } from "./matching";
+import { matchWorkers, WorkerMatchResult } from "./matching";
 import { createBooking } from "./booking";
-import { Prisma } from "@prisma/client";
+
 
 export async function getOrganizationLocations(organizationId: string, type: "SOCIETY" | "INSTITUTION") {
   return prisma.organizationLocation.findMany({
@@ -132,6 +132,7 @@ export async function assignWorkerToOrganizationRequest(data: {
   }
 
   if (!categoryId) throw new Error("Request missing category");
+  if (!customerId) throw new Error("Failed to resolve customer context for assignment");
 
   const booking = await createBooking({
     customerId,

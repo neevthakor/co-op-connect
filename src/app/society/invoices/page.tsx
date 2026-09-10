@@ -7,7 +7,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 export default async function SocietyInvoicesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const societyId = (session.user as any).societyId;
+  const societyId = session.user.societyId;
   if (!societyId) redirect("/login");
 
   const bookings = await prisma.booking.findMany({

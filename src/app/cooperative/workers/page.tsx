@@ -12,7 +12,7 @@ export const metadata = {
 export default async function CooperativeWorkersPage() {
   const session = await auth();
 
-  if (!session?.user || (session.user as any).role !== "COOPERATIVE_ADMIN") {
+  if (!session?.user || session.user.role !== "COOPERATIVE_ADMIN") {
     redirect("/login");
   }
 

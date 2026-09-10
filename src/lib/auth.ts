@@ -58,29 +58,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role;
+        token.role = user.role as string as string;
         token.userId = user.id;
-        token.workerId = (user as any).workerId;
-        token.customerId = (user as any).customerId;
-        token.cooperativeId = (user as any).cooperativeId;
-        token.federationId = (user as any).federationId;
-        token.societyId = (user as any).societyId;
-        token.institutionId = (user as any).institutionId;
-        token.verificationStatus = (user as any).verificationStatus;
+        token.workerId = user.workerId as string;
+        token.customerId = user.customerId as string;
+        token.cooperativeId = user.cooperativeId as string;
+        token.federationId = user.federationId as string;
+        token.societyId = user.societyId as string;
+        token.institutionId = user.institutionId as string;
+        token.verificationStatus = user.verificationStatus as string;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.userId;
-        (session.user as any).role = token.role;
-        (session.user as any).workerId = token.workerId;
-        (session.user as any).customerId = token.customerId;
-        (session.user as any).cooperativeId = token.cooperativeId;
-        (session.user as any).federationId = token.federationId;
-        (session.user as any).societyId = token.societyId;
-        (session.user as any).institutionId = token.institutionId;
-        (session.user as any).verificationStatus = token.verificationStatus;
+        session.user.id = token.userId as string;
+        session.user.role = token.role as string;
+        session.user.workerId = token.workerId as string;
+        session.user.customerId = token.customerId as string;
+        session.user.cooperativeId = token.cooperativeId as string;
+        session.user.federationId = token.federationId as string;
+        session.user.societyId = token.societyId as string;
+        session.user.institutionId = token.institutionId as string;
+        session.user.verificationStatus = token.verificationStatus as string;
       }
       return session;
     },

@@ -6,14 +6,14 @@ import { approveWorker, rejectWorker, requestMoreInfo, suspendWorker } from '@/s
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    const userRole = (session?.user as any)?.role;
+    const userRole = session?.user?.role;
     if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') || 'PENDING';
-    const cooperativeId = (session.user as any).cooperativeId;
+    const cooperativeId = session.user.cooperativeId;
 
     const workers = await prisma.worker.findMany({
       where: {
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth();
-    const userRole = (session?.user as any)?.role;
+    const userRole = session?.user?.role;
     if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -54,7 +54,7 @@ export async function PATCH(req: NextRequest) {
 
     if (userRole === 'COOPERATIVE_ADMIN') {
       const worker = await prisma.worker.findUnique({ where: { id: workerId } });
-      if (!worker || worker.cooperativeId !== (session.user as any).cooperativeId) {
+      if (!worker || worker.cooperativeId !== session.user.cooperativeId) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }

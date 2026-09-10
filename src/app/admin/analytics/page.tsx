@@ -6,12 +6,12 @@ import { BarChart3, Users, MapPin } from 'lucide-react';
 
 export default async function AnalyticsPage() {
   const session = await auth();
-  const userRole = (session?.user as any)?.role;
+  const userRole = session?.user?.role;
   if (!session?.user || userRole !== 'COOPERATIVE_ADMIN') {
     redirect('/login');
   }
 
-  const cooperativeId = (session.user as any).cooperativeId;
+  const cooperativeId = session.user.cooperativeId;
 
   const [cityStats, stateStats, verificationStats] = await Promise.all([
     prisma.worker.groupBy({

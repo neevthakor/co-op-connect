@@ -5,12 +5,12 @@ import { auth } from '@/lib/auth';
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    const userRole = (session?.user as any)?.role;
+    const userRole = session?.user?.role;
     if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const cooperativeId = (session.user as any).cooperativeId;
+    const cooperativeId = session.user.cooperativeId;
 
     const complaints = await prisma.complaint.findMany({
       where: cooperativeId ? {
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth();
-    const userRole = (session?.user as any)?.role;
+    const userRole = session?.user?.role;
     if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -51,7 +51,7 @@ export async function PATCH(req: NextRequest) {
 
     if (!complaint) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    const cooperativeId = (session.user as any).cooperativeId;
+    const cooperativeId = session.user.cooperativeId;
     if (cooperativeId && complaint.worker && complaint.worker.cooperativeId !== cooperativeId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
