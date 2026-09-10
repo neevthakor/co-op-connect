@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AddLocationDialog } from "@/components/organization/AddLocationDialog";
 import { MapPin, Plus } from "lucide-react";
 import { getOrganizationLocations } from "@/services/organization";
 
@@ -26,10 +27,7 @@ export default async function InstitutionLocationsPage() {
           <h2 className="text-2xl font-bold tracking-tight">Institution Locations</h2>
           <p className="text-muted-foreground">Manage service areas within your institution.</p>
         </div>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Location
-        </Button>
+        <AddLocationDialog type="INSTITUTION" />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

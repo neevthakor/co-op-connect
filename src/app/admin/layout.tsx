@@ -1,4 +1,4 @@
-﻿import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Users, Shield, ShieldCheck, ClipboardList, Activity, LayoutDashboard, LogOut } from 'lucide-react';
@@ -29,12 +29,45 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="pt-4 pb-1 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Management
           </div>
-          <Link href="/admin/workers" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
-            <ShieldCheck className="w-4 h-4" /> Worker Verification
-          </Link>
-          <Link href="/admin/bookings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
-            <ClipboardList className="w-4 h-4" /> Bookings & Jobs
-          </Link>
+
+          {userRole === 'COOPERATIVE_ADMIN' && (
+            <>
+              <Link href="/admin/workers" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                <Users className="w-4 h-4" /> Workers
+              </Link>
+              <Link href="/admin/verification" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                <ShieldCheck className="w-4 h-4" /> Worker Verification
+              </Link>
+              <Link href="/admin/complaints" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                <Activity className="w-4 h-4" /> Customer Issues
+              </Link>
+              <Link href="/admin/analytics" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                <Activity className="w-4 h-4" /> Workforce Analytics
+              </Link>
+              <Link href="/admin/bookings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                <ClipboardList className="w-4 h-4" /> Bookings
+              </Link>
+            </>
+          )}
+
+          {userRole === 'FEDERATION_ADMIN' && (
+            <>
+              <Link href="/admin/organization-requests" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                <ClipboardList className="w-4 h-4" /> Organization Requests
+              </Link>
+            </>
+          )}
+
+          {userRole === 'ADMIN' && (
+            <>
+              <Link href="/admin/workers" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                <ShieldCheck className="w-4 h-4" /> Worker Verification
+              </Link>
+              <Link href="/admin/bookings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                <ClipboardList className="w-4 h-4" /> Bookings & Jobs
+              </Link>
+            </>
+          )}
         </nav>
         <div className="p-4 mt-auto border-t border-slate-800">
            <SignOutButton className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg py-2 transition-colors" />

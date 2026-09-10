@@ -10,7 +10,6 @@ const mobileNavItems = [
   { href: "/worker/home", label: "Home", icon: Home },
   { href: "/worker/jobs", label: "Jobs", icon: Briefcase },
   { href: "/worker/earnings", label: "Earnings", icon: Wallet },
-  { href: "/worker/messages", label: "Messages", icon: MessageSquare },
   { href: "/worker/profile", label: "Profile", icon: User },
 ];
 
@@ -21,7 +20,6 @@ const desktopNavItems = [
   { href: "/worker/calendar", label: "Calendar", icon: Calendar },
   { href: "/worker/earnings", label: "Earnings", icon: Wallet },
   { href: "/worker/helpers", label: "Helpers & Teams", icon: Users },
-  { href: "/worker/messages", label: "Messages", icon: MessageSquare },
   { href: "/worker/notifications", label: "Notifications", icon: Bell },
   { href: "/worker/profile", label: "Profile & KYC", icon: User },
 ];

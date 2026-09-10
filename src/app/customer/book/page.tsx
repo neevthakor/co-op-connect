@@ -42,6 +42,16 @@ function BookServiceContent() {
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [matchedWorkers, setMatchedWorkers] = useState<any[]>([]);
   const [selectedWorker, setSelectedWorker] = useState<any>(null);
+  const [savedLocations, setSavedLocations] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/customer/locations')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setSavedLocations(data);
+      })
+      .catch(err => console.error('Failed to load locations', err));
+  }, []);
 
   const stepTitles = [
     'Describe Problem',
@@ -379,7 +389,27 @@ function BookServiceContent() {
             <h1 className="text-2xl font-bold">Where is the service needed?</h1>
             <p className="text-muted-foreground">Confirm your service address.</p>
 
-            <div className="relative">
+            {savedLocations.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm font-semibold mb-2">Previous Locations</p>
+                <div className="grid gap-2">
+                  {savedLocations.map(loc => (
+                    <div 
+                      key={loc.id} 
+                      onClick={() => {
+                        setBookingData({ ...bookingData, address: loc.address, latitude: loc.latitude, longitude: loc.longitude });
+                      }}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors text-left ${bookingData.address === loc.address ? 'border-primary bg-primary/5' : 'hover:border-primary/50'}`}
+                    >
+                      <p className="text-sm font-medium">{loc.address}</p>
+                      <p className="text-xs text-muted-foreground">{loc.city}, {loc.state}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="relative mt-2">
               <label htmlFor="service-address" className="sr-only">Service Address</label>
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
@@ -388,7 +418,7 @@ function BookServiceContent() {
                 autoComplete="street-address"
                 value={bookingData.address}
                 onChange={(e) => setBookingData({ ...bookingData, address: e.target.value })}
-                placeholder="Full address (e.g., Flat 402, Vastrapur, Ahmedabad)"
+                placeholder="Or enter new address (e.g., Flat 402, Vastrapur, Ahmedabad)"
                 className="pl-10 h-12 text-base"
               />
             </div>

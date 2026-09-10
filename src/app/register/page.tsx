@@ -1,215 +1,76 @@
-'use client';
+import Link from "next/link";
+import { Shield, UserPlus, Wrench, Building2, School } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Shield, UserPlus, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-
-export default function CustomerRegisterPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    address: '',
-  });
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!formData.name.trim() || !formData.email.trim() || !formData.password || !formData.phone.trim()) {
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    const cleanedPhone = formData.phone.replace(/\D/g, '');
-    const isPhoneValid = (cleanedPhone.length === 10 && /^[6-9]\d{9}$/.test(cleanedPhone)) || 
-                         (cleanedPhone.length === 12 && cleanedPhone.startsWith('91') && /^[6-9]\d{9}$/.test(cleanedPhone.substring(2)));
-                         
-    if (!isPhoneValid) {
-      setError('Please enter a valid 10-digit Indian mobile number.');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          email: formData.email.trim().toLowerCase(),
-          phone: formData.phone.trim(),
-          password: formData.password,
-          address: formData.address.trim(),
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-
-      toast.success('Account created successfully! Please sign in.');
-      router.push('/login?registered=true');
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function RegisterHubPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4 md:p-6">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="flex items-center justify-center gap-2.5 mb-6">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20">
-            <Shield className="w-6 h-6 text-white" />
-          </div>
-          <span className="font-bold text-xl text-foreground">Co-opConnect</span>
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+      <div className="w-full max-w-4xl">
+        <div className="text-center mb-10">
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20">
+              <span className="text-white font-bold text-sm">CC</span>
+            </div>
+            <span className="font-bold text-foreground text-xl tracking-tight">Co-opConnect</span>
+          </Link>
+          <h1 className="text-3xl font-black tracking-tight mb-2">Create an Account</h1>
+          <p className="text-muted-foreground">Select how you want to join Co-opConnect</p>
         </div>
 
-        <Card className="border border-border/80 shadow-lg bg-card">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl font-bold text-foreground tracking-tight">Create Customer Account</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
-              Book verified cooperative domestic trade services in Ahmedabad
-            </p>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-xl text-xs text-destructive font-medium">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-              <div>
-                <label className="font-semibold text-foreground block mb-1">Full Name *</label>
-                <Input
-                  required
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Amit Patel"
-                  className="h-10 text-xs bg-secondary/50 border-border text-foreground"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-foreground block mb-1">Email Address *</label>
-                <Input
-                  required
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="name@example.com"
-                  className="h-10 text-xs bg-secondary/50 border-border text-foreground"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-foreground block mb-1">Phone Number *</label>
-                <Input
-                  required
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+91 98765 43210"
-                  className="h-10 text-xs bg-secondary/50 border-border text-foreground"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Password *</label>
-                  <Input
-                    required
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Min 6 characters"
-                    className="h-10 text-xs bg-secondary/50 border-border text-foreground"
-                  />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Link href="/customer/register" className="block group">
+            <Card className="h-full hover:border-primary transition-colors hover:bg-primary/5 cursor-pointer">
+              <CardHeader>
+                <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                  <UserPlus className="w-6 h-6" />
                 </div>
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Confirm Password *</label>
-                  <Input
-                    required
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    placeholder="Re-enter password"
-                    className="h-10 text-xs bg-secondary/50 border-border text-foreground"
-                  />
+                <CardTitle>Personal Customer</CardTitle>
+                <CardDescription>Book domestic services for your home</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/worker/register" className="block group">
+            <Card className="h-full hover:border-primary transition-colors hover:bg-primary/5 cursor-pointer">
+              <CardHeader>
+                <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                  <Wrench className="w-6 h-6" />
                 </div>
-              </div>
+                <CardTitle>Cooperative Worker</CardTitle>
+                <CardDescription>Join a cooperative and find reliable work</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
 
-              <div>
-                <label className="font-semibold text-foreground block mb-1">Address / Neighborhood</label>
-                <Input
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="e.g. Vastrapur, Ahmedabad"
-                  className="h-10 text-xs bg-secondary/50 border-border text-foreground"
-                />
-              </div>
+          <Link href="/society/register" className="block group">
+            <Card className="h-full hover:border-primary transition-colors hover:bg-primary/5 cursor-pointer">
+              <CardHeader>
+                <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-4 text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                  <Building2 className="w-6 h-6" />
+                </div>
+                <CardTitle>Housing Society</CardTitle>
+                <CardDescription>Register your society for bulk maintenance & services</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
 
-              <Button
-                type="submit"
-                className="w-full h-11 text-xs font-bold mt-3 bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 cursor-pointer"
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Creating Account...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <UserPlus className="h-4 w-4" /> Create Account
-                  </span>
-                )}
-              </Button>
-            </form>
+          <Link href="/institution/register" className="block group">
+            <Card className="h-full hover:border-primary transition-colors hover:bg-primary/5 cursor-pointer">
+              <CardHeader>
+                <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center mb-4 text-teal-500 group-hover:bg-teal-500 group-hover:text-white transition-colors">
+                  <School className="w-6 h-6" />
+                </div>
+                <CardTitle>Institution / School</CardTitle>
+                <CardDescription>Register your institution for dedicated maintenance contracts</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+        </div>
 
-            <div className="mt-5 pt-4 border-t border-border/80 text-center space-y-2 text-xs">
-              <p className="text-muted-foreground">
-                Already have an account?{' '}
-                <Link href="/login" className="text-primary font-bold hover:underline">
-                  Sign In
-                </Link>
-              </p>
-              <p className="text-muted-foreground">
-                Are you a skilled technician or helper?{' '}
-                <Link href="/worker/register" className="text-emerald-400 font-semibold hover:underline">
-                  Register as Worker →
-                </Link>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          Already have an account? <Link href="/login" className="text-primary hover:underline font-medium">Sign in</Link>
+        </p>
       </div>
     </div>
   );
 }
-

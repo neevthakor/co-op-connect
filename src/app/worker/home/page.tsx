@@ -20,8 +20,10 @@ export default async function WorkerHomePage() {
   let activeBookings: any[] = [];
   let completedJobsCount = 0;
 
+  let topRequirements: any[] = [];
+
   if (workerId) {
-    const [workerData, bookingsData, earningsAgg, jobsCount] = await Promise.all([
+    const [workerData, bookingsData, earningsAgg, jobsCount, topReqs, allCategories] = await Promise.all([
       prisma.worker.findUnique({
         where: { id: workerId },
         select: {
@@ -56,13 +58,25 @@ export default async function WorkerHomePage() {
       }),
       prisma.booking.count({
         where: { workerId, status: 'COMPLETED' },
-      })
+      }),
+      prisma.booking.groupBy({
+        by: ['categoryId'],
+        _count: { categoryId: true },
+        orderBy: { _count: { categoryId: 'desc' } },
+        take: 3,
+      }),
+      prisma.serviceCategory.findMany() // to map category ID to name
     ]);
 
     worker = workerData;
     activeBookings = bookingsData;
     todayEarnings = earningsAgg._sum.netAmount || 0;
     completedJobsCount = jobsCount;
+
+    topRequirements = topReqs.map(req => ({
+      name: allCategories.find(c => c.id === req.categoryId)?.name || req.categoryId,
+      count: req._count.categoryId
+    }));
   }
 
   const ratingDisplay =
@@ -165,6 +179,33 @@ export default async function WorkerHomePage() {
                       </Button>
                     </Link>
                   </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Top Customer Requirements */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-blue-600" />
+            Top Customer Requirements (Overall Demand)
+          </h2>
+        </div>
+        
+        {topRequirements.length === 0 ? (
+          <Card className="bg-white text-center p-8 border">
+            <h3 className="font-semibold text-gray-700">No demand data available</h3>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {topRequirements.map((req, idx) => (
+              <Card key={idx} className="bg-blue-50/50 border border-blue-100 hover:border-blue-200 transition-all shadow-xs">
+                <CardContent className="p-4 flex justify-between items-center">
+                  <span className="font-semibold text-gray-800">{req.name}</span>
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{req.count} requests</Badge>
                 </CardContent>
               </Card>
             ))}

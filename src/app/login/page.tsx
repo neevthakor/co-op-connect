@@ -10,8 +10,6 @@ import { getRoleRedirect } from "@/lib/rbac";
 const DEMO_ACCOUNTS = [
   { email: "customer1@gmail.com", role: "Customer", color: "bg-blue-500" },
   { email: "worker1@coopconnect.in", role: "Worker", color: "bg-green-500" },
-  { email: "admin1@coopconnect.in", role: "Cooperative Admin", color: "bg-slate-700" },
-  { email: "federation@coopconnect.in", role: "Federation Admin", color: "bg-purple-500" },
   { email: "society1@coopconnect.in", role: "Housing Society", color: "bg-amber-500" },
   { email: "school@ahmedabad.edu", role: "Institution", color: "bg-teal-500" },
 ];

@@ -10,7 +10,6 @@ const mobileNavItems = [
   { href: "/customer/home", label: "Home", icon: Home },
   { href: "/customer/services", label: "Services", icon: Search },
   { href: "/customer/bookings", label: "Bookings", icon: CalendarDays },
-  { href: "/customer/messages", label: "Messages", icon: MessageSquare },
   { href: "/customer/profile", label: "Profile", icon: User },
 ];
 
@@ -19,7 +18,6 @@ const desktopNavItems = [
   { href: "/customer/home", label: "Home", icon: Home },
   { href: "/customer/services", label: "Services", icon: Search },
   { href: "/customer/bookings", label: "Bookings", icon: CalendarDays },
-  { href: "/customer/messages", label: "Messages", icon: MessageSquare },
   { href: "/customer/trusted", label: "Trusted Workers", icon: Heart },
   { href: "/customer/notifications", label: "Notifications", icon: Bell },
   { href: "/customer/profile", label: "Profile & Settings", icon: User },

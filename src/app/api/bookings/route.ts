@@ -137,6 +137,29 @@ export async function POST(req: NextRequest) {
     });
     console.timeEnd('[booking] createBooking function');
 
+    if (address && customerId) {
+      try {
+        const normalizedAddress = address.toLowerCase().trim();
+        const existingLocations = await prisma.customerLocation.findMany({ where: { customerId } });
+        const duplicate = existingLocations.find(l => l.address.toLowerCase().trim() === normalizedAddress);
+        if (!duplicate) {
+          await prisma.customerLocation.create({
+            data: {
+              customerId,
+              address: address,
+              city: body.city || 'Ahmedabad',
+              state: body.state || 'Gujarat',
+              latitude: latitude ? parseFloat(latitude) : null,
+              longitude: longitude ? parseFloat(longitude) : null,
+              isDefault: existingLocations.length === 0
+            }
+          });
+        }
+      } catch (locErr) {
+        console.error('Failed to save customer location history:', locErr);
+      }
+    }
+
     const imageUrls = body.imageUrls;
     if (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0) {
       await prisma.jobProof.createMany({

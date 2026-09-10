@@ -1,4 +1,4 @@
-﻿import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -20,7 +20,7 @@ export default async function CustomerHomePage() {
 
   const customerId = (session.user as any).customerId;
 
-  const [activeBookings, popularServices, nearbyWorkers, recentBookings] = await Promise.all([
+  const [activeBookings, popularServices, nearbyWorkers, recentBookings, latestLocation] = await Promise.all([
     customerId
       ? prisma.booking.findMany({
           where: {
@@ -63,7 +63,21 @@ export default async function CustomerHomePage() {
           take: 3,
         })
       : [],
+    customerId 
+      ? prisma.customerLocation.findFirst({
+          where: { customerId },
+          orderBy: { createdAt: 'desc' }
+        })
+      : null,
   ]);
+
+  const workersAvailableCount = await prisma.worker.count({
+    where: {
+      verificationStatus: 'VERIFIED',
+      availabilityStatus: 'AVAILABLE',
+      ...(latestLocation?.city ? { city: latestLocation.city } : {})
+    }
+  });
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-6xl mx-auto w-full">
@@ -72,15 +86,24 @@ export default async function CustomerHomePage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-black tracking-tight text-foreground">
-              Hello, {session.user.name || 'Cooperator'}! ðŸ‘‹
+              Hello, {session.user.name || 'Cooperator'}! 👋
             </h1>
           </div>
           <p className="text-muted-foreground text-xs md:text-sm mt-0.5">
             Verified cooperative services & fair-wage technicians in your area.
           </p>
+          <div className="mt-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold text-xs md:text-sm border border-emerald-500/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              {latestLocation?.city ? `Workers Available Near You (${latestLocation.city}): ${workersAvailableCount}` : `Workers Available Globally: ${workersAvailableCount}`}
+            </span>
+            {!latestLocation?.city && (
+              <p className="text-[10px] text-muted-foreground mt-1 ml-1">Please set your location during booking to see nearby workers.</p>
+            )}
+          </div>
         </div>
         <Link href="/customer/profile" className="shrink-0">
-          <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-base  transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-base transition-colors">
             {session.user.name?.charAt(0) || 'U'}
           </div>
         </Link>
