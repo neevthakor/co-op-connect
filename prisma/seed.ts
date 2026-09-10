@@ -6,6 +6,16 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding Co-opConnect database...');
 
+  const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
+  const seedDemoPassword = process.env.SEED_DEMO_PASSWORD;
+
+  if (!seedAdminPassword || !seedDemoPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD and SEED_DEMO_PASSWORD environment variables are required.');
+  }
+
+  const passwordHash = await bcrypt.hash(seedDemoPassword, 10);
+  const adminPasswordHash = await bcrypt.hash(seedAdminPassword, 10);
+
   // Clear existing data
   const tables = [
     "Vote", "CooperativeProposal", "FraudAlert", "AuditLog", "SkillGapRecord", 
@@ -26,8 +36,6 @@ async function main() {
     await prisma.$executeRawUnsafe(`DELETE FROM "${table}" WHERE id LIKE 'demo-%'`);
   }
   // Note: ServiceCategory, Skill, and Certification are preserved as core data.
-
-  const passwordHash = await bcrypt.hash('[REDACTED]', 10);
 
   // ============================================================
   // FEDERATION
@@ -412,7 +420,7 @@ async function main() {
         id: `demo-user-coopadmin-${i + 1}`,
         email: `admin${i + 1}@coopconnect.in`,
         phone: `+9196${String(10000000 + i).padStart(8, '0')}`,
-        passwordHash,
+        passwordHash: adminPasswordHash,
         name: `Admin ${['Patel', 'Sharma', 'Desai', 'Modi', 'Joshi'][i]}`,
         role: 'COOPERATIVE_ADMIN',
       },
@@ -432,7 +440,7 @@ async function main() {
       id: 'demo-user-fedadmin-1',
       email: 'federation@coopconnect.in',
       phone: '+919600000001',
-      passwordHash,
+      passwordHash: adminPasswordHash,
       name: 'Rajesh Kothari',
       role: 'FEDERATION_ADMIN',
     },
@@ -483,7 +491,7 @@ async function main() {
         id: `demo-user-societyadmin-${i + 1}`,
         email: `society${i + 1}@coopconnect.in`,
         phone: `+9195${String(20000000 + i).padStart(8, '0')}`,
-        passwordHash,
+        passwordHash: adminPasswordHash,
         name: i === 0 ? 'Mihir Shah' : 'Nisha Patel',
         role: 'SOCIETY_ADMIN',
       },
@@ -519,7 +527,7 @@ async function main() {
       id: 'demo-user-inst-1',
       email: 'school@ahmedabad.edu',
       phone: '+919876543220',
-      passwordHash,
+      passwordHash: adminPasswordHash,
       name: 'Dr. Anand Patel',
       role: 'INSTITUTIONAL_CUSTOMER',
     },

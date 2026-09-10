@@ -1,5 +1,6 @@
 import { prisma } from '../src/lib/prisma';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { getWorkerProfile } from '../src/services/worker-profile';
 import { createBooking, updateBookingStatus, verifyServicePin } from '../src/services/booking';
 import { processPayment } from '../src/services/payment';
@@ -10,7 +11,7 @@ async function runRealDataFlowTest() {
   console.log('===============================================================\n');
 
   const testTimestamp = Date.now();
-  const passwordHash = await bcrypt.hash('[REDACTED]', 10);
+  const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
 
   // 1. Register Fresh Real Customer
   const customerUser = await prisma.user.create({

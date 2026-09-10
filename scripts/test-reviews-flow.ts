@@ -1,5 +1,6 @@
 import { prisma } from '../src/lib/prisma';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { getWorkerProfile } from '../src/services/worker-profile';
 import { createBooking, updateBookingStatus, verifyServicePin } from '../src/services/booking';
 import { WorkerReview } from '../src/types/review';
@@ -10,7 +11,7 @@ async function testWorkerReviewsFlow() {
   console.log('===============================================================\n');
 
   const timestamp = Date.now();
-  const passwordHash = await bcrypt.hash('[REDACTED]', 10);
+  const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
 
   // 1. Create Test Worker
   const workerUser = await prisma.user.create({

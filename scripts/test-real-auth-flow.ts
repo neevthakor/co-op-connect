@@ -1,5 +1,6 @@
 import { prisma } from '../src/lib/prisma';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { getRoleRedirect } from '../src/lib/rbac';
 
 async function testRealAuthFlow() {
@@ -8,8 +9,8 @@ async function testRealAuthFlow() {
   console.log('===============================================================\n');
 
   const timestamp = Date.now();
-  const rawCustomerPassword = '[REDACTED]';
-  const rawWorkerPassword = '[REDACTED]';
+  const rawCustomerPassword = crypto.randomBytes(32).toString('hex');
+  const rawWorkerPassword = crypto.randomBytes(32).toString('hex');
 
   // ============================================================
   // 1. TEST CUSTOMER REGISTRATION

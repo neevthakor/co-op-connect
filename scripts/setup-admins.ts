@@ -4,9 +4,9 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
   if (!adminPassword) {
-    console.error('ADMIN_PASSWORD environment variable is required');
+    console.error('SEED_ADMIN_PASSWORD environment variable is required');
     process.exit(1);
   }
 

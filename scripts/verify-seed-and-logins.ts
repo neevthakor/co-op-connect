@@ -42,6 +42,12 @@ async function main() {
   console.log('       DATABASE SEED VERIFICATION & AUTHENTICATION AUDIT        ');
   console.log('===============================================================\n');
 
+  const seedDemoPassword = process.env.SEED_DEMO_PASSWORD;
+  const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!seedDemoPassword || !seedAdminPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD and SEED_DEMO_PASSWORD environment variables are required.');
+  }
+
   // 1. Verify Database Records
   const userCount = await prisma.user.count();
   const workerCount = await prisma.worker.count();
@@ -67,13 +73,13 @@ async function main() {
 
   // 2. Demo Accounts Test Cases
   const testCredentials = [
-    { label: 'Customer 1', email: 'customer1@gmail.com', password: '[REDACTED]', expectedRole: 'CUSTOMER' },
-    { label: 'Customer 2', email: 'customer2@gmail.com', password: '[REDACTED]', expectedRole: 'CUSTOMER' },
-    { label: 'Worker 1 (Lead AC Tech)', email: 'worker1@coopconnect.in', password: '[REDACTED]', expectedRole: 'WORKER' },
-    { label: 'Worker 5 (Lead Technician)', email: 'worker5@coopconnect.in', password: '[REDACTED]', expectedRole: 'WORKER' },
-    { label: 'Worker 10 (Helper / Apprentice)', email: 'worker10@coopconnect.in', password: '[REDACTED]', expectedRole: 'WORKER' },
-    { label: 'Cooperative Admin 1', email: 'admin1@coopconnect.in', password: '[REDACTED]', expectedRole: 'COOPERATIVE_ADMIN' },
-    { label: 'Federation Admin', email: 'federation@coopconnect.in', password: '[REDACTED]', expectedRole: 'FEDERATION_ADMIN' },
+    { label: 'Customer 1', email: 'customer1@gmail.com', password: seedDemoPassword, expectedRole: 'CUSTOMER' },
+    { label: 'Customer 2', email: 'customer2@gmail.com', password: seedDemoPassword, expectedRole: 'CUSTOMER' },
+    { label: 'Worker 1 (Lead AC Tech)', email: 'worker1@coopconnect.in', password: seedDemoPassword, expectedRole: 'WORKER' },
+    { label: 'Worker 5 (Lead Technician)', email: 'worker5@coopconnect.in', password: seedDemoPassword, expectedRole: 'WORKER' },
+    { label: 'Worker 10 (Helper / Apprentice)', email: 'worker10@coopconnect.in', password: seedDemoPassword, expectedRole: 'WORKER' },
+    { label: 'Cooperative Admin 1', email: 'admin1@coopconnect.in', password: seedAdminPassword, expectedRole: 'COOPERATIVE_ADMIN' },
+    { label: 'Federation Admin', email: 'federation@coopconnect.in', password: seedAdminPassword, expectedRole: 'FEDERATION_ADMIN' },
   ];
 
   console.log('🔐 AUTHENTICATION LOGIN TESTS:\n');
@@ -82,7 +88,7 @@ async function main() {
     const result = await verifyAuth(cred.email, cred.password);
     if (result.success && result.user) {
       console.log(`✅ [SUCCESS] ${cred.label}`);
-      console.log(`   Email: ${cred.email} | Password: ${cred.password}`);
+      console.log(`   Email: ${cred.email}`);
       console.log(`   Name: ${result.user.name} | Role: ${result.user.role}`);
       if (result.user.workerId) console.log(`   Worker ID: ${result.user.workerId} (${result.user.primaryTrade || 'Trade'})`);
       if (result.user.customerId) console.log(`   Customer ID: ${result.user.customerId}`);

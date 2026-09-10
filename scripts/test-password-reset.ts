@@ -8,8 +8,8 @@ async function main() {
   console.log('--- STARTING PASSWORD RESET TEST ---');
   
   const testEmail = `testreset_${Date.now()}@example.com`;
-  const initialPassword = '[REDACTED]';
-  const newPassword = '[REDACTED]';
+  const initialPassword = crypto.randomBytes(32).toString('hex');
+  const newPassword = crypto.randomBytes(32).toString('hex');
 
   // 1. Create a real registered user directly in DB for testing
   const passwordHash = await bcrypt.hash(initialPassword, 10);

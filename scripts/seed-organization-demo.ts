@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 
 export const prisma = new PrismaClient();
 
-const DEMO_PASSWORD = "[REDACTED]";
 const SOCIETY_MEMBER_COUNT = 3;
 const INSTITUTION_MEMBER_COUNT = 2;
 const AHMEDABAD = {
@@ -533,7 +532,11 @@ async function ensureBooking(input: {
 }
 
 export async function seedOrganizationDemo() {
-  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+  const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!seedAdminPassword) {
+    throw new Error("SEED_ADMIN_PASSWORD environment variable is required.");
+  }
+  const passwordHash = await bcrypt.hash(seedAdminPassword, 10);
   const [society, institution] = await Promise.all([ensureSociety(), ensureInstitution()]);
 
   await ensureAdmins(society.id, institution.id, passwordHash);

@@ -48,7 +48,11 @@ const INTERNATIONAL_CUSTOMERS = [
 async function main() {
   console.log('Seeding Mobile Demo Data...');
 
-  const passwordHash = await bcrypt.hash('[REDACTED]', 10);
+  const seedDemoPassword = process.env.SEED_DEMO_PASSWORD;
+  if (!seedDemoPassword) {
+    throw new Error('SEED_DEMO_PASSWORD environment variable is required.');
+  }
+  const passwordHash = await bcrypt.hash(seedDemoPassword, 10);
 
   // 1. Ensure a Federation exists
   let federation = await prisma.federation.findFirst();

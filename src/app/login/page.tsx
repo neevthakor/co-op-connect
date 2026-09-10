@@ -60,33 +60,8 @@ function LoginForm() {
 
   const handleDevAccountLogin = async (devEmail: string) => {
     setEmail(devEmail);
-    setPassword("[REDACTED]");
-    setLoading(true);
-    setError("");
-
-    try {
-      const result = await signIn("credentials", {
-        email: devEmail,
-        password: "[REDACTED]",
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError("Sign in failed for this account. Ensure database is seeded.");
-        setLoading(false);
-        return;
-      }
-
-      const sessionRes = await fetch("/api/auth/session");
-      const session = await sessionRes.json();
-      const role = session?.user?.role;
-      const redirectPath = getRoleRedirect(role);
-      router.push(redirectPath);
-      router.refresh();
-    } catch {
-      setError("An error occurred during sign in. Please try again.");
-      setLoading(false);
-    }
+    setPassword("");
+    setError("Enter the seeded profile password to continue.");
   };
 
   return (

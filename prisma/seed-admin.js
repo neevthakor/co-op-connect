@@ -4,7 +4,11 @@ const prisma = new PrismaClient();
 
 async function main() {
   const adminEmail = 'admin@coopconnect.com';
-  const password = '[REDACTED]';
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+
+  if (!adminPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD environment variable is required.');
+  }
   
   const existingAdmin = await prisma.user.findUnique({
     where: { email: adminEmail }
@@ -15,7 +19,7 @@ async function main() {
     return;
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
   
   const admin = await prisma.user.create({
     data: {

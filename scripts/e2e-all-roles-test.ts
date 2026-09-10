@@ -26,12 +26,18 @@ async function runE2ETests() {
   console.log('       STARTING COMPREHENSIVE MULTI-ROLE E2E AUDIT TEST        ');
   console.log('===============================================================\n');
 
+  const seedDemoPassword = process.env.SEED_DEMO_PASSWORD;
+  const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!seedDemoPassword || !seedAdminPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD and SEED_DEMO_PASSWORD environment variables are required.');
+  }
+
   // ============================================================
   // 1. CUSTOMER FLOW
   // ============================================================
   console.log('--- [1. CUSTOMER END-TO-END FLOW] ---');
   // A. Customer Login
-  const custAuth = await testAuth('customer1@gmail.com', '[REDACTED]');
+  const custAuth = await testAuth('customer1@gmail.com', seedDemoPassword);
   if (!custAuth.success || !custAuth.user) throw new Error('Customer login failed');
   console.log(`✅ Customer Login: ${custAuth.user.name} (${custAuth.user.email}) -> Role: ${custAuth.user.role}`);
 
@@ -79,7 +85,7 @@ async function runE2ETests() {
   // ============================================================
   console.log('--- [2. WORKER END-TO-END FLOW] ---');
   // A. Worker Login
-  const workerAuth = await testAuth('worker1@coopconnect.in', '[REDACTED]');
+  const workerAuth = await testAuth('worker1@coopconnect.in', seedDemoPassword);
   if (!workerAuth.success || !workerAuth.user) throw new Error('Worker login failed');
   console.log(`✅ Worker Login: ${workerAuth.user.name} (${workerAuth.user.email}) -> Trade: ${workerAuth.user.worker?.primaryTrade}`);
 
@@ -128,7 +134,7 @@ async function runE2ETests() {
   // ============================================================
   console.log('--- [3. ADMIN END-TO-END FLOW] ---');
   // A. Admin Login
-  const adminAuth = await testAuth('admin1@coopconnect.in', '[REDACTED]');
+  const adminAuth = await testAuth('admin1@coopconnect.in', seedAdminPassword);
   if (!adminAuth.success || !adminAuth.user) throw new Error('Admin login failed');
   console.log(`✅ Admin Login: ${adminAuth.user.name} (${adminAuth.user.email}) -> Role: ${adminAuth.user.role}, Coop: ${adminAuth.user.cooperativeAdmin?.cooperativeId}`);
 
