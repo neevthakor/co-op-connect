@@ -3,14 +3,54 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Bell, LogOut, type LucideIcon } from "lucide-react";
+import {
+  Activity,
+  Bell,
+  Briefcase,
+  Calendar,
+  CalendarDays,
+  ClipboardList,
+  FileText,
+  Heart,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Search,
+  ShieldCheck,
+  User,
+  Users,
+  Wallet,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
+
+const portalIconMap = {
+  Activity,
+  Bell,
+  Briefcase,
+  Calendar,
+  CalendarDays,
+  ClipboardList,
+  FileText,
+  Heart,
+  Home,
+  LayoutDashboard,
+  Search,
+  ShieldCheck,
+  User,
+  Users,
+  Wallet,
+  Wrench,
+} satisfies Record<string, LucideIcon>;
+
+type PortalIconName = keyof typeof portalIconMap;
 
 export type PortalNavItem = {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: LucideIcon | PortalIconName;
 };
 
 type PortalShellProps = {
@@ -57,6 +97,10 @@ const accents = {
 
 function isItemActive(pathname: string, item: PortalNavItem, homeHref: string) {
   return pathname === item.href || (item.href !== homeHref && pathname.startsWith(`${item.href}/`));
+}
+
+function getPortalIcon(icon: PortalNavItem["icon"]) {
+  return typeof icon === "string" ? portalIconMap[icon] : icon;
 }
 
 function Brand({ homeHref, roleLabel, accent }: Pick<PortalShellProps, "homeHref" | "roleLabel" | "accent">) {
@@ -127,6 +171,7 @@ export function PortalShell({
         <nav aria-label={`${roleLabel} navigation`} className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navItems.map((item) => {
             const active = isItemActive(pathname, item, homeHref);
+            const Icon = getPortalIcon(item.icon);
             return (
               <Link
                 key={item.href}
@@ -136,7 +181,7 @@ export function PortalShell({
                   active && colors.active
                 )}
               >
-                <item.icon className={cn("size-4 shrink-0", active ? colors.icon : "text-muted-foreground")} />
+                <Icon className={cn("size-4 shrink-0", active ? colors.icon : "text-muted-foreground")} />
                 <span className="truncate">{item.label}</span>
               </Link>
             );
@@ -167,6 +212,7 @@ export function PortalShell({
         <div className="mx-auto grid h-16 max-w-md grid-cols-4 gap-1">
           {mobileNavItems.map((item) => {
             const active = isItemActive(pathname, item, homeHref);
+            const Icon = getPortalIcon(item.icon);
             return (
               <Link
                 key={item.href}
@@ -176,7 +222,7 @@ export function PortalShell({
                   active ? colors.label : "hover:text-foreground"
                 )}
               >
-                <item.icon className={cn("size-5", active && "stroke-[2.4]")} />
+                <Icon className={cn("size-5", active && "stroke-[2.4]")} />
                 <span className="max-w-full truncate text-[11px] font-semibold">{item.label}</span>
               </Link>
             );

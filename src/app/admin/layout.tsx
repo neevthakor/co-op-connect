@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Activity, ClipboardList, LayoutDashboard, ShieldCheck, Users } from "lucide-react";
-import { PortalShell } from "@/components/layout/portal-shell";
+import { PortalShell, type PortalNavItem } from "@/components/layout/portal-shell";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -11,24 +10,26 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login");
   }
 
-  const navItems = [
-    { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  const adminNavItem = (href: string, label: string, icon: PortalNavItem["icon"]): PortalNavItem => ({ href, label, icon });
+
+  const navItems: PortalNavItem[] = [
+    adminNavItem("/admin", "Dashboard", "LayoutDashboard"),
     ...(userRole === "COOPERATIVE_ADMIN"
       ? [
-          { href: "/admin/workers", label: "Workers", icon: Users },
-          { href: "/admin/verification", label: "Worker verification", icon: ShieldCheck },
-          { href: "/admin/complaints", label: "Customer issues", icon: Activity },
-          { href: "/admin/analytics", label: "Workforce analytics", icon: Activity },
-          { href: "/admin/bookings", label: "Bookings", icon: ClipboardList },
+          adminNavItem("/admin/workers", "Workers", "Users"),
+          adminNavItem("/admin/verification", "Worker verification", "ShieldCheck"),
+          adminNavItem("/admin/complaints", "Customer issues", "Activity"),
+          adminNavItem("/admin/analytics", "Workforce analytics", "Activity"),
+          adminNavItem("/admin/bookings", "Bookings", "ClipboardList"),
         ]
       : []),
     ...(userRole === "FEDERATION_ADMIN"
-      ? [{ href: "/admin/organization-requests", label: "Organization requests", icon: ClipboardList }]
+      ? [adminNavItem("/admin/organization-requests", "Organization requests", "ClipboardList")]
       : []),
     ...(userRole === "ADMIN"
       ? [
-          { href: "/admin/workers", label: "Worker verification", icon: ShieldCheck },
-          { href: "/admin/bookings", label: "Bookings & jobs", icon: ClipboardList },
+          adminNavItem("/admin/workers", "Worker verification", "ShieldCheck"),
+          adminNavItem("/admin/bookings", "Bookings & jobs", "ClipboardList"),
         ]
       : []),
   ];
