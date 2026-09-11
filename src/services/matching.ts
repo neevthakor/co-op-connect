@@ -74,9 +74,11 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
   const allowedTradesArray = Array.from(dynamicTrades);
 
   // 1. Filter eligible workers (verified, belongs to trade/skills in category)
+  // FIX: also exclude workers who are OFFLINE outright, instead of only down-scoring them.
   const workers = await prisma.worker.findMany({
     where: {
       verificationStatus: "VERIFIED",
+      availabilityStatus: { not: "OFFLINE" },
       ...(cooperativeId ? { cooperativeId } : {}),
       OR: [
         {
@@ -122,15 +124,20 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
 
   for (const worker of workers) {
     // 1. Skill Compatibility (0 - 100)
+    // FIX: a worker with no real skill record for this category (matched only via
+    // the loose primaryTrade text fallback) should score noticeably lower than one
+    // with an actual, verified skill entry — not the same 70 as before.
     const matchingSkill = worker.skills.find(
       (ws) => ws.skill.categoryId === categoryId
     );
-    let skillScore = 70;
+    let skillScore = 45; // no matching skill record — matched on primaryTrade text only
     if (matchingSkill?.proficiencyLevel === "EXPERT") skillScore = 100;
     else if (matchingSkill?.proficiencyLevel === "ADVANCED") skillScore = 90;
     else if (matchingSkill?.proficiencyLevel === "INTERMEDIATE") skillScore = 80;
+    else if (matchingSkill) skillScore = 65; // has a skill record but no/unknown proficiency
 
     // 2. Availability (0 - 100)
+    // OFFLINE workers are already excluded above, so this only distinguishes AVAILABLE vs BUSY.
     let availabilityScore = 50;
     if (worker.availabilityStatus === "AVAILABLE") availabilityScore = 100;
     else if (worker.availabilityStatus === "BUSY") availabilityScore = 40;
@@ -139,7 +146,9 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     }
 
     // 3. Distance (0 - 100)
-    let distanceKm = 5;
+    // FIX: if a worker has no coordinates on file, don't guess "5km" (that fabricates
+    // a favorable distance score) — push them to the bottom on this factor instead.
+    let distanceKm: number | null = null;
     if (worker.latitude && worker.longitude) {
       distanceKm = haversineDistance(
         latitude,
@@ -149,17 +158,25 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
       );
     }
     const maxRadius = worker.serviceRadius || 15;
-    
-    // EXCLUDE DISTANT WORKERS
-    if (distanceKm > maxRadius) {
+
+    // EXCLUDE DISTANT WORKERS (only when we actually know the distance)
+    if (distanceKm !== null && distanceKm > maxRadius) {
       continue;
     }
 
-    const distanceScore = Math.max(0, Math.round((1 - Math.min(distanceKm, maxRadius) / maxRadius) * 100));
+    const distanceScore = distanceKm === null
+      ? 20
+      : Math.max(0, Math.round((1 - Math.min(distanceKm, maxRadius) / maxRadius) * 100));
 
     // 4. Reliability (0 - 100)
-    const ratingComponent = ((worker.averageRating || 4.5) / 5) * 50;
-    const completionComponent = ((worker.completionRate || 95) / 100) * 50;
+    // FIX: don't default an unrated worker to 4.5/5 — that lets brand-new workers
+    // with zero jobs outrank proven ones. Use a neutral 3.0 default instead, and only
+    // let completion rate count once the worker actually has a job history.
+    const hasRatingHistory = worker.totalJobs && worker.totalJobs > 0;
+    const ratingComponent = ((worker.averageRating ?? 3.0) / 5) * 50;
+    const completionComponent = hasRatingHistory
+      ? ((worker.completionRate ?? 80) / 100) * 50
+      : 25; // neutral midpoint for workers with no completed jobs yet
     const reliabilityScore = Math.round(ratingComponent + completionComponent);
 
     // 5. Certification (0 - 100)
@@ -181,14 +198,20 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
       fairnessScore * weights.fairnessWeight
     );
 
-    const explanation = `Recommended because this worker has verified skills for this service, is located ~${distanceKm.toFixed(1)} km away with a ${worker.averageRating.toFixed(1)} rating, and is fairly prioritized under cooperative workload distribution.`;
+    // FIX: worker.averageRating can be null/undefined for new workers — this used to
+    // crash on .toFixed(1). Use the same fallback as the scoring above.
+    const displayRating = (worker.averageRating ?? 3.0).toFixed(1);
+    const distanceLabel = distanceKm === null ? "an unknown distance" : `~${distanceKm.toFixed(1)} km`;
+    const explanation = `Recommended because this worker has ${matchingSkill ? "verified" : "listed"} skills for this service, is located ${distanceLabel} away with a ${displayRating} rating, and is fairly prioritized under cooperative workload distribution.`;
 
     scoredResults.push({
       worker: {
         ...worker,
-        distance: distanceKm,
+        distance: distanceKm ?? undefined,
       },
-      match_score: Math.min(99, Math.max(50, totalScore)),
+      // FIX: removed the artificial 50-point floor. A weak match should be able to
+      // show as weak (e.g. 20-40) instead of always displaying as 50+.
+      match_score: Math.min(99, Math.max(0, totalScore)),
       score_breakdown: {
         skill: skillScore,
         availability: availabilityScore,

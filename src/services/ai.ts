@@ -173,28 +173,51 @@ User Input: "${text}"`;
 
 function fallbackParseServiceRequest(text: string, language?: string): ParsedServiceRequest {
   const lower = text.toLowerCase();
-  
+
   // Emergency Detection First
   if (lower.includes('accident') || lower.includes('chot') || lower.includes('injured') || lower.includes('ambulance') || lower.includes('doctor') || lower.includes('hospital') || lower.includes('gir gayi')) {
       return createDeterministicFallback(text, language, 'MEDICAL_EMERGENCY', null, 0.99, 'CRITICAL');
   }
-  if (lower.includes('aag') || lower.includes('fire') || lower.includes('police')) {
+  if (lower.includes('aag') || lower.includes('fire') || lower.includes('police') || lower.includes('short circuit') || lower.includes('sparking')) {
       return createDeterministicFallback(text, language, 'EMERGENCY', null, 0.99, 'CRITICAL');
   }
 
   // Out of Scope
-  if (lower.includes('lawyer') || lower.includes('visa') || lower.includes('restaurant') || lower.includes('ticket') || lower.includes('movie')) {
+  if (lower.includes('lawyer') || lower.includes('visa') || lower.includes('restaurant') || lower.includes('ticket') || lower.includes('movie') || lower.includes('mechanic') || lower.includes('flight')) {
       return createDeterministicFallback(text, language, 'OUT_OF_SCOPE', null, 0.95, 'NORMAL');
   }
 
-  // Service Mapping
+  // Service Mapping — covers all 10 supported categories with EN/Hindi/Hinglish/Gujarati keywords.
+  // FIX: previously only 5 of 10 categories were matched here, so any Gemini outage (timeout,
+  // rate limit, quota, etc.) silently misclassified cleaner/appliance/pest/waterproofing/gardener
+  // requests as CLARIFICATION_REQUIRED even when the request was completely unambiguous.
+  // "ac" alone is too short/ambiguous for a plain substring check (matches "package", "attack",
+  // etc.), so it gets a word-boundary regex instead of a substring match.
+  if (/\bac\b/.test(lower)) {
+    return createDeterministicFallback(text, language, 'SERVICE_REQUEST', CATEGORY_MAP.ac, 0.90, 'NORMAL');
+  }
+
+  const categoryKeywords: Record<string, string[]> = {
+    ac: ['a/c', 'air condition', 'cooling', 'thanda nahi', 'એસી', 'एसी', 'ઠંડક'],
+    plumber: ['plumb', 'leak', 'tap ', 'pipe', 'drain', 'faucet', 'geyser leak', 'toilet', 'flush', 'નળ', 'नल', 'ટપકે', 'टपक'],
+    electrician: ['electric', 'wiring', 'wire', 'switch', 'fan ', 'mcb', 'inverter', 'bulb', 'socket', 'વીજળી', 'बिजली', 'ફેન'],
+    carpenter: ['carpent', 'wood', 'door', 'furniture', 'wardrobe', 'shelf', 'shelves', 'hinge', 'ફર્નિચર', 'लकड़ी', 'बढ़ई'],
+    painter: ['paint', 'whitewash', 'texture wall', 'રંગ', 'पेंट', 'पुताई'],
+    cleaner: ['clean', 'cleaning', 'sofa wash', 'deep clean', 'housekeeping', 'saaf', 'સાફ', 'सफाई', 'सफ़ाई'],
+    appliance: ['washing machine', 'refrigerator', 'fridge', 'microwave', 'geyser not', 'appliance', 'फ्रिज', 'વોશિંગ'],
+    pest: ['pest', 'termite', 'cockroach', 'bed bug', 'ants', 'rat problem', 'mosquito', 'keede', 'कीड़े', 'મચ્છર'],
+    waterproofing: ['waterproof', 'seepage', 'seeping', 'dampness', 'damp wall', 'terrace leak', 'ceiling leak', 'छत से पानी', 'છત'],
+    gardener: ['garden', 'lawn', 'hedge', 'plant', 'gardening', 'weed', 'બગીચો', 'बगीचा', 'बाग'],
+  };
+
   let categoryKey: string | null = null;
-  if (lower.includes('ac') || lower.includes('cooling') || lower.includes('એસી') || lower.includes('एसी')) categoryKey = 'ac';
-  else if (lower.includes('plumb') || lower.includes('leak') || lower.includes('tap') || lower.includes('pipe') || lower.includes('નળ') || lower.includes('नल')) categoryKey = 'plumber';
-  else if (lower.includes('electric') || lower.includes('wire') || lower.includes('switch') || lower.includes('fan') || lower.includes('વીજળી') || lower.includes('बिजली')) categoryKey = 'electrician';
-  else if (lower.includes('carpent') || lower.includes('wood') || lower.includes('door') || lower.includes('ફર્નિચર') || lower.includes('लकड़ी')) categoryKey = 'carpenter';
-  else if (lower.includes('paint') || lower.includes('wall') || lower.includes('રંગ') || lower.includes('पेंटिंग')) categoryKey = 'painter';
-  
+  for (const [key, keywords] of Object.entries(categoryKeywords)) {
+    if (keywords.some((kw) => lower.includes(kw))) {
+      categoryKey = key;
+      break;
+    }
+  }
+
   if (categoryKey) {
       return createDeterministicFallback(text, language, 'SERVICE_REQUEST', CATEGORY_MAP[categoryKey], 0.90, 'NORMAL');
   }
