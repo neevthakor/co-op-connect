@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Loader2 } from "lucide-react";
 import { cn } from '@/lib/utils';
@@ -42,7 +42,7 @@ export function VoiceInput({ onResult, onTranscription, language = "en-IN", clas
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSupported, setIsSupported] = useState(true);
-  const [recognition, setRecognition] = useState<ISpeechRecognition | null>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
 
   const handleResult = useCallback((text: string) => {
     if (onResult) onResult(text);
@@ -65,8 +65,9 @@ export function VoiceInput({ onResult, onTranscription, language = "en-IN", clas
     }
 
     if (isRecording) {
-      // Let the current instance stop naturally or we could track it in a ref. 
-      // It's cleaner to just update the state visually and let it stop.
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
       setIsRecording(false);
       return;
     }
@@ -76,6 +77,7 @@ export function VoiceInput({ onResult, onTranscription, language = "en-IN", clas
     reco.continuous = false;
     reco.interimResults = true;
     reco.lang = language;
+    recognitionRef.current = reco;
 
     reco.onresult = (event: SpeechRecognitionEvent) => {
       const current = event.resultIndex;

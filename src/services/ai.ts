@@ -210,7 +210,7 @@ function fallbackParseServiceRequest(text: string, language?: string): ParsedSer
     appliance: ['washing machine', 'refrigerator', 'fridge', 'microwave', 'geyser not', 'appliance', 'फ्रिज', 'વોશિંગ'],
     pest: ['pest', 'termite', 'cockroach', 'bed bug', 'ants', 'rat problem', 'mosquito', 'keede', 'कीड़े', 'મચ્છર'],
     waterproofing: ['waterproof', 'seepage', 'seeping', 'dampness', 'damp wall', 'terrace leak', 'ceiling leak', 'छत से पानी', 'છત'],
-    gardener: ['garden', 'lawn', 'hedge', 'plant', 'gardening', 'weed', 'બગીચो', 'बगीचा', 'बाग'],
+    gardener: ['garden', 'lawn', 'hedge', 'plant', 'gardening', 'weed', 'બગીચો', 'बगीचा', 'बाग'],
   };
 
   let categoryKey: string | null = null;
