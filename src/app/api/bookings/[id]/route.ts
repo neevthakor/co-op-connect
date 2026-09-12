@@ -140,6 +140,11 @@ export async function PATCH(
       if (!isCustomer && !isAdmin) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
+      
+      if (isCustomer && booking.status !== 'REQUESTED') {
+        return NextResponse.json({ error: 'Booking can only be cancelled before the worker accepts it.' }, { status: 400 });
+      }
+
       const updated = await cancelBooking(bookingId, reason || note || 'User cancelled booking');
       return NextResponse.json({ success: true, booking: updated });
     }

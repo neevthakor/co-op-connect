@@ -21,6 +21,29 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
   const [disputeCategory, setDisputeCategory] = useState('POOR_QUALITY');
   const [disputeDesc, setDisputeDesc] = useState('');
   const [loadingDispute, setLoadingDispute] = useState(false);
+  const [loadingCancel, setLoadingCancel] = useState(false);
+
+  const handleCancel = async () => {
+    if (!confirm("Are you sure you want to cancel this booking?")) return;
+    
+    setLoadingCancel(true);
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to cancel booking');
+
+      toast.success('Booking cancelled successfully');
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || 'Cancellation failed');
+    } finally {
+      setLoadingCancel(false);
+    }
+  };
 
   const handlePay = async () => {
     const totalAmount = invoice?.total || 450;
@@ -119,6 +142,29 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
 
   return (
     <div className="space-y-4">
+      {status === 'REQUESTED' && (
+        <Card className="border-destructive bg-destructive/5 p-4">
+          <CardContent className="p-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h4 className="font-bold text-sm text-foreground">Cancel Booking</h4>
+              <p className="text-xs text-muted-foreground">You can cancel the booking before the worker accepts it.</p>
+            </div>
+            <Button
+              onClick={handleCancel}
+              disabled={loadingCancel}
+              variant="destructive"
+              className="w-full sm:w-auto font-bold gap-2"
+            >
+              {loadingCancel ? (
+                <><RefreshCw className="h-4 w-4 animate-spin" /> Cancelling...</>
+              ) : (
+                'Cancel Booking'
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {isCompleted && !hasPaid && invoice && (
         <Card className="border-primary bg-primary/5 p-4">
           <CardContent className="p-0 flex flex-col sm:flex-row items-center justify-between gap-4">
