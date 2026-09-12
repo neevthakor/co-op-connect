@@ -46,7 +46,23 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { availabilityStatus, serviceRadius, bio, isEmergencyAvailable, workingHoursStart, workingHoursEnd } = body;
+    const {
+      availabilityStatus,
+      serviceRadius,
+      bio,
+      isEmergencyAvailable,
+      workingHoursStart,
+      workingHoursEnd,
+      // BUG FIX: latitude/longitude were never accepted here, so a worker had no
+      // way to set or correct their base location from their profile. That left
+      // matchWorkers()/findNearbyWorkers() with no coordinates to compare against,
+      // so the worker could never appear in "nearby" results.
+      latitude,
+      longitude,
+      address,
+      city,
+      state,
+    } = body;
 
     const updated = await prisma.worker.update({
       where: { id: workerId },
@@ -57,6 +73,11 @@ export async function PATCH(
         ...(isEmergencyAvailable !== undefined ? { isEmergencyAvailable: !!isEmergencyAvailable } : {}),
         ...(workingHoursStart ? { workingHoursStart } : {}),
         ...(workingHoursEnd ? { workingHoursEnd } : {}),
+        ...(typeof latitude === 'number' && !isNaN(latitude) && latitude >= -90 && latitude <= 90 ? { latitude } : {}),
+        ...(typeof longitude === 'number' && !isNaN(longitude) && longitude >= -180 && longitude <= 180 ? { longitude } : {}),
+        ...(typeof address === 'string' ? { address: address.trim() } : {}),
+        ...(typeof city === 'string' ? { city: city.trim() } : {}),
+        ...(typeof state === 'string' ? { state: state.trim() } : {}),
       },
     });
 
@@ -66,4 +87,3 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

@@ -45,33 +45,24 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     }
   }
 
-  // Dynamically resolve allowable trades from the database using ServiceCategory and Skills
   const categoryData = await prisma.serviceCategory.findUnique({
     where: { id: categoryId },
     include: { skills: true }
   });
 
+  if (!categoryData) {
+    throw new Error(`Invalid categoryId: ${categoryId}`);
+  }
+
   const dynamicTrades = new Set<string>();
-  if (categoryData?.name) dynamicTrades.add(categoryData.name);
-  if (categoryData?.skills) {
+  if (categoryData.name) dynamicTrades.add(categoryData.name);
+  if (categoryData.skills) {
     categoryData.skills.forEach(s => dynamicTrades.add(s.name));
   }
 
-  // Graceful fallback purely to prevent breaking existing workers if the production database is unseeded
-  if (dynamicTrades.size === 0) {
-    const fallbackMap: Record<string, string[]> = {
-      'cat-ac': ['AC Repair', 'Appliance Repair'],
-      'cat-plumb': ['Plumber'],
-      'cat-elec': ['Electrician'],
-      'cat-carp': ['Carpenter'],
-      'cat-paint': ['Painter'],
-      'cat-clean': ['Cleaner'],
-      'cat-appliance': ['Appliance Repair', 'AC Repair'],
-    };
-    (fallbackMap[categoryId] || []).forEach(t => dynamicTrades.add(t));
-  }
-
   const allowedTradesArray = Array.from(dynamicTrades);
+
+  const totalWorkersInDb = await prisma.worker.count();
 
   // 1. Filter eligible workers (verified, belongs to trade/skills in category)
   // FIX: also exclude workers who are OFFLINE outright, instead of only down-scoring them.
@@ -121,6 +112,7 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
   });
 
   const scoredResults: WorkerMatchResult[] = [];
+  let excludedByDistance = 0;
 
   for (const worker of workers) {
     // 1. Skill Compatibility (0 - 100)
@@ -161,6 +153,7 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
 
     // EXCLUDE DISTANT WORKERS (only when we actually know the distance)
     if (distanceKm !== null && distanceKm > maxRadius) {
+      excludedByDistance++;
       continue;
     }
 
@@ -224,5 +217,17 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     });
   }
 
-  return scoredResults.sort((a, b) => b.match_score - a.match_score);
+  const finalMatches = scoredResults.sort((a, b) => b.match_score - a.match_score);
+
+  console.log(`[Diagnostic] matchWorkers request:
+- categoryId: ${categoryId}
+- latitude/longitude: ${latitude}, ${longitude}
+- cooperativeId: ${cooperativeId || 'none'}
+- workers before filtering (total in DB): ${totalWorkersInDb}
+- workers after eligibility filtering (verified, available, trade/skill match): ${workers.length}
+- excluded because of distance: ${excludedByDistance}
+- excluded because of skill/category: ${totalWorkersInDb - workers.length}
+- final matches: ${finalMatches.length}`);
+
+  return finalMatches;
 }

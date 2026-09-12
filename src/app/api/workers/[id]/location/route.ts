@@ -24,7 +24,7 @@ export async function PATCH(
     const body = await req.json();
     const { latitude, longitude } = body;
 
-    if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+    if (typeof latitude !== 'number' || typeof longitude !== 'number' || isNaN(latitude) || isNaN(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
       return NextResponse.json({ error: 'Invalid location data' }, { status: 400 });
     }
 

@@ -20,6 +20,8 @@ export async function POST(req: NextRequest) {
       state = 'Unspecified',
       isEmergencyAvailable = false,
       role = 'WORKER',
+      latitude: providedLatitude,
+      longitude: providedLongitude,
     } = body;
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -64,6 +66,41 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
+    // BUG FIX: worker registration used to hardcode latitude/longitude to null,
+    // so a real worker's address was never converted into coordinates. That meant
+    // the worker could never be found by proximity-based matching (matchWorkers /
+    // findNearbyWorkers both require non-null lat/lng), no matter how close they
+    // actually were to a customer. Prefer coordinates the client already has
+    // (e.g. from browser geolocation); otherwise geocode the typed address here.
+    let latitude: number | null =
+      typeof providedLatitude === 'number' && !isNaN(providedLatitude) && providedLatitude >= -90 && providedLatitude <= 90 ? providedLatitude : null;
+    let longitude: number | null =
+      typeof providedLongitude === 'number' && !isNaN(providedLongitude) && providedLongitude >= -180 && providedLongitude <= 180 ? providedLongitude : null;
+
+    if ((latitude === null || longitude === null) && address && typeof address === 'string' && address.trim()) {
+      try {
+        const geoRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address.trim())}&format=json&limit=1`,
+          { headers: { 'User-Agent': 'CoopConnect/1.0' } }
+        );
+        const geoData = await geoRes.json();
+        if (Array.isArray(geoData) && geoData.length > 0) {
+          const fetchedLat = parseFloat(geoData[0].lat);
+          const fetchedLng = parseFloat(geoData[0].lon);
+          if (!isNaN(fetchedLat) && fetchedLat >= -90 && fetchedLat <= 90) {
+            latitude = fetchedLat;
+          }
+          if (!isNaN(fetchedLng) && fetchedLng >= -180 && fetchedLng <= 180) {
+            longitude = fetchedLng;
+          }
+        }
+      } catch (geoError) {
+        console.error('Worker registration geocoding failed:', geoError);
+        // Non-fatal: worker is created with null coordinates and can set/fix
+        // their location later from their profile (see PATCH /api/workers/[id]).
+      }
+    }
+
     // Pick first active cooperative if not provided
     let coopId = cooperativeId;
     if (!coopId) {
@@ -96,8 +133,8 @@ export async function POST(req: NextRequest) {
             averageRating: 0,
             completionRate: 100,
             punctualityScore: 100,
-            latitude: null,
-            longitude: null,
+            latitude,
+            longitude,
           },
         },
       },

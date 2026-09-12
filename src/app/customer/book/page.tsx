@@ -128,7 +128,7 @@ function BookServiceContent() {
     let lat = bookingData.latitude;
     let lng = bookingData.longitude;
 
-    if (!lat || !lng) {
+    if (lat === null || lng === null || isNaN(lat) || isNaN(lng)) {
       try {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
           if (!navigator.geolocation) {
@@ -466,7 +466,10 @@ function BookServiceContent() {
 
             <div className="flex flex-col gap-4">
               {matchedWorkers.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">No available workers found for this criteria.</div>
+                <div className="text-center py-8 text-muted-foreground flex flex-col items-center gap-4">
+                  <p>No available workers found for this criteria.</p>
+                  <Button variant="outline" onClick={prevStep}>Change Location or Requirements</Button>
+                </div>
               ) : (
                 matchedWorkers.map((match) => {
                   const workerObj = match.worker || match;
