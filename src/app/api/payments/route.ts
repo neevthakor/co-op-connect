@@ -10,19 +10,37 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { bookingId, amount, method = 'UPI', provider = 'SANDBOX' } = body;
+    const { bookingId, method = 'UPI', provider = 'SANDBOX' } = body;
 
-    if (!bookingId || !amount) {
-      return NextResponse.json({ error: 'bookingId and amount are required' }, { status: 400 });
+    if (!bookingId) {
+      return NextResponse.json({ error: 'bookingId is required' }, { status: 400 });
     }
 
     const { prisma } = await import('@/lib/prisma');
     const booking = await prisma.booking.findUnique({
-      where: { id: bookingId }
+      where: { id: bookingId },
+      include: { invoice: true }
     });
 
     if (!booking) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+    }
+
+    if (booking.status !== "COMPLETED") {
+      return NextResponse.json({ error: 'Payment is only allowed for completed bookings' }, { status: 400 });
+    }
+
+    if (!booking.invoice) {
+      return NextResponse.json({ error: 'Invoice not found for this booking' }, { status: 400 });
+    }
+
+    if (booking.invoice.status === "PAID") {
+      return NextResponse.json({ error: 'Payment already completed for this booking' }, { status: 400 });
+    }
+
+    const finalAmount = booking.invoice.total;
+    if (typeof finalAmount !== 'number' || finalAmount <= 0) {
+      return NextResponse.json({ error: 'Invalid invoice amount' }, { status: 400 });
     }
 
     const isCustomer = session.user.customerId === booking.customerId;
@@ -34,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     const result = await processPayment({
       bookingId,
-      amount: parseFloat(amount.toString()),
+      amount: finalAmount,
       method,
       provider,
     });

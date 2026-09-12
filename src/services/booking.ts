@@ -44,6 +44,10 @@ export async function createBooking(params: {
     throw new Error("Worker is not currently eligible for new bookings");
   }
 
+  if (worker.availabilityStatus === "OFFLINE") {
+    throw new Error("Worker is currently offline and cannot accept bookings");
+  }
+
   if (conflicting) {
     throw new Error("This worker is no longer available for the selected time. Please choose another worker or time.");
   }
@@ -117,7 +121,7 @@ export async function updateBookingStatus(
 
   if (!booking) throw new Error("Booking not found");
 
-  if (newStatus !== "CANCELLED" && booking.status !== newStatus) {
+  if (booking.status !== newStatus) {
     const allowed = validTransitions[booking.status] || [];
     if (!allowed.includes(newStatus)) {
       throw new Error(`Invalid transition from ${booking.status} to ${newStatus}`);
@@ -213,6 +217,10 @@ export async function updateBookingStatus(
 export async function verifyServicePin(bookingId: string, enteredPin: string) {
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking) throw new Error("Booking not found");
+
+  if (booking.status !== "ARRIVED") {
+    return { success: false, message: "PIN can only be verified when worker has arrived" };
+  }
 
   if (booking.servicePin === enteredPin) {
     await prisma.booking.update({

@@ -33,6 +33,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'Worker not found' }, { status: 404 });
     }
 
+    if (userRole === 'COOPERATIVE_ADMIN' && worker.cooperativeId !== session.user.cooperativeId) {
+      return NextResponse.json({ error: 'Forbidden: Worker belongs to a different cooperative' }, { status: 403 });
+    }
+
     const updatedWorker = await prisma.worker.update({
       where: { id: workerId },
       data: { verificationStatus: status }

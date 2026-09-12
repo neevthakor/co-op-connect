@@ -41,8 +41,12 @@ export async function completePaymentTransaction(
     throw new Error("Booking not found");
   }
 
+  if (!booking.invoice?.id) {
+    throw new Error("Invoice not found for this booking");
+  }
+
   // Idempotency check
-  if (booking.invoice?.status === "PAID") {
+  if (booking.invoice.status === "PAID") {
     throw new Error("Payment already completed for this booking");
   }
 
@@ -68,17 +72,11 @@ export async function completePaymentTransaction(
     },
   });
 
-  // 2. Mark Invoice as PAID and Booking as COMPLETED
-  await prisma.$transaction([
-    prisma.invoice.update({
-      where: { id: booking.invoice?.id || "" }, // Handle safely if missing? It should exist if paid.
-      data: { status: "PAID" },
-    }),
-    prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: "COMPLETED" },
-    }),
-  ]);
+  // 2. Mark Invoice as PAID
+  await prisma.invoice.update({
+    where: { id: booking.invoice.id },
+    data: { status: "PAID" },
+  });
 
   // 3. Record Worker Earnings
   const labourCharge = booking.invoice?.labourCharge || Math.round(amount * 0.7);

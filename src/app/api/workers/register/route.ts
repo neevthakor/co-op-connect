@@ -135,6 +135,13 @@ export async function POST(req: NextRequest) {
             punctualityScore: 100,
             latitude,
             longitude,
+            skills: {
+              create: Array.isArray(skillIds) ? skillIds.map(sId => ({
+                skillId: sId,
+                proficiencyLevel: 'INTERMEDIATE',
+                verified: false,
+              })) : []
+            }
           },
         },
       },
@@ -142,22 +149,6 @@ export async function POST(req: NextRequest) {
         worker: true,
       },
     });
-
-    const workerId = user.worker?.id;
-
-    // Add skills if provided
-    if (workerId && Array.isArray(skillIds) && skillIds.length > 0) {
-      for (const sId of skillIds) {
-        await prisma.workerSkill.create({
-          data: {
-            workerId,
-            skillId: sId,
-            proficiencyLevel: 'INTERMEDIATE',
-            verified: false,
-          },
-        }).catch(() => {});
-      }
-    }
 
     return NextResponse.json(
       {

@@ -45,6 +45,14 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    if (u.role === 'COOPERATIVE_ADMIN') {
+      const worker = await prisma.worker.findUnique({ where: { id: workerId } });
+      if (!worker) return NextResponse.json({ error: 'Worker not found' }, { status: 404 });
+      if (worker.cooperativeId !== u.cooperativeId) {
+        return NextResponse.json({ error: 'Forbidden: Worker belongs to a different cooperative' }, { status: 403 });
+      }
+    }
+
     const body = await req.json();
     const {
       availabilityStatus,
