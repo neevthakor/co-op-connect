@@ -34,6 +34,9 @@ export interface AIDisputeData {
 }
 
 export interface AIFraudData {
+  cancellations?: number;
+  recentRatings?: number;
+  priceDifference?: number;
   [key: string]: unknown;
 }
 
@@ -207,7 +210,7 @@ function fallbackParseServiceRequest(text: string, language?: string): ParsedSer
     appliance: ['washing machine', 'refrigerator', 'fridge', 'microwave', 'geyser not', 'appliance', 'फ्रिज', 'વોશિંગ'],
     pest: ['pest', 'termite', 'cockroach', 'bed bug', 'ants', 'rat problem', 'mosquito', 'keede', 'कीड़े', 'મચ્છર'],
     waterproofing: ['waterproof', 'seepage', 'seeping', 'dampness', 'damp wall', 'terrace leak', 'ceiling leak', 'छत से पानी', 'છત'],
-    gardener: ['garden', 'lawn', 'hedge', 'plant', 'gardening', 'weed', 'બગીચો', 'बगीचा', 'बाग'],
+    gardener: ['garden', 'lawn', 'hedge', 'plant', 'gardening', 'weed', 'બગીચो', 'बगीचा', 'बाग'],
   };
 
   let categoryKey: string | null = null;
@@ -416,10 +419,28 @@ Format as JSON:
 // ============================================================
 // 7. Fraud Detection Placeholder
 // ============================================================
-export async function detectFraud(_data: AIFraudData): Promise<{ riskScore: number; anomalies: string[]; isSuspicious: boolean }> {
+export async function detectFraud(data: AIFraudData): Promise<{ riskScore: number; anomalies: string[]; isSuspicious: boolean }> {
+  let riskScore = 0;
+  const anomalies: string[] = [];
+
+  if (data.cancellations && data.cancellations >= 3) {
+    riskScore += 0.4;
+    anomalies.push(`High cancellation rate (${data.cancellations} recent)`);
+  }
+  
+  if (data.recentRatings && data.recentRatings >= 5) {
+    riskScore += 0.3;
+    anomalies.push(`Suspiciously high rating velocity (${data.recentRatings} in 24h)`);
+  }
+
+  if (data.priceDifference && data.priceDifference > 50) {
+    riskScore += 0.3;
+    anomalies.push(`Price anomaly detected: ${data.priceDifference}% difference from estimate`);
+  }
+
   return {
-    riskScore: 0.05,
-    anomalies: [],
-    isSuspicious: false,
+    riskScore,
+    anomalies,
+    isSuspicious: riskScore >= 0.5,
   };
 }

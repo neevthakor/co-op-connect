@@ -137,6 +137,17 @@ export async function completePaymentTransaction(
   const expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + 30);
 
+  // Trigger fraud checks asynchronously
+  import('./fraud').then(({ runFraudChecks }) => {
+    runFraudChecks(
+      booking.customerId, 
+      booking.workerId, 
+      bookingId, 
+      amount, 
+      booking.estimatedPrice || undefined
+    ).catch(console.error);
+  });
+
   await prisma.warranty.upsert({
     where: { bookingId },
     create: {

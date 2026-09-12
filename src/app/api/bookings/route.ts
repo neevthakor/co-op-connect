@@ -121,6 +121,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Selected service category is no longer available. Please select another service.', code: 'INVALID_CATEGORY' }, { status: 400 });
     }
 
+    if (!customerId) {
+      return NextResponse.json({ success: false, error: 'Could not resolve customer ID', code: 'CUSTOMER_MISSING' }, { status: 400 });
+    }
+
     console.time('[booking] createBooking function');
     const booking = await createBooking({
       customerId,

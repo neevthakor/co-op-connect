@@ -51,46 +51,12 @@ export function VoiceInput({ onResult, onTranscription, language = "en-IN", clas
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const reco = new SpeechRecognition();
-        reco.continuous = false;
-        reco.interimResults = true;
-        setRecognition(reco);
-      } else {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
         setIsSupported(false);
       }
     }
   }, []);
-
-  useEffect(() => {
-    if (recognition) {
-      recognition.lang = language;
-      
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        const current = event.resultIndex;
-        const result = event.results[current];
-        const text = result[0].transcript;
-        
-        setTranscript(text);
-        
-        if (result.isFinal) {
-          handleResult(text);
-          setIsRecording(false);
-        }
-      };
-
-      recognition.onerror = (event: { error: string }) => {
-        console.error("Speech recognition error", event.error);
-        setIsRecording(false);
-      };
-
-      recognition.onend = () => {
-        setIsRecording(false);
-      };
-    }
-  }, [recognition, language, handleResult]);
 
   const toggleRecording = () => {
     if (!isSupported) {
@@ -99,13 +65,43 @@ export function VoiceInput({ onResult, onTranscription, language = "en-IN", clas
     }
 
     if (isRecording) {
-      recognition?.stop();
+      // Let the current instance stop naturally or we could track it in a ref. 
+      // It's cleaner to just update the state visually and let it stop.
       setIsRecording(false);
-    } else {
-      setTranscript("");
-      recognition?.start();
-      setIsRecording(true);
+      return;
     }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const reco = new SpeechRecognition();
+    reco.continuous = false;
+    reco.interimResults = true;
+    reco.lang = language;
+
+    reco.onresult = (event: SpeechRecognitionEvent) => {
+      const current = event.resultIndex;
+      const result = event.results[current];
+      const text = result[0].transcript;
+      
+      setTranscript(text);
+      
+      if (result.isFinal) {
+        handleResult(text);
+        setIsRecording(false);
+      }
+    };
+
+    reco.onerror = (event: { error: string }) => {
+      console.error("Speech recognition error", event.error);
+      setIsRecording(false);
+    };
+
+    reco.onend = () => {
+      setIsRecording(false);
+    };
+
+    setTranscript("");
+    reco.start();
+    setIsRecording(true);
   };
 
   return (

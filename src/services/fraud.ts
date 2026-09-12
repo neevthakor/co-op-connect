@@ -1,7 +1,34 @@
 import { prisma } from "@/lib/prisma";
 
-export async function runFraudChecks() {
+import { detectFraud } from './ai';
+
+export async function runFraudChecks(customerId: string, workerId: string, bookingId: string, actualPrice?: number, estimatedPrice?: number) {
   console.log("[Fraud Detection] Running background checks...");
+  
+  const cancellations = await prisma.bookingStatusHistory.count({
+    where: { status: "CANCELLED", booking: { customerId }, createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }
+  });
+
+  const recentRatings = await prisma.rating.count({
+    where: { workerId, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }
+  });
+
+  const priceDifference = (actualPrice && estimatedPrice && estimatedPrice > 0) 
+    ? Math.abs((actualPrice - estimatedPrice) / estimatedPrice) * 100 
+    : 0;
+
+  const result = await detectFraud({ cancellations, recentRatings, priceDifference });
+
+  if (result.isSuspicious) {
+    await createFraudAlert(
+      "AI_FRAUD_DETECTION",
+      "BOOKING",
+      bookingId,
+      result.riskScore > 0.7 ? "CRITICAL" : "HIGH",
+      `AI flagged suspicious behavior: ${result.anomalies.join(', ')}`,
+      { riskScore: result.riskScore, anomalies: result.anomalies }
+    );
+  }
 }
 
 export async function checkRepeatedCancellations(customerId: string) {

@@ -20,7 +20,7 @@ export function PaymentSummary({ payment, className }: PaymentSummaryProps) {
   const amount = payment.amount || payment.total || 0;
   const method = payment.method || "UPI / Digital";
   const status = payment.status || "COMPLETED";
-  const transactionId = payment.transactionId || `TXN-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+  const transactionId = payment.transactionId || (status === "PENDING" ? "Pending" : "Not available");
 
   return (
     <Card className={cn("overflow-hidden bg-white border shadow-xs", className)}>

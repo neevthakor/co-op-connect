@@ -12,7 +12,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing signature" }, { status: 400 });
     }
 
-    const secret = process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET || "default_secret";
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET;
+    
+    if (!secret) {
+      return NextResponse.json({ error: "Webhook secret is not configured" }, { status: 500 });
+    }
 
     const expectedSignature = crypto
       .createHmac("sha256", secret)
