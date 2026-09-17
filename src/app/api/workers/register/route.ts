@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { isValidEmail, isValidPhone, normalizePhone } from '@/lib/validation';
 
 export async function POST(req: NextRequest) {
+
   try {
     const body = await req.json();
     const {
@@ -140,7 +141,6 @@ export async function POST(req: NextRequest) {
                 skillId: sId,
                 proficiencyLevel: 'INTERMEDIATE',
                 verified: false,
-                skillVerificationStatus: 'SELF_DECLARED',
               })) : []
             }
           },
