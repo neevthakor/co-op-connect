@@ -50,7 +50,7 @@ export default function HelpersPage() {
         teams: teamsData.teams || [],
       });
       setNearbyHelpers(Array.isArray(helpersData) ? helpersData : []);
-    } catch (err: any) {
+    } catch (err) {
       toast.error('Failed to load helpers data');
     } finally {
       setLoading(false);
@@ -78,8 +78,8 @@ export default function HelpersPage() {
           : 'Helper request rejected'
       );
       await fetchTeams();
-    } catch (err: any) {
-      toast.error(err.message || 'Action failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Action failed');
     } finally {
       setActionLoading(false);
     }

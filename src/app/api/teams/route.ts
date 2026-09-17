@@ -70,9 +70,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ helperRequests, teams });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Teams GET Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 
@@ -131,9 +131,9 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Teams POST Error:', error);
-    return NextResponse.json({ error: error.message || 'Team operation failed' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Team operation failed' }, { status: 500 });
   }
 }
 
@@ -224,9 +224,9 @@ export async function PATCH(req: NextRequest) {
 
       return NextResponse.json({ success: true, status: 'REJECTED' });
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Teams PATCH Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to update helper request' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Failed to update helper request' }, { status: 500 });
   }
 }
 

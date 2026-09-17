@@ -37,7 +37,7 @@ export async function PATCH(
     });
 
     return NextResponse.json({ success: true, location: { lat: updatedWorker.latitude, lng: updatedWorker.longitude } });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Update Location Error:', error);
     return NextResponse.json({ error: 'Failed to update location' }, { status: 500 });
   }

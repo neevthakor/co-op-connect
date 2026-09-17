@@ -38,8 +38,8 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
 
       toast.success('Booking cancelled successfully');
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || 'Cancellation failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Cancellation failed');
     } finally {
       setLoadingCancel(false);
     }
@@ -64,8 +64,8 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
 
       toast.success(`Payment of ₹${totalAmount} successful! Warranty activated.`);
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || 'Payment processing failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Payment processing failed');
     } finally {
       setLoadingPay(false);
     }
@@ -91,8 +91,8 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
       setDisputeOpen(false);
       setDisputeDesc('');
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || 'Complaint filing failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Complaint filing failed');
     } finally {
       setLoadingDispute(false);
     }
@@ -133,8 +133,8 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
 
       toast.success('Before photo uploaded successfully');
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to upload photo');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Failed to upload photo');
     } finally {
       setUploadingBefore(false);
     }

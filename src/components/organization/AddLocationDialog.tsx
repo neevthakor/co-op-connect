@@ -48,8 +48,8 @@ export function AddLocationDialog({ type }: { type: "SOCIETY" | "INSTITUTION" })
       toast.success("Location added successfully!");
       setOpen(false);
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error"));
     } finally {
       setLoading(false);
     }

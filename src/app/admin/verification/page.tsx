@@ -46,8 +46,8 @@ export default function VerificationPage() {
 
       toast.success(`Worker application ${action.toLowerCase()}d successfully`);
       await fetchWorkers(statusFilter);
-    } catch (error: any) {
-      toast.error(error.message || `Error performing action ${action}`);
+    } catch (error) {
+      toast.error((error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || `Error performing action ${action}`);
     } finally {
       setActionLoading(null);
     }

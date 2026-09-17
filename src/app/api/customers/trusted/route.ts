@@ -24,9 +24,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(trusted);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Trusted Workers GET Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 
@@ -63,9 +63,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(record, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Trusted Workers POST Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 
@@ -94,9 +94,9 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, message: 'Removed from trusted workers' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Trusted Workers DELETE Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 

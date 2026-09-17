@@ -16,11 +16,7 @@ export async function approveWorker(workerId: string, adminId: string, note?: st
     data: {
       verificationStatus: "VERIFIED",
       identityVerified: true,
-      verificationMethod: "ADMIN",
-      verifiedAt: new Date(),
-      verifiedById: adminId,
-      verificationNotes: note || "Manually approved by Admin",
-      riskFlag: "LOW",
+      
     },
   });
 
@@ -85,10 +81,8 @@ export async function assessWorkerSkill(workerSkillId: string, adminId: string, 
   const updatedSkill = await prisma.workerSkill.update({
     where: { id: workerSkillId },
     data: {
-      skillVerificationStatus: status,
-      assessedById: adminId,
-      assessedAt: new Date(),
-      assessmentNotes: notes,
+      verified: status === "SKILL_ASSESSED",
+      
     },
     include: {
       worker: true,

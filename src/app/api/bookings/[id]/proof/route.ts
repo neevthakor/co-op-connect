@@ -34,8 +34,8 @@ export async function GET(
     });
 
     return NextResponse.json(proofs);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 
@@ -95,9 +95,9 @@ export async function POST(
     });
 
     return NextResponse.json(proof, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Job Proof Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to save job proof' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Failed to save job proof' }, { status: 500 });
   }
 }
 

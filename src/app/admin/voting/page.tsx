@@ -46,8 +46,8 @@ export default function VotingPage() {
 
       toast.success(`Your vote (${vote}) has been recorded on the cooperative ledger!`);
       await fetchProposals();
-    } catch (err: any) {
-      toast.error(err.message || 'Vote failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Vote failed');
     } finally {
       setActionLoading(false);
     }
@@ -76,8 +76,8 @@ export default function VotingPage() {
       setNewTitle('');
       setNewDesc('');
       await fetchProposals();
-    } catch (err: any) {
-      toast.error(err.message || 'Creation failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Creation failed');
     } finally {
       setActionLoading(false);
     }

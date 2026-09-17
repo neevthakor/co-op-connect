@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.redirect(new URL('/admin/organization-requests', req.url), 303);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to assign worker:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

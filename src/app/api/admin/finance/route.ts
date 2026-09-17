@@ -75,9 +75,9 @@ export async function GET(req: NextRequest) {
       recentInvoices: invoices,
       recentPayments: payments,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Finance API Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 

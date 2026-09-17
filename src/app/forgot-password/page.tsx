@@ -36,8 +36,8 @@ export default function ForgotPasswordPage() {
       }
 
       setIsSuccess(true);
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred. Please try again.');
+    } catch (err) {
+      setError((err instanceof Error ? err.message : "Unknown error") || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }

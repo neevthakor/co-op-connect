@@ -59,7 +59,7 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
       if (!res.ok) throw new Error('Job not found');
       const data = await res.json();
       setJob(data);
-    } catch (err: any) {
+    } catch (err) {
       toast.error('Failed to load job details');
     }
   };
@@ -114,8 +114,8 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
       } else {
         await fetchJob();
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Status transition failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Status transition failed');
     } finally {
       setActionLoading(false);
     }
@@ -141,8 +141,8 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
       } else {
         await fetchJob();
       }
-    } catch (err: any) {
-      toast.error(err.message || 'PIN verification failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'PIN verification failed');
     } finally {
       setActionLoading(false);
     }
@@ -183,8 +183,8 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
 
       toast.success(`${type} photo uploaded successfully`);
       await fetchJob();
-    } catch (err: any) {
-      toast.error(err.message || 'Photo upload failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Photo upload failed');
     } finally {
       setActionLoading(false);
       e.target.value = ''; // reset input
@@ -213,8 +213,8 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
       setMatItem('');
       setMatPrice('');
       await fetchJob();
-    } catch (err: any) {
-      toast.error(err.message || 'Material request failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Material request failed');
     } finally {
       setActionLoading(false);
     }
@@ -255,8 +255,8 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
       toast.success('Helper request dispatched (70% Lead / 30% Helper revenue split)');
       setShowHelperModal(false);
       await fetchJob();
-    } catch (err: any) {
-      toast.error(err.message || 'Helper request failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Helper request failed');
     } finally {
       setActionLoading(false);
     }

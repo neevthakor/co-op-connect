@@ -51,9 +51,9 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true, complaint }, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Complaint Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to file complaint' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Failed to file complaint' }, { status: 500 });
   }
 }
 

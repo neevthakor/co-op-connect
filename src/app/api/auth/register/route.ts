@@ -90,10 +90,10 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('Customer Registration Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to create account. Please try again.' },
+      { error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Failed to create account. Please try again.' },
       { status: 500 }
     );
   }

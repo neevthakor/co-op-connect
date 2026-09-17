@@ -58,9 +58,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Payment Error:', error);
-    return NextResponse.json({ error: error.message || 'Payment processing failed' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Payment processing failed' }, { status: 500 });
   }
 }
 
@@ -97,8 +97,8 @@ export async function GET(req: NextRequest) {
 
     const payment = await getPaymentStatus(bookingId);
     return NextResponse.json(payment);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 

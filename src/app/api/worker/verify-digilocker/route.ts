@@ -38,11 +38,9 @@ export async function POST(req: NextRequest) {
         identityVerified: true,
         identityDocType: 'AADHAAR',
         identityDocMasked: aadhaarNumber ? `XXXX-XXXX-${aadhaarNumber.slice(-4)}` : 'XXXX-XXXX-XXXX',
-        verificationMethod: 'DIGILOCKER',
+        
         verificationStatus: 'VERIFIED',
-        verifiedAt: new Date(),
-        verifiedById: 'SYSTEM_DIGILOCKER',
-        verificationNotes: 'Automatically verified via DigiLocker OAuth Mock adapter',
+        
       },
     });
 
@@ -50,11 +48,11 @@ export async function POST(req: NextRequest) {
       success: true, 
       worker: {
         verificationStatus: updatedWorker.verificationStatus,
-        verificationMethod: updatedWorker.verificationMethod,
+        
       } 
     });
   } catch (error) {
     console.error('DigiLocker Mock Error:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to verify identity' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : 'Failed to verify identity' }, { status: 500 });
   }
 }

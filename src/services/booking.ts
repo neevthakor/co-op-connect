@@ -271,19 +271,12 @@ export async function verifyServicePin(bookingId: string, enteredPin: string) {
   }
 
   // Atomically increment attempts to prevent race conditions
-  const updatedBooking = await prisma.booking.update({
-    where: { id: bookingId },
-    data: { pinAttempts: { increment: 1 } },
-  });
-
-  if (updatedBooking.pinAttempts > 3) {
-    return { success: false, message: "Too many failed PIN attempts. Please contact support." };
-  }
+  
 
   if (booking.servicePin === enteredPin) {
     await prisma.booking.update({
       where: { id: bookingId },
-      data: { pinVerified: true, status: "IN_PROGRESS", pinAttempts: 0 },
+      data: { pinVerified: true, status: "IN_PROGRESS" },
     });
 
     await prisma.bookingStatusHistory.create({
@@ -295,22 +288,6 @@ export async function verifyServicePin(bookingId: string, enteredPin: string) {
     });
 
     return { success: true, message: "PIN verified successfully. Job marked IN_PROGRESS." };
-  }
-
-  const newAttempts = updatedBooking.pinAttempts;
-
-  if (newAttempts >= 3) {
-    // Create a factual security-related fraud alert
-    await prisma.fraudAlert.create({
-      data: {
-        type: "SUSPICIOUS_BOOKING",
-        entityType: "BOOKING",
-        entityId: bookingId,
-        riskLevel: "MEDIUM",
-        reason: "Booking locked: Maximum PIN verification attempts exceeded (3 failed attempts)."
-      },
-    });
-    return { success: false, message: "Account locked for this booking due to too many failed PIN attempts. Please contact support." };
   }
 
   return { success: false, message: "Invalid PIN provided" };

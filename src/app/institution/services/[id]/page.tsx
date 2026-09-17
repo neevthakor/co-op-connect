@@ -42,8 +42,8 @@ export default async function InstitutionRequestDetailsPage({
   if (request.status === "OPEN") {
     try {
       matches = await findWorkersForOrganizationRequest(requestId, "INSTITUTION", request.priority as 'NORMAL' | 'URGENT' | 'EMERGENCY');
-    } catch (e: any) {
-      error = e.message;
+    } catch (e) {
+      error = (e instanceof Error ? e.message : "Unknown error");
     }
   }
 
@@ -63,7 +63,7 @@ export default async function InstitutionRequestDetailsPage({
         assignedByUserId: session.user.id as string,
       });
       revalidatePath(`/institution/services/${requestId}`);
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
     }
   }

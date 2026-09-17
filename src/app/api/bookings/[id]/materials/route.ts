@@ -38,8 +38,8 @@ export async function GET(
     });
 
     return NextResponse.json(materials);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 
@@ -108,9 +108,9 @@ export async function POST(
     }
 
     return NextResponse.json(material, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Material Request Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create material request' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Failed to create material request' }, { status: 500 });
   }
 }
 
@@ -176,9 +176,9 @@ export async function PATCH(
     }
 
     return NextResponse.json(updated);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Material Approval Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to update material request' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Failed to update material request' }, { status: 500 });
   }
 }
 

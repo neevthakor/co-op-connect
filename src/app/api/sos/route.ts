@@ -31,19 +31,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const incident = await prisma.incident.create({
-      data: {
-        bookingId,
-        reporterId: userId,
-        reportedWorkerId,
-        reportedCustomerId,
-        type: 'SOS',
-        description,
-        severity: 'CRITICAL',
-        status: 'OPEN',
-        latitude,
-        longitude
-      }
+    const location = { latitude, longitude };
+    const incident = await prisma.notification.create({ 
+      data: { 
+        userId, 
+        type: 'EMERGENCY', 
+        title: 'SOS Alert', 
+        body: 'SOS Button Activated ' + JSON.stringify(location) 
+      } 
+    });
+    
+    await prisma.complaint.create({ 
+      data: { 
+        customerId: userId, 
+        bookingId: bookingId || null, 
+        category: 'SAFETY', 
+        description: 'SOS Button Activated ' + JSON.stringify(location), 
+        status: 'OPEN' 
+      } 
     });
 
     if (bookingId) {
@@ -61,6 +66,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, incidentId: incident.id });
   } catch (error) {
     console.error('SOS Trigger Error:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to trigger SOS' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : 'Failed to trigger SOS' }, { status: 500 });
   }
 }

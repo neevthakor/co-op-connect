@@ -75,8 +75,8 @@ export default function SocietyRegisterPage() {
 
       toast.success('Housing Society registered successfully! Please sign in.');
       router.push('/login?registered=true');
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+    } catch (err) {
+      setError((err instanceof Error ? err.message : "Unknown error") || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

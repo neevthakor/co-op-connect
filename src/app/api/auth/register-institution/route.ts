@@ -104,10 +104,10 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('Institution Registration Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to register institution. Please try again.' },
+      { error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Failed to register institution. Please try again.' },
       { status: 500 }
     );
   }

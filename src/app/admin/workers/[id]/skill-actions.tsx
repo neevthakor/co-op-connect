@@ -38,7 +38,7 @@ export function SkillAssessmentActions({ workerId, skillId, currentStatus }: { w
       } else {
         toast.error(data.error || 'Failed to update skill status');
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
       toast.error('Error updating status');
     } finally {

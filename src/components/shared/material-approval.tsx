@@ -50,8 +50,8 @@ export function MaterialApproval({ material, bookingId, onApprove, onReject, cla
       }
       setCurrentStatus(newStatus);
       toast.success(`Material request ${action === "approve" ? "Approved" : "Rejected"}`);
-    } catch (err: any) {
-      toast.error(err.message || "Action failed");
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || "Action failed");
     } finally {
       setIsHandling(false);
     }

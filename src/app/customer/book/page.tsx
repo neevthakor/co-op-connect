@@ -86,8 +86,8 @@ function BookServiceContent() {
       
       setBookingData((prev) => ({ ...prev, imageUrls: [...(prev.imageUrls || []), uploadData.url] }));
       toast.success('Photo attached!', { id: toastId });
-    } catch (err: any) {
-      toast.error(err.message || 'Photo upload failed', { id: toastId });
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Photo upload failed', { id: toastId });
     } finally {
       e.target.value = ''; // reset
     }
@@ -114,8 +114,8 @@ function BookServiceContent() {
         estimatedPrice: data.category?.basePrice || 450,
       }));
       nextStep();
-    } catch (err: any) {
-      toast.error(err.message || 'AI analysis failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'AI analysis failed');
     } finally {
       setLoading(false);
     }
@@ -185,8 +185,8 @@ function BookServiceContent() {
         setBookingData((prev) => ({ ...prev, latitude: lat, longitude: lng }));
       }
       nextStep();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to match workers');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Failed to match workers');
     } finally {
       setLoading(false);
     }
@@ -222,8 +222,8 @@ function BookServiceContent() {
 
       toast.success(`Booking Confirmed! Security PIN: ${data.booking.servicePin}`);
       router.push(`/customer/bookings/${data.booking.id}`);
-    } catch (err: any) {
-      toast.error(err.message || 'Booking failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Booking failed');
     } finally {
       setLoading(false);
     }

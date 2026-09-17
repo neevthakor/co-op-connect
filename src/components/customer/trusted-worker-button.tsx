@@ -51,8 +51,8 @@ export function TrustedWorkerButton({
         toast.success('Added to trusted workers');
       }
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || 'Operation failed');
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : "Unknown error") || 'Operation failed');
     } finally {
       setLoading(false);
     }

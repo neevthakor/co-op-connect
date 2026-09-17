@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'No file found in request' }, { status: 400 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 

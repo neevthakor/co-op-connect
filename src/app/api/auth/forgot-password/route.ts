@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       { message: 'If an account exists for this email, a password reset link has been sent.' },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('Forgot Password API error:', error);
     return NextResponse.json(
       { error: 'An unexpected error occurred' },

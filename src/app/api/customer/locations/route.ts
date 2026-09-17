@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(locations);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to fetch locations:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(newLocation, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to create location:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

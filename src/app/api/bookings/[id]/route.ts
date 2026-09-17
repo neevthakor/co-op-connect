@@ -75,7 +75,7 @@ export async function GET(
     return NextResponse.json(booking);
   } catch (error) {
     console.error('Booking GET Error:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to fetch booking' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : 'Failed to fetch booking' }, { status: 500 });
   }
 }
 
@@ -173,6 +173,6 @@ export async function PATCH(
     return NextResponse.json({ error: 'No valid action provided' }, { status: 400 });
   } catch (error) {
     console.error('Booking PATCH Error:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to update booking' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : 'Failed to update booking' }, { status: 500 });
   }
 }

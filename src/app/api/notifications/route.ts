@@ -18,9 +18,9 @@ export async function GET(req: NextRequest) {
     const unreadCount = notifications.filter((n) => !n.readAt).length;
 
     return NextResponse.json({ notifications, unreadCount });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Notifications GET Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 
@@ -57,9 +57,9 @@ export async function PATCH(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'notificationId or markAll is required' }, { status: 400 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Notifications PATCH Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
   }
 }
 

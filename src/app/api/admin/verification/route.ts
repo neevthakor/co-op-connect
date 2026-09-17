@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(workers);
   } catch (error) {
     console.error('Admin Verification GET Error:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : 'Unknown error' }, { status: 500 });
   }
 }
 
@@ -99,7 +99,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true, worker: updatedWorker });
   } catch (error) {
     console.error('Admin Verification PATCH Error:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : 'Unknown error' }, { status: 500 });
   }
 }
 

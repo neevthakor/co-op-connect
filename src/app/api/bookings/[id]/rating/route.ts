@@ -114,9 +114,9 @@ export async function POST(
     }
 
     return NextResponse.json({ success: true, rating }, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Rating Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to submit rating' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Failed to submit rating' }, { status: 500 });
   }
 }
 

@@ -37,7 +37,7 @@ async function main() {
   
   const toDelete = [];
   const toPreserve = [];
-  const uncertain: Array<{ user: any; reason: string }> = [];
+  const uncertain: Array<{ user: { id: string; email: string; name: string | null; role: string; }; reason: string }> = [];
 
   const confirmedDemoIds = new Set<string>(CONFIRMED_DEMO_USER_IDS);
   const preservedAdminIds = new Set<string>(PRESERVED_ADMIN_USER_IDS);

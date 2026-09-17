@@ -104,22 +104,20 @@ export default async function AdminWorkerDetailsPage({ params }: { params: Promi
                   <div>
                     <h4 className="font-bold text-gray-900">{ws.skill.name}</h4>
                     <p className="text-sm text-gray-600">
-                      Level: {ws.proficiencyLevel} {ws.experienceYears ? `| Exp: ${ws.experienceYears} yrs` : ''}
+                      Level: {ws.proficiencyLevel} 
                     </p>
-                    {ws.experienceDescription && (
-                      <p className="text-xs text-gray-500 mt-1 italic">"{ws.experienceDescription}"</p>
-                    )}
+                    
                   </div>
                   <div className="mt-2 sm:mt-0 flex flex-col items-start sm:items-end gap-2">
                     <Badge variant="outline" className={
-                      ws.skillVerificationStatus === 'SKILL_ASSESSED' ? 'bg-green-100 text-green-800 border-green-200' :
-                      ws.skillVerificationStatus === 'ASSESSMENT_PENDING' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                      ws.skillVerificationStatus === 'REJECTED' ? 'bg-red-100 text-red-800 border-red-200' :
+                      ws.verified ? 'bg-green-100 text-green-800 border-green-200' :
+                      !ws.verified ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                      !ws.verified ? 'bg-red-100 text-red-800 border-red-200' :
                       'bg-gray-100 text-gray-800 border-gray-200'
                     }>
-                      {ws.skillVerificationStatus?.replace('_', ' ') || 'SELF DECLARED'}
+                      {ws.verified ? "VERIFIED" : "PENDING"?.replace('_', ' ') || 'SELF DECLARED'}
                     </Badge>
-                    <SkillAssessmentActions workerId={worker.id} skillId={ws.id} currentStatus={ws.skillVerificationStatus} />
+                    <SkillAssessmentActions workerId={worker.id} skillId={ws.id} currentStatus={ws.verified ? "VERIFIED" : "PENDING"} />
                   </div>
                 </div>
               ))}

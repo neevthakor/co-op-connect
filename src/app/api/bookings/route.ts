@@ -56,9 +56,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(bookings);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Bookings GET Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to fetch bookings' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Failed to fetch bookings' }, { status: 500 });
   }
 }
 
@@ -181,16 +181,16 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, booking }, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Booking Creation Error:', error);
     
     let errorCode = 'INTERNAL_ERROR';
     let status = 500;
-    if (error.message === 'Worker not found') { errorCode = 'WORKER_NOT_FOUND'; status = 404; }
-    if (error.message.includes('not currently eligible')) { errorCode = 'WORKER_UNAVAILABLE'; status = 403; }
-    if (error.message.includes('no longer available for the selected time')) { errorCode = 'SCHEDULING_CONFLICT'; status = 409; }
+    if ((error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") === 'Worker not found') { errorCode = 'WORKER_NOT_FOUND'; status = 404; }
+    if ((error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error").includes('not currently eligible')) { errorCode = 'WORKER_UNAVAILABLE'; status = 403; }
+    if ((error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error").includes('no longer available for the selected time')) { errorCode = 'SCHEDULING_CONFLICT'; status = 409; }
     
-    return NextResponse.json({ success: false, error: error.message || 'Failed to create booking', code: errorCode }, { status });
+    return NextResponse.json({ success: false, error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Failed to create booking', code: errorCode }, { status });
   }
 }
 

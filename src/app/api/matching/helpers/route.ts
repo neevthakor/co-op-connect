@@ -28,9 +28,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(helpers);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Helper Matching Error:', error);
-    return NextResponse.json({ error: error.message || 'Helper matching failed' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Helper matching failed' }, { status: 500 });
   }
 }
 

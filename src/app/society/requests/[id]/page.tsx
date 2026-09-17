@@ -42,8 +42,8 @@ export default async function SocietyRequestDetailsPage({
   if (request.status === "OPEN") {
     try {
       matches = await findWorkersForOrganizationRequest(requestId, "SOCIETY", request.priority as 'NORMAL' | 'URGENT' | 'EMERGENCY');
-    } catch (e: any) {
-      error = e.message;
+    } catch (e) {
+      error = (e instanceof Error ? e.message : "Unknown error");
     }
   }
 
@@ -63,7 +63,7 @@ export default async function SocietyRequestDetailsPage({
         assignedByUserId: session.user.id as string,
       });
       revalidatePath(`/society/requests/${requestId}`);
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
     }
   }

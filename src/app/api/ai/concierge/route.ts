@@ -47,9 +47,9 @@ export async function POST(req: NextRequest) {
       },
       aiProvider: parsed.parsedData.aiProvider,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('AI Concierge Error:', error);
-    return NextResponse.json({ error: error.message || 'AI parsing failed' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'AI parsing failed' }, { status: 500 });
   }
 }
 

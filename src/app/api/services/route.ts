@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(categories);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Services GET Error:', error);
     return NextResponse.json({ error: 'Failed to fetch services' }, { status: 500 });
   }

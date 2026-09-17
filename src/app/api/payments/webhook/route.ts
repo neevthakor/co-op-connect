@@ -49,10 +49,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true, message: "Event ignored" });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Webhook processing error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error", details: error.message },
+      { error: "Internal Server Error", details: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") },
       { status: 500 }
     );
   }

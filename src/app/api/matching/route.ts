@@ -33,9 +33,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(matches);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Matching Error:', error);
-    return NextResponse.json({ error: error.message || 'Worker matching failed' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Worker matching failed' }, { status: 500 });
   }
 }
 
@@ -67,9 +67,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(matches);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Matching Error:', error);
-    return NextResponse.json({ error: error.message || 'Worker matching failed' }, { status: 500 });
+    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Worker matching failed' }, { status: 500 });
   }
 }
 

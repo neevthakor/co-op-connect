@@ -72,12 +72,12 @@ export default async function AdminWorkersPage({ searchParams }: { searchParams:
                     <div className="flex flex-wrap gap-1 mt-1">
                       {w.skills.slice(0, 3).map(ws => (
                         <span key={ws.id} className={`px-2 py-0.5 text-xs rounded border ${
-                          ws.skillVerificationStatus === 'SKILL_ASSESSED' ? 'bg-green-50 border-green-200 text-green-700' :
-                          ws.skillVerificationStatus === 'ASSESSMENT_PENDING' ? 'bg-orange-50 border-orange-200 text-orange-700' :
-                          ws.skillVerificationStatus === 'REJECTED' ? 'bg-red-50 border-red-200 text-red-700' :
+                          ws.verified ? 'bg-green-50 border-green-200 text-green-700' :
+                          !ws.verified ? 'bg-orange-50 border-orange-200 text-orange-700' :
+                          false ? 'bg-red-50 border-red-200 text-red-700' :
                           'bg-gray-50 border-gray-200 text-gray-700'
                         }`}>
-                          {ws.skill.name} ({ws.skillVerificationStatus?.replace('_', ' ') || 'Self Declared'})
+                          {ws.skill.name} ({ws.verified ? "VERIFIED" : "PENDING"?.replace('_', ' ') || 'Self Declared'})
                         </span>
                       ))}
                       {w.skills.length > 3 && (

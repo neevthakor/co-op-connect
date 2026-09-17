@@ -160,10 +160,10 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('Worker Registration Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Worker registration failed. Please try again.' },
+      { error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") || 'Worker registration failed. Please try again.' },
       { status: 500 }
     );
   }

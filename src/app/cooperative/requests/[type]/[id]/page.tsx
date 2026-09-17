@@ -70,8 +70,8 @@ export default async function CooperativeRequestMatchPage({
       matches = await findWorkersForOrganizationRequest(requestId, type, request.priority as 'NORMAL' | 'URGENT' | 'EMERGENCY');
       // Filter for this cooperative only
       matches = matches.filter(m => m.worker.cooperativeId === admin.cooperativeId);
-    } catch (e: any) {
-      error = e.message;
+    } catch (e) {
+      error = (e instanceof Error ? e.message : "Unknown error");
     }
   }
 
@@ -91,7 +91,7 @@ export default async function CooperativeRequestMatchPage({
         assignedByUserId: formSession.user.id as string,
       });
       revalidatePath(`/cooperative/requests/${type.toLowerCase()}/${requestId}`);
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
       // Handle error gracefully in real app
     }
