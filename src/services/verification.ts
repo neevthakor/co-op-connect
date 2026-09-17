@@ -10,17 +10,23 @@ export async function submitForVerification(workerId: string) {
   });
 }
 
-export async function approveWorker(workerId: string, adminId: string) {
+export async function approveWorker(workerId: string, adminId: string, note?: string) {
   const updated = await prisma.worker.update({
     where: { id: workerId },
     data: {
       verificationStatus: "VERIFIED",
       identityVerified: true,
+      verificationMethod: "ADMIN",
+      verifiedAt: new Date(),
+      verifiedById: adminId,
+      verificationNotes: note || "Manually approved by Admin",
+      riskFlag: "LOW",
     },
   });
 
   await createAuditLog(adminId, "APPROVE_WORKER", "WORKER", workerId, {
     status: "VERIFIED",
+    method: "ADMIN",
   });
 
   return updated;
@@ -73,4 +79,27 @@ export async function suspendWorker(workerId: string, adminId: string, reason: s
   });
 
   return updated;
+}
+
+export async function assessWorkerSkill(workerSkillId: string, adminId: string, status: string, notes?: string) {
+  const updatedSkill = await prisma.workerSkill.update({
+    where: { id: workerSkillId },
+    data: {
+      skillVerificationStatus: status,
+      assessedById: adminId,
+      assessedAt: new Date(),
+      assessmentNotes: notes,
+    },
+    include: {
+      worker: true,
+      skill: true,
+    }
+  });
+
+  await createAuditLog(adminId, "ASSESS_SKILL", "WORKER_SKILL", workerSkillId, {
+    status,
+    notes,
+  });
+
+  return updatedSkill;
 }

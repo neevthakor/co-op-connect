@@ -41,10 +41,22 @@ export function WorkerCard({
         </Avatar>
         <div className="flex flex-1 flex-col justify-between">
           <div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="font-bold text-base text-foreground">{name}</h3>
               {isVerified && (
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 fill-emerald-500/20" />
+                <div title={worker.verificationMethod === 'DIGILOCKER' ? 'DigiLocker Verified' : 'Admin Verified'} className="flex items-center">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 fill-emerald-500/20" />
+                  {worker.verificationMethod === 'DIGILOCKER' && (
+                    <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4 bg-blue-50 text-blue-700 border-blue-200">
+                      DigiLocker (MOCK)
+                    </Badge>
+                  )}
+                  {worker.verificationMethod === 'ADMIN' && (
+                    <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4 bg-gray-50 text-gray-700 border-gray-200">
+                      Admin Verified
+                    </Badge>
+                  )}
+                </div>
               )}
             </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">

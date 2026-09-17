@@ -80,7 +80,7 @@ export async function generateGeminiContent(
     return null; // Fallback to mock
   }
 
-  const timeoutMs = options?.timeoutMs || 12000;
+  const timeoutMs = options?.timeoutMs || 3000;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 

@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Map, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { SOSButton } from '@/components/safety/SOSButton';
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
   const session = await auth();
@@ -24,7 +25,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
     redirect('/login');
   }
 
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   const bookingId = resolvedParams.id;
 
   const booking = await prisma.booking.findUnique({
@@ -58,6 +59,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   const isCompleted = booking.status === 'COMPLETED';
   const showPin = ['ACCEPTED', 'TRAVELLING', 'ARRIVED'].includes(booking.status);
   const isTravelling = booking.status === 'TRAVELLING';
+  const isCancellable = !isCompleted && booking.status !== 'CANCELLED';
 
   return (
     <div className="flex flex-col gap-6 p-4 pb-20 md:p-8 max-w-3xl mx-auto w-full">
@@ -73,11 +75,16 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           </div>
           <p className="text-sm text-muted-foreground mt-1">{booking.category.name} • {booking.address || 'Ahmedabad'}</p>
         </div>
-        {isCompleted && (
-          <Link href={`/customer/book?query=${encodeURIComponent(booking.category.name)}`}>
-            <Button variant="outline" size="sm">Book Again</Button>
-          </Link>
-        )}
+        <div className="flex gap-2">
+          {isCancellable && (
+            <SOSButton bookingId={booking.id} />
+          )}
+          {isCompleted && (
+            <Link href={`/customer/book?query=${encodeURIComponent(booking.category.name)}`}>
+              <Button variant="outline" size="sm">Book Again</Button>
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* Booking status timeline */}

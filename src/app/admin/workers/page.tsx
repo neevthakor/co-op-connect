@@ -1,4 +1,4 @@
-﻿import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,14 +10,21 @@ export default async function AdminWorkersPage({ searchParams }: { searchParams:
   const userRole = session?.user?.role;
   if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
 
-  const resolvedParams = await Promise.resolve(searchParams);
-  const statusFilter = resolvedParams.status || 'PENDING';
+  const resolvedParams = await searchParams;
+  const statusFilter = resolvedParams?.status || 'ALL';
+
+  const whereClause: any = {};
+  if (statusFilter !== 'ALL') whereClause.verificationStatus = statusFilter;
+  if (userRole === 'COOPERATIVE_ADMIN' && session.user.cooperativeId) {
+    whereClause.cooperativeId = session.user.cooperativeId;
+  }
 
   const workers = await prisma.worker.findMany({
-    where: statusFilter !== 'ALL' ? { verificationStatus: statusFilter } : {},
+    where: whereClause,
     include: {
       user: { select: { name: true, email: true, phone: true } },
-      cooperative: { select: { name: true } }
+      cooperative: { select: { name: true } },
+      skills: { include: { skill: true } }
     },
     orderBy: { joinedAt: 'desc' }
   });
@@ -32,6 +39,7 @@ export default async function AdminWorkersPage({ searchParams }: { searchParams:
         <div className="flex gap-2">
           <Link href="?status=PENDING" className={`px-4 py-2 rounded-lg text-sm font-semibold ${statusFilter === 'PENDING' ? 'bg-orange-100 text-orange-700' : 'bg-white border text-gray-600'}`}>Pending</Link>
           <Link href="?status=VERIFIED" className={`px-4 py-2 rounded-lg text-sm font-semibold ${statusFilter === 'VERIFIED' ? 'bg-green-100 text-green-700' : 'bg-white border text-gray-600'}`}>Verified</Link>
+          <Link href="?status=REJECTED" className={`px-4 py-2 rounded-lg text-sm font-semibold ${statusFilter === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-white border text-gray-600'}`}>Rejected</Link>
           <Link href="?status=ALL" className={`px-4 py-2 rounded-lg text-sm font-semibold ${statusFilter === 'ALL' ? 'bg-blue-100 text-blue-700' : 'bg-white border text-gray-600'}`}>All</Link>
         </div>
       </div>
@@ -57,8 +65,27 @@ export default async function AdminWorkersPage({ searchParams }: { searchParams:
                     </Badge>
                   </div>
                   <div className="text-sm text-gray-500 space-y-1">
-                    <p>{w.user.email} â€¢ {w.user.phone}</p>
-                    <p>Trade: {w.primaryTrade || 'Not specified'} â€¢ {w.cooperative?.name}</p>
+                    <p>{w.user.email} • {w.user.phone}</p>
+                    <p>
+                      {w.city || 'Unknown City'}, {w.state || 'Unknown State'} • Experience: {w.experience} yrs
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {w.skills.slice(0, 3).map(ws => (
+                        <span key={ws.id} className={`px-2 py-0.5 text-xs rounded border ${
+                          ws.skillVerificationStatus === 'SKILL_ASSESSED' ? 'bg-green-50 border-green-200 text-green-700' :
+                          ws.skillVerificationStatus === 'ASSESSMENT_PENDING' ? 'bg-orange-50 border-orange-200 text-orange-700' :
+                          ws.skillVerificationStatus === 'REJECTED' ? 'bg-red-50 border-red-200 text-red-700' :
+                          'bg-gray-50 border-gray-200 text-gray-700'
+                        }`}>
+                          {ws.skill.name} ({ws.skillVerificationStatus?.replace('_', ' ') || 'Self Declared'})
+                        </span>
+                      ))}
+                      {w.skills.length > 3 && (
+                        <span className="px-2 py-0.5 text-xs rounded border bg-gray-50 border-gray-200 text-gray-700">
+                          +{w.skills.length - 3} more
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">

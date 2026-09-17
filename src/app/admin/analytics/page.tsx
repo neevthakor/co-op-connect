@@ -7,29 +7,30 @@ import { BarChart3, Users, MapPin } from 'lucide-react';
 export default async function AnalyticsPage() {
   const session = await auth();
   const userRole = session?.user?.role;
-  if (!session?.user || userRole !== 'COOPERATIVE_ADMIN') {
+  if (!session?.user || !['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(userRole || '')) {
     redirect('/login');
   }
 
   const cooperativeId = session.user.cooperativeId;
+  const whereClause = userRole === 'COOPERATIVE_ADMIN' && cooperativeId ? { cooperativeId } : {};
 
   const [cityStats, stateStats, verificationStats] = await Promise.all([
     prisma.worker.groupBy({
       by: ['city'],
       _count: { city: true },
-      where: { cooperativeId },
+      where: whereClause,
       orderBy: { _count: { city: 'desc' } }
     }),
     prisma.worker.groupBy({
       by: ['state'],
       _count: { state: true },
-      where: { cooperativeId },
+      where: whereClause,
       orderBy: { _count: { state: 'desc' } }
     }),
     prisma.worker.groupBy({
       by: ['verificationStatus'],
       _count: { verificationStatus: true },
-      where: { cooperativeId },
+      where: whereClause,
     })
   ]);
 

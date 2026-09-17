@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const resolvedParams = await Promise.resolve(params);
+    const resolvedParams = await params;
     const workerId = resolvedParams.id;
 
     const profileData = await getWorkerProfile(workerId);
@@ -35,7 +35,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const resolvedParams = await Promise.resolve(params);
+    const resolvedParams = await params;
     const workerId = resolvedParams.id;
 
     const u = session.user;

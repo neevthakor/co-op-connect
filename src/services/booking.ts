@@ -3,6 +3,26 @@ import { generatePin } from "@/lib/utils";
 import { sendNotification } from "./notification";
 import { generateInvoice } from "./invoice";
 
+function parseTimeToMinutes(timeStr: string) {
+  if (!timeStr) return 0;
+  const match = timeStr.trim().match(/(\d+):(\d+)\s*(AM|PM)?/i);
+  if (!match) return 0;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3]?.toUpperCase();
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+}
+
+function parseAbsoluteMinutes(dateObj: Date, timeStr: string) {
+  if (!dateObj || !timeStr) return 0;
+  const dateStr = dateObj.toISOString().split('T')[0]; 
+  const baseDate = new Date(`${dateStr}T00:00:00.000Z`);
+  const timeMinutes = parseTimeToMinutes(timeStr);
+  return Math.floor(baseDate.getTime() / 60000) + timeMinutes;
+}
+
 export async function createBooking(params: {
   customerId: string;
   workerId: string;
@@ -16,84 +36,100 @@ export async function createBooking(params: {
   longitude?: number;
   isEmergency?: boolean;
 }) {
-  // Validate worker eligibility and check for scheduling conflicts in parallel
-  console.time('[booking] worker and conflict check (parallel)');
-  const [worker, conflicting] = await Promise.all([
-    prisma.worker.findUnique({
-      where: { id: params.workerId },
-    }),
-    (params.scheduledDate && params.scheduledTime) ? prisma.booking.findFirst({
-      where: {
-        workerId: params.workerId,
-        scheduledDate: params.scheduledDate,
-        scheduledTime: params.scheduledTime,
-        status: {
-          in: ["REQUESTED", "ACCEPTED", "TRAVELLING", "ARRIVED", "IN_PROGRESS"]
-        }
+  return await prisma.$transaction(async (tx) => {
+    const reqId = Math.random().toString(36).substring(7);
+    console.time(`[booking] worker and conflict check ${reqId}`);
+    const [worker, activeBookings] = await Promise.all([
+      tx.worker.findUnique({
+        where: { id: params.workerId },
+      }),
+      tx.booking.findMany({
+        where: {
+          workerId: params.workerId,
+          status: {
+            in: ["REQUESTED", "ACCEPTED", "TRAVELLING", "ARRIVED", "IN_PROGRESS"]
+          }
+        },
+        select: { id: true, scheduledDate: true, scheduledTime: true },
+      })
+    ]);
+    console.timeEnd(`[booking] worker and conflict check ${reqId}`);
+
+    let conflicting = false;
+    if (params.scheduledDate && params.scheduledTime) {
+      const requestedStart = parseAbsoluteMinutes(params.scheduledDate, params.scheduledTime);
+      const requestedEnd = requestedStart + 120; // Assume 2-hour duration
+
+      conflicting = activeBookings.some(b => {
+        if (!b.scheduledDate || !b.scheduledTime) return false;
+        
+        const bStart = parseAbsoluteMinutes(new Date(b.scheduledDate), b.scheduledTime);
+        const bEnd = bStart + 120;
+        
+        return requestedStart < bEnd && bStart < requestedEnd;
+      });
+    }
+
+    if (!worker) {
+      throw new Error("Worker not found");
+    }
+
+    if (worker.verificationStatus !== "VERIFIED") {
+      throw new Error("Worker is not currently eligible for new bookings");
+    }
+
+    if (worker.availabilityStatus === "OFFLINE") {
+      throw new Error("Worker is currently offline and cannot accept bookings");
+    }
+
+    if (conflicting) {
+      throw new Error("This worker is no longer available for the selected time. Please choose another worker or time.");
+    }
+
+    const servicePin = generatePin();
+
+    console.time(`[booking] insert booking ${reqId}`);
+    const booking = await tx.booking.create({
+      data: {
+        ...params,
+        status: "REQUESTED",
+        servicePin,
+        pinVerified: false,
       },
-      select: { id: true },
-    }) : null
-  ]);
-  console.timeEnd('[booking] worker and conflict check (parallel)');
+      include: {
+        category: true,
+        worker: { include: { user: true } },
+        customer: { include: { user: true } },
+      },
+    });
+    console.timeEnd(`[booking] insert booking ${reqId}`);
 
-  if (!worker) {
-    throw new Error("Worker not found");
-  }
+    console.time(`[booking] insert status history ${reqId}`);
+    await tx.bookingStatusHistory.create({
+      data: {
+        bookingId: booking.id,
+        status: "REQUESTED",
+        note: "Booking created by customer",
+      },
+    });
+    console.timeEnd(`[booking] insert status history ${reqId}`);
 
-  if (worker.verificationStatus !== "VERIFIED") {
-    throw new Error("Worker is not currently eligible for new bookings");
-  }
-
-  if (worker.availabilityStatus === "OFFLINE") {
-    throw new Error("Worker is currently offline and cannot accept bookings");
-  }
-
-  if (conflicting) {
-    throw new Error("This worker is no longer available for the selected time. Please choose another worker or time.");
-  }
-
-  const servicePin = generatePin();
-
-  console.time('[booking] insert booking');
-  const booking = await prisma.booking.create({
-    data: {
-      ...params,
-      status: "REQUESTED",
-      servicePin,
-      pinVerified: false,
-    },
-    include: {
-      category: true,
-      worker: { include: { user: true } },
-      customer: { include: { user: true } },
-    },
+    return booking;
+  }, {
+    isolationLevel: 'Serializable'
+  }).then(async (booking) => {
+    // Notify outside transaction to avoid blocking/rolling back if notification fails
+    if (booking.worker?.user?.id) {
+      await sendNotification(
+        booking.worker.user.id,
+        "BOOKING",
+        "New Job Request",
+        `You have a new ${booking.category.name} booking request at ${booking.address || 'your location'}.`,
+        { bookingId: booking.id, category: booking.category.name }
+      ).catch(e => console.error("Notification failed", e));
+    }
+    return booking;
   });
-  console.timeEnd('[booking] insert booking');
-
-  console.time('[booking] insert status history');
-  await prisma.bookingStatusHistory.create({
-    data: {
-      bookingId: booking.id,
-      status: "REQUESTED",
-      note: "Booking created by customer",
-    },
-  });
-  console.timeEnd('[booking] insert status history');
-
-  // Notify worker of new booking
-  if (booking.worker?.user?.id) {
-    console.time('[booking] send notification');
-    await sendNotification(
-      booking.worker.user.id,
-      "BOOKING",
-      "New Job Request",
-      `You have a new ${booking.category.name} booking request at ${booking.address || 'your location'}.`,
-      { bookingId: booking.id, category: booking.category.name }
-    );
-    console.timeEnd('[booking] send notification');
-  }
-
-  return booking;
 }
 
 export async function updateBookingStatus(
@@ -103,10 +139,10 @@ export async function updateBookingStatus(
 ) {
   const validTransitions: Record<string, string[]> = {
     REQUESTED: ["ACCEPTED", "CANCELLED"],
-    ACCEPTED: ["TRAVELLING", "CANCELLED"],
-    TRAVELLING: ["ARRIVED", "CANCELLED"],
-    ARRIVED: ["IN_PROGRESS", "CANCELLED"],
-    IN_PROGRESS: ["COMPLETED", "CANCELLED"],
+    ACCEPTED: ["TRAVELLING"],
+    TRAVELLING: ["ARRIVED"],
+    ARRIVED: ["IN_PROGRESS"],
+    IN_PROGRESS: ["COMPLETED"],
   };
 
   const booking = await prisma.booking.findUnique({
@@ -128,12 +164,24 @@ export async function updateBookingStatus(
     }
   }
 
-  const updated = await prisma.booking.update({
-    where: { id: bookingId },
+  // Use Optimistic Concurrency Control (OCC) to prevent race conditions
+  const updateResult = await prisma.booking.updateMany({
+    where: { 
+      id: bookingId,
+      status: booking.status // Ensure it hasn't changed since we read it
+    },
     data: {
       status: newStatus,
       completedAt: newStatus === "COMPLETED" ? new Date() : undefined,
-    },
+    }
+  });
+
+  if (updateResult.count === 0) {
+    throw new Error("Concurrent update detected. The booking was modified by another process.");
+  }
+
+  const updated = await prisma.booking.findUniqueOrThrow({
+    where: { id: bookingId },
     include: {
       category: true,
       worker: { include: { user: true } },
@@ -222,10 +270,20 @@ export async function verifyServicePin(bookingId: string, enteredPin: string) {
     return { success: false, message: "PIN can only be verified when worker has arrived" };
   }
 
+  // Atomically increment attempts to prevent race conditions
+  const updatedBooking = await prisma.booking.update({
+    where: { id: bookingId },
+    data: { pinAttempts: { increment: 1 } },
+  });
+
+  if (updatedBooking.pinAttempts > 3) {
+    return { success: false, message: "Too many failed PIN attempts. Please contact support." };
+  }
+
   if (booking.servicePin === enteredPin) {
     await prisma.booking.update({
       where: { id: bookingId },
-      data: { pinVerified: true, status: "IN_PROGRESS" },
+      data: { pinVerified: true, status: "IN_PROGRESS", pinAttempts: 0 },
     });
 
     await prisma.bookingStatusHistory.create({
@@ -237,6 +295,22 @@ export async function verifyServicePin(bookingId: string, enteredPin: string) {
     });
 
     return { success: true, message: "PIN verified successfully. Job marked IN_PROGRESS." };
+  }
+
+  const newAttempts = updatedBooking.pinAttempts;
+
+  if (newAttempts >= 3) {
+    // Create a factual security-related fraud alert
+    await prisma.fraudAlert.create({
+      data: {
+        type: "SUSPICIOUS_BOOKING",
+        entityType: "BOOKING",
+        entityId: bookingId,
+        riskLevel: "MEDIUM",
+        reason: "Booking locked: Maximum PIN verification attempts exceeded (3 failed attempts)."
+      },
+    });
+    return { success: false, message: "Account locked for this booking due to too many failed PIN attempts. Please contact support." };
   }
 
   return { success: false, message: "Invalid PIN provided" };

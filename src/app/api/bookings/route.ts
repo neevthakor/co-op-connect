@@ -125,7 +125,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Could not resolve customer ID', code: 'CUSTOMER_MISSING' }, { status: 400 });
     }
 
-    console.time('[booking] createBooking function');
+    const reqId = Math.random().toString(36).substring(7);
+    console.time(`[booking] createBooking function ${reqId}`);
     const booking = await createBooking({
       customerId,
       workerId,
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
       longitude: longitude ? parseFloat(longitude) : undefined,
       isEmergency: !!isEmergency,
     });
-    console.timeEnd('[booking] createBooking function');
+    console.timeEnd(`[booking] createBooking function ${reqId}`);
 
     if (address && customerId) {
       try {

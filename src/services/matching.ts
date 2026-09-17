@@ -151,15 +151,13 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     }
     const maxRadius = worker.serviceRadius || 15;
 
-    // EXCLUDE DISTANT WORKERS (only when we actually know the distance)
-    if (distanceKm !== null && distanceKm > maxRadius) {
+    // EXCLUDE DISTANT OR LOCATIONLESS WORKERS
+    if (distanceKm === null || distanceKm > maxRadius) {
       excludedByDistance++;
       continue;
     }
 
-    const distanceScore = distanceKm === null
-      ? 20
-      : Math.max(0, Math.round((1 - Math.min(distanceKm, maxRadius) / maxRadius) * 100));
+    const distanceScore = Math.max(0, Math.round((1 - Math.min(distanceKm, maxRadius) / maxRadius) * 100));
 
     // 4. Reliability (0 - 100)
     // FIX: don't default an unrated worker to 4.5/5 — that lets brand-new workers

@@ -22,7 +22,7 @@ function BookServiceContent() {
     address: '',
     latitude: null as number | null,
     longitude: null as number | null,
-    date: new Date().toISOString().split('T')[0],
+    date: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })(),
     time: '11:00 AM',
     workerId: null as string | null,
     categoryId: 'cat-ac',

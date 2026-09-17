@@ -55,26 +55,43 @@ export default function DemandPage() {
   }, [selectedArea]);
 
   // Transform demand history into chart series
-  const chartData = [
-    { day: 'Mon', AC: 28, Electrical: 19, Plumbing: 24, Cleaning: 15 },
-    { day: 'Tue', AC: 32, Electrical: 22, Plumbing: 20, Cleaning: 18 },
-    { day: 'Wed', AC: 45, Electrical: 25, Plumbing: 29, Cleaning: 22 },
-    { day: 'Thu', AC: 38, Electrical: 30, Plumbing: 27, Cleaning: 20 },
-    { day: 'Fri', AC: 52, Electrical: 35, Plumbing: 33, Cleaning: 28 },
-    { day: 'Sat', AC: 65, Electrical: 42, Plumbing: 40, Cleaning: 35 },
-    { day: 'Sun', AC: 70, Electrical: 48, Plumbing: 45, Cleaning: 40 },
-  ];
+  let chartData: any[] = [];
+  if (demandData?.demandHistory && Array.isArray(demandData.demandHistory)) {
+    const groupedByDay: Record<string, Record<string, number>> = {};
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    // Initialize days
+    days.forEach(day => {
+      groupedByDay[day] = {};
+    });
+
+    demandData.demandHistory.forEach((record: any) => {
+      const date = new Date(record.date);
+      const dayName = days[date.getDay()];
+      const categoryName = record.category?.name || 'Other';
+      
+      if (!groupedByDay[dayName][categoryName]) {
+        groupedByDay[dayName][categoryName] = 0;
+      }
+      groupedByDay[dayName][categoryName] += record.count;
+    });
+
+    chartData = days.map(day => {
+      return {
+        day,
+        ...groupedByDay[day]
+      };
+    });
+  } else {
+    // Fallback empty structure
+    chartData = [
+      { day: 'Mon' }, { day: 'Tue' }, { day: 'Wed' }, { day: 'Thu' }, { day: 'Fri' }, { day: 'Sat' }, { day: 'Sun' }
+    ];
+  }
 
   const categoryDemandList = demandData?.categoryDemand
     ? Object.entries(demandData.categoryDemand).map(([name, count]) => ({ name, count }))
-    : [
-        { name: 'AC Repair', count: 180 },
-        { name: 'Electrician', count: 140 },
-        { name: 'Plumber', count: 125 },
-        { name: 'Carpenter', count: 85 },
-        { name: 'Painter', count: 70 },
-        { name: 'Cleaner', count: 65 },
-      ];
+    : [];
 
   return (
     <div className="space-y-6 p-4 md:p-8 max-w-7xl mx-auto w-full pb-20">
@@ -162,10 +179,22 @@ export default function DemandPage() {
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="AC" stroke="#2563eb" strokeWidth={2.5} />
-                  <Line type="monotone" dataKey="Electrical" stroke="#16a34a" strokeWidth={2} />
-                  <Line type="monotone" dataKey="Plumbing" stroke="#d97706" strokeWidth={2} />
-                  <Line type="monotone" dataKey="Cleaning" stroke="#9333ea" strokeWidth={1.5} />
+                    {categoryDemandList.length > 0 ? (
+                      categoryDemandList.map((cat: any, i: number) => {
+                        const colors = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#e11d48', '#0d9488'];
+                        return (
+                          <Line 
+                            key={cat.name} 
+                            type="monotone" 
+                            dataKey={cat.name} 
+                            stroke={colors[i % colors.length]} 
+                            strokeWidth={2} 
+                          />
+                        );
+                      })
+                    ) : (
+                      <Line type="monotone" dataKey="No Data" stroke="#9ca3af" strokeWidth={2} />
+                    )}
                 </LineChart>
               </ResponsiveContainer>
             </div>

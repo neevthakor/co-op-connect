@@ -18,7 +18,7 @@ export default async function CustomerWorkerProfilePage({
     redirect('/login');
   }
 
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   const workerId = resolvedParams.id;
   const customerId = session.user.customerId;
 

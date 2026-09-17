@@ -24,7 +24,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         ]
       : []),
     ...(userRole === "FEDERATION_ADMIN"
-      ? [adminNavItem("/admin/organization-requests", "Organization requests", "ClipboardList")]
+      ? [
+          adminNavItem("/admin/workers", "Workers", "Users"),
+          adminNavItem("/admin/verification", "Worker verification", "ShieldCheck"),
+          adminNavItem("/admin/organization-requests", "Organization requests", "ClipboardList")
+        ]
       : []),
     ...(userRole === "ADMIN"
       ? [

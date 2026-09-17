@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const resolvedParams = await Promise.resolve(params);
+    const resolvedParams = await params;
     const bookingId = resolvedParams.id;
 
     const session = await auth();
@@ -66,14 +66,16 @@ export async function GET(
       if (booking.status === 'REQUESTED' && booking.customer && booking.customer.user) {
         booking.customer.user.phone = null;
       }
-      // Strip servicePin from response for workers
+    }
+
+    if (!isCustomer) {
       booking.servicePin = null;
     }
 
     return NextResponse.json(booking);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Booking GET Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to fetch booking' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to fetch booking' }, { status: 500 });
   }
 }
 
@@ -82,7 +84,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const resolvedParams = await Promise.resolve(params);
+    const resolvedParams = await params;
     const bookingId = resolvedParams.id;
     const body = await req.json();
     const { status, pin, note, reason } = body;
@@ -154,6 +156,12 @@ export async function PATCH(
       if (!isWorker) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
+      
+      // Enforce Worker Verification
+      if (session.user.verificationStatus !== 'VERIFIED') {
+        return NextResponse.json({ error: 'Worker account is not verified. You cannot accept or update customer jobs.' }, { status: 403 });
+      }
+
       const allowedWorkerStatuses = ['ACCEPTED', 'TRAVELLING', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'];
       if (!allowedWorkerStatuses.includes(status)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -163,9 +171,8 @@ export async function PATCH(
     }
 
     return NextResponse.json({ error: 'No valid action provided' }, { status: 400 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Booking PATCH Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to update booking' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to update booking' }, { status: 500 });
   }
 }
-

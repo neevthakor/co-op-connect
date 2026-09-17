@@ -138,7 +138,7 @@ export default function VerificationPage() {
                       </td>
                       <td className="px-5 py-3.5 font-medium">{w.experience || 2} Years</td>
                       <td className="px-5 py-3.5 text-muted-foreground">{w.cooperative?.name || 'Ahmedabad Cooperative'}</td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5 space-y-1">
                         <Badge
                           className={
                             w.verificationStatus === 'VERIFIED'
@@ -150,6 +150,16 @@ export default function VerificationPage() {
                         >
                           {w.verificationStatus}
                         </Badge>
+                        {w.verificationMethod && (
+                          <div className="text-[10px] text-muted-foreground mt-1">
+                            Method: {w.verificationMethod}
+                          </div>
+                        )}
+                        {w.riskFlag && w.riskFlag !== 'LOW' && (
+                          <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4 ml-1">
+                            {w.riskFlag} RISK
+                          </Badge>
+                        )}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="flex justify-end gap-1.5">

@@ -140,6 +140,7 @@ export async function POST(req: NextRequest) {
                 skillId: sId,
                 proficiencyLevel: 'INTERMEDIATE',
                 verified: false,
+                skillVerificationStatus: 'SELF_DECLARED',
               })) : []
             }
           },

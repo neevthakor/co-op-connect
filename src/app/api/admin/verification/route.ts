@@ -30,9 +30,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(workers);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Admin Verification GET Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
 
@@ -44,7 +44,22 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
+    const contentType = req.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 400 });
+    }
+
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return NextResponse.json({ error: 'Invalid or empty JSON body' }, { status: 400 });
+    }
+
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'JSON body must be an object' }, { status: 400 });
+    }
+
     const { workerId, action, reason, note } = body;
     const adminId = session.user.id as string;
 
@@ -61,21 +76,30 @@ export async function PATCH(req: NextRequest) {
 
     let updatedWorker;
     if (action === 'APPROVE') {
-      updatedWorker = await approveWorker(workerId, adminId);
+      updatedWorker = await approveWorker(workerId, adminId, note);
     } else if (action === 'REJECT') {
       updatedWorker = await rejectWorker(workerId, adminId, reason || 'Application criteria not met');
     } else if (action === 'REQUEST_INFO') {
       updatedWorker = await requestMoreInfo(workerId, adminId, note || 'Additional KYC proof required');
     } else if (action === 'SUSPEND') {
       updatedWorker = await suspendWorker(workerId, adminId, reason || 'Suspended by admin');
+    } else if (action === 'ASSESS_SKILL') {
+      const { skillId, status, notes } = body;
+      if (!skillId || !status) {
+        return NextResponse.json({ error: 'skillId and status are required for ASSESS_SKILL' }, { status: 400 });
+      }
+      
+      const { assessWorkerSkill } = await import('@/services/verification');
+      const updatedSkill = await assessWorkerSkill(skillId, adminId, status, notes);
+      return NextResponse.json({ success: true, workerSkill: updatedSkill });
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
     return NextResponse.json({ success: true, worker: updatedWorker });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Admin Verification PATCH Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
 

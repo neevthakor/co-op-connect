@@ -12,6 +12,9 @@ export interface WorkerProfileData {
     skill: { name: string };
     proficiencyLevel: string;
     verified: boolean;
+    skillVerificationStatus?: string | null;
+    experienceYears?: number | null;
+    experienceDescription?: string | null;
   }[];
   certifications: Record<string, unknown>[];
   recentReviews: WorkerReview[];

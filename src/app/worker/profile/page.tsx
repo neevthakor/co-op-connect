@@ -154,20 +154,39 @@ export default async function ProfilePage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Wrench className="h-4 w-4 text-primary" /> Verified Trade Skills
+              <Wrench className="h-4 w-4 text-primary" /> Trade Skills
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {skills.length === 0 ? (
               <p className="text-xs text-muted-foreground">No skills added yet</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {skills.map((ws) => (
-                  <Badge key={ws.id} variant="outline" className="text-xs py-1 px-2.5 flex items-center gap-1">
-                    {ws.verified && <CheckCircle2 className="h-3 w-3 text-green-600" />}
-                    {ws.skill.name} • {ws.proficiencyLevel}
-                  </Badge>
-                ))}
+              <div className="flex flex-col gap-2">
+                {skills.map((ws) => {
+                  const statusColors: Record<string, string> = {
+                    'SELF_DECLARED': 'text-gray-600 bg-gray-50 border-gray-200',
+                    'ASSESSMENT_PENDING': 'text-amber-600 bg-amber-50 border-amber-200',
+                    'SKILL_ASSESSED': 'text-green-700 bg-green-50 border-green-200',
+                    'REJECTED': 'text-red-700 bg-red-50 border-red-200',
+                  };
+                  const color = ws.skillVerificationStatus ? statusColors[ws.skillVerificationStatus] : statusColors['SELF_DECLARED'];
+                  const statusLabel = ws.skillVerificationStatus ? ws.skillVerificationStatus.replace('_', ' ') : 'SELF DECLARED';
+
+                  return (
+                    <div key={ws.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs p-2 bg-muted/40 rounded border">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold text-sm">{ws.skill.name}</span>
+                        <span className="text-muted-foreground">
+                          {ws.proficiencyLevel} {ws.experienceYears ? `• ${ws.experienceYears} yrs experience` : ''}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className={`mt-2 sm:mt-0 ${color}`}>
+                        {ws.skillVerificationStatus === 'SKILL_ASSESSED' && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                        {statusLabel}
+                      </Badge>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>

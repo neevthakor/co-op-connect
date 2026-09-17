@@ -12,7 +12,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const resolvedParams = await Promise.resolve(params);
+    const resolvedParams = await params;
     const bookingId = resolvedParams.id;
     const body = await req.json();
     const { category = 'POOR_QUALITY', description } = body;

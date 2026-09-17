@@ -20,7 +20,8 @@ export function AdminWorkerActions({ workerId, currentStatus }: { workerId: stri
       if (res.ok) {
         router.refresh();
       } else {
-        alert('Failed to update status');
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Failed to update status: ${errorData.error || res.statusText}`);
       }
     } catch (e) {
       console.error(e);

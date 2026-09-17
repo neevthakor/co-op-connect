@@ -12,7 +12,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const resolvedParams = await Promise.resolve(params);
+    const resolvedParams = await params;
     const workerId = resolvedParams.id;
     const sessionWorkerId = session.user.workerId;
 
