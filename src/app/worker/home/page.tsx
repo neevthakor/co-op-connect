@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Briefcase, CheckCircle2, MapPin, ShieldCheck } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { AvailabilityToggle } from '@/components/worker/availability-toggle';
 
 export default async function WorkerHomePage() {
   const session = await auth();
@@ -16,9 +17,11 @@ export default async function WorkerHomePage() {
   const workerId = (session.user as { workerId?: string }).workerId;
   
   type WorkerSummary = {
+    id: string;
     primaryTrade: string | null;
     averageRating: number;
     verificationStatus: string;
+    availabilityStatus: string;
     cooperative: { id: string; name: string } | null;
   };
   type ActiveBooking = {
@@ -46,6 +49,7 @@ export default async function WorkerHomePage() {
           primaryTrade: true,
           averageRating: true,
           verificationStatus: true,
+          availabilityStatus: true,
           cooperative: { select: { id: true, name: true } },
         },
       }),
@@ -119,11 +123,9 @@ export default async function WorkerHomePage() {
         </div>
         <div className="flex items-center gap-3">
           {worker?.verificationStatus === 'VERIFIED' ? (
-              <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-              ● AVAILABLE FOR JOBS
-            </span>
+            <AvailabilityToggle workerId={worker.id} initialStatus={worker.availabilityStatus} />
           ) : (
-              <span className="rounded-full border border-orange-500/25 bg-orange-500/10 px-3 py-1.5 text-xs font-semibold text-orange-700 dark:text-orange-300">
+            <span className="rounded-full border border-orange-500/25 bg-orange-500/10 px-3 py-1.5 text-xs font-semibold text-orange-700 dark:text-orange-300">
               ● PENDING VERIFICATION
             </span>
           )}
