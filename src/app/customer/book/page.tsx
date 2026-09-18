@@ -476,14 +476,19 @@ function BookServiceContent() {
                   const workerObj = match.worker || match;
                   const userObj = workerObj.user || {};
                   const isSelected = bookingData.workerId === workerObj.id;
+                  const isOffline = workerObj.availabilityStatus === 'OFFLINE';
 
                   return (
                     <Card
                       key={workerObj.id}
-                      className={`cursor-pointer transition-all bg-card ${
-                        isSelected ? 'border-primary ring-2 ring-primary/30 bg-primary/10' : 'border-border/80 hover:border-primary/50'
-                      }`}
+                      className={`transition-all bg-card ${
+                        isSelected ? 'border-primary ring-2 ring-primary/30 bg-primary/10' : 'border-border/80'
+                      } ${isOffline ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50'}`}
                       onClick={() => {
+                        if (isOffline) {
+                          toast.error('This worker is currently offline and cannot accept new bookings right now.');
+                          return;
+                        }
                         setSelectedWorker(match);
                         setBookingData({
                           ...bookingData,
@@ -494,7 +499,7 @@ function BookServiceContent() {
                       }}
                     >
                       <CardContent className="p-4 flex gap-4 items-center">
-                        <div className="w-14 h-14 bg-primary/10 text-primary font-bold rounded-full flex items-center justify-center flex-shrink-0 text-xl">
+                        <div className={`w-14 h-14 font-bold rounded-full flex items-center justify-center flex-shrink-0 text-xl ${isOffline ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
                           {userObj.name?.[0] || 'W'}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -502,7 +507,12 @@ function BookServiceContent() {
                             <div>
                               <h3 className="font-semibold text-base flex items-center gap-1.5">
                                 {userObj.name || 'Cooperative Worker'}
-                                <ShieldCheck className="h-4 w-4 text-primary" />
+                                <ShieldCheck className={`h-4 w-4 ${isOffline ? 'text-muted-foreground' : 'text-primary'}`} />
+                                {isOffline && (
+                                  <span className="text-[10px] uppercase font-bold bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm ml-1">
+                                    Offline
+                                  </span>
+                                )}
                               </h3>
                               <p className="text-xs text-muted-foreground">{workerObj.primaryTrade || 'Technician'} • {workerObj.experience ? `${workerObj.experience} yrs exp` : 'Verified Member'}</p>
                             </div>
