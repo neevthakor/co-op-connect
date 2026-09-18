@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     const lngParam = searchParams.get('longitude');
     const urgency = (searchParams.get('urgency') as 'NORMAL' | 'URGENT' | 'EMERGENCY') || 'NORMAL';
     const cooperativeId = searchParams.get('cooperativeId') || undefined;
+    const searchedAddress = searchParams.get('address') || undefined;
 
     if (!latParam || !lngParam) {
       return NextResponse.json({ error: 'latitude and longitude are required' }, { status: 400 });
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest) {
       longitude,
       urgency,
       cooperativeId,
+      searchedAddress,
     });
 
     return NextResponse.json(matches);
@@ -42,7 +44,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { categoryId, latitude, longitude, urgency = 'NORMAL', cooperativeId } = body;
+    const { categoryId, latitude, longitude, urgency = 'NORMAL', cooperativeId, address } = body;
 
     if (!categoryId) {
       return NextResponse.json({ error: 'categoryId is required' }, { status: 400 });
@@ -64,6 +66,7 @@ export async function POST(req: NextRequest) {
       longitude: lng,
       urgency,
       cooperativeId,
+      searchedAddress: typeof address === 'string' ? address : undefined,
     });
 
     return NextResponse.json(matches);

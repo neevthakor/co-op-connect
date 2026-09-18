@@ -165,6 +165,7 @@ function BookServiceContent() {
           urgency: bookingData.isEmergency ? 'EMERGENCY' : 'NORMAL',
           latitude: lat,
           longitude: lng,
+          address: bookingData.address,
         }),
       });
       const data = await res.json();

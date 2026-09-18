@@ -7,6 +7,7 @@ export interface MatchParams {
   longitude: number;
   urgency?: "NORMAL" | "URGENT" | "EMERGENCY";
   cooperativeId?: string;
+  searchedAddress?: string;
 }
 
 export interface WorkerMatchResult {
@@ -23,8 +24,57 @@ export interface WorkerMatchResult {
   explanation: string;
 }
 
+/**
+ * Extract the operational-area portion from a worker's persisted address.
+ * Worker addresses follow the seed/registration pattern "<house number>, <area>"
+ * (e.g. "142, Chandkheda"). Returns the area portion after the first comma,
+ * normalized to lowercase and trimmed. If no comma is present, the entire
+ * string is treated as the area.
+ */
+function extractOperationalArea(address: string): string {
+  const commaIndex = address.indexOf(",");
+  const raw = commaIndex >= 0 ? address.substring(commaIndex + 1) : address;
+  return raw.trim().toLowerCase();
+}
+
+/**
+ * Check whether a worker's persisted address matches the customer's searched
+ * address/area string. Comparison is case-insensitive and whitespace-tolerant.
+ *
+ * The worker's operational area (extracted from their address) is compared
+ * against each comma-separated part of the searched string AND against the
+ * full searched string. This handles:
+ *   worker "142, Chandkheda"  + search "Chandkheda"           → match
+ *   worker "87, Satellite"    + search "satellite"             → match
+ *   worker "142, Chandkheda"  + search "Main Rd, Chandkheda"  → match
+ */
+function matchesOperationalArea(
+  workerAddress: string | null | undefined,
+  searchedAddress: string | undefined
+): boolean {
+  if (!workerAddress || !searchedAddress) return false;
+
+  const workerArea = extractOperationalArea(workerAddress);
+  if (!workerArea) return false;
+
+  const searchedFull = searchedAddress.trim().toLowerCase();
+  if (!searchedFull) return false;
+
+  // Direct match: full searched string equals the worker's area
+  if (searchedFull === workerArea) return true;
+
+  // Part-based match: any comma-separated part of the searched address
+  // equals the worker's area
+  const searchedParts = searchedAddress
+    .split(",")
+    .map((p) => p.trim().toLowerCase())
+    .filter(Boolean);
+
+  return searchedParts.some((part) => part === workerArea);
+}
+
 export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResult[]> {
-  const { categoryId, latitude, longitude, urgency = "NORMAL", cooperativeId } = params;
+  const { categoryId, latitude, longitude, urgency = "NORMAL", cooperativeId, searchedAddress } = params;
 
   // Retrieve cooperative matching weights or default
   let weights = {
@@ -65,11 +115,12 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
   const totalWorkersInDb = await prisma.worker.count();
 
   // 1. Filter eligible workers (verified, belongs to trade/skills in category)
-  // FIX: also exclude workers who are OFFLINE outright, instead of only down-scoring them.
+  // OFFLINE workers are included in discovery so they remain visible when
+  // searching by area/location. The availability scoring below naturally
+  // ranks them lower than AVAILABLE or BUSY workers.
   const workers = await prisma.worker.findMany({
     where: {
       verificationStatus: "VERIFIED",
-      availabilityStatus: { not: "OFFLINE" },
       ...(cooperativeId ? { cooperativeId } : {}),
       OR: [
         {
@@ -129,10 +180,12 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     else if (matchingSkill) skillScore = 65; // has a skill record but no/unknown proficiency
 
     // 2. Availability (0 - 100)
-    // OFFLINE workers are already excluded above, so this only distinguishes AVAILABLE vs BUSY.
+    // OFFLINE workers are discoverable but scored low so AVAILABLE/BUSY workers
+    // always rank above them when all other factors are equal.
     let availabilityScore = 50;
     if (worker.availabilityStatus === "AVAILABLE") availabilityScore = 100;
     else if (worker.availabilityStatus === "BUSY") availabilityScore = 40;
+    else if (worker.availabilityStatus === "OFFLINE") availabilityScore = 20;
     if (urgency === "EMERGENCY" && worker.isEmergencyAvailable) {
       availabilityScore = 100;
     }
@@ -151,13 +204,25 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     }
     const maxRadius = worker.serviceRadius || 15;
 
-    // EXCLUDE DISTANT OR LOCATIONLESS WORKERS
-    if (distanceKm === null || distanceKm > maxRadius) {
+    // Discovery qualification: a worker enters the candidate pool if they satisfy
+    // EITHER an exact/normalized operational-area match OR GPS proximity within
+    // the platform discovery radius. Neither condition requires the worker to be
+    // online. serviceRadius is NOT used as a discovery gate — only for scoring.
+    const WORKER_LOCATION_MATCH_RADIUS_KM = 7;
+    const exactAreaMatch = matchesOperationalArea(worker.address, searchedAddress);
+    const withinDiscoveryRadius = distanceKm !== null && distanceKm <= WORKER_LOCATION_MATCH_RADIUS_KM;
+
+    if (!exactAreaMatch && !withinDiscoveryRadius) {
       excludedByDistance++;
       continue;
     }
 
-    const distanceScore = Math.max(0, Math.round((1 - Math.min(distanceKm, maxRadius) / maxRadius) * 100));
+    // Distance scoring: workers with known GPS get a score normalized against
+    // their serviceRadius; area-matched workers without GPS get a baseline of 0
+    // (unknown distance = lowest distance score, but they still appear in results).
+    const distanceScore = distanceKm !== null
+      ? Math.max(0, Math.round((1 - Math.min(distanceKm, maxRadius) / maxRadius) * 100))
+      : 0;
 
     // 4. Reliability (0 - 100)
     // FIX: don't default an unrated worker to 4.5/5 — that lets brand-new workers
@@ -222,9 +287,8 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
 - latitude/longitude: ${latitude}, ${longitude}
 - cooperativeId: ${cooperativeId || 'none'}
 - workers before filtering (total in DB): ${totalWorkersInDb}
-- workers after eligibility filtering (verified, available, trade/skill match): ${workers.length}
-- excluded because of distance: ${excludedByDistance}
-- excluded because of skill/category: ${totalWorkersInDb - workers.length}
+- workers after eligibility filtering (verified, trade/skill match, includes OFFLINE): ${workers.length}
+- excluded because of distance (outside both serviceRadius and ${7}km discovery radius): ${excludedByDistance}
 - final matches: ${finalMatches.length}`);
 
   return finalMatches;
