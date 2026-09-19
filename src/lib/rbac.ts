@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+
 import type { UserRole } from "@/lib/utils";
 
 type Permission =
@@ -118,34 +118,6 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
 
 export function hasPermission(role: string, permission: Permission): boolean {
   return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
-}
-
-export async function requireAuth(...requiredRoles: UserRole[]) {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error('UNAUTHORIZED');
-  }
-
-  const userRole = session.user.role as string;
-  if (requiredRoles.length > 0 && !requiredRoles.includes(userRole as UserRole)) {
-    throw new Error('FORBIDDEN');
-  }
-
-  return session.user;
-}
-
-export async function requirePermission(permission: Permission) {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error('UNAUTHORIZED');
-  }
-
-  const userRole = session.user.role as string;
-  if (!hasPermission(userRole, permission)) {
-    throw new Error('FORBIDDEN');
-  }
-
-  return session.user;
 }
 
 export function getRoleRedirect(role: string): string {

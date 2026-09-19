@@ -2,11 +2,38 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { isValidEmail, isValidPhone, normalizePhone } from '@/lib/validation';
+import { isValidState, isValidCity, ALL_INDIA_STATES_AND_UTS, INDIA_CITIES } from '@/lib/locations/india';
 
 export async function POST(req: NextRequest) {
 
   try {
-    const body = await req.json();
+    let body: any;
+    let file: File | null = null;
+
+    if (req.headers.get('content-type')?.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      const jsonData = formData.get('data');
+      if (typeof jsonData === 'string') {
+        body = JSON.parse(jsonData);
+      } else {
+        return NextResponse.json({ error: 'Missing JSON data in form' }, { status: 400 });
+      }
+      file = formData.get('photo') as File | null;
+    } else {
+      body = await req.json();
+    }
+
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        return NextResponse.json({ error: 'Profile photo exceeds 5MB limit' }, { status: 400 });
+      }
+      if (!file.type.startsWith('image/') || file.type.includes('svg')) {
+        return NextResponse.json({ error: 'Invalid profile photo type. Only JPG, PNG, and WebP are allowed.' }, { status: 400 });
+      }
+    } else {
+      return NextResponse.json({ error: 'Profile photo is required.' }, { status: 400 });
+    }
+
     const {
       name,
       email,
@@ -23,6 +50,10 @@ export async function POST(req: NextRequest) {
       role = 'WORKER',
       latitude: providedLatitude,
       longitude: providedLongitude,
+      learningMethod,
+      trainingInstitute,
+      learningDetails,
+      verificationAnswers,
     } = body;
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -43,6 +74,25 @@ export async function POST(req: NextRequest) {
 
     if (!primaryTrade || typeof primaryTrade !== 'string') {
       return NextResponse.json({ error: 'Primary trade selection is required' }, { status: 400 });
+    }
+
+    // Normalize state/city via the central dataset
+    let finalState = state;
+    if (state !== 'Unspecified') {
+      const normalizedState = ALL_INDIA_STATES_AND_UTS.find(s => s.toLowerCase() === String(state).toLowerCase());
+      if (!normalizedState) {
+        return NextResponse.json({ error: 'Invalid state or union territory selected' }, { status: 400 });
+      }
+      finalState = normalizedState;
+    }
+
+    let finalCity = city;
+    if (city !== 'Unspecified') {
+      const normalizedCity = INDIA_CITIES[finalState]?.find(c => c.toLowerCase() === String(city).toLowerCase());
+      if (!normalizedCity) {
+        return NextResponse.json({ error: 'Invalid city selected for the given state' }, { status: 400 });
+      }
+      finalCity = normalizedCity;
     }
 
     const normalizedEmail = email.trim().toLowerCase();
@@ -67,12 +117,6 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // BUG FIX: worker registration used to hardcode latitude/longitude to null,
-    // so a real worker's address was never converted into coordinates. That meant
-    // the worker could never be found by proximity-based matching (matchWorkers /
-    // findNearbyWorkers both require non-null lat/lng), no matter how close they
-    // actually were to a customer. Prefer coordinates the client already has
-    // (e.g. from browser geolocation); otherwise geocode the typed address here.
     let latitude: number | null =
       typeof providedLatitude === 'number' && !isNaN(providedLatitude) && providedLatitude >= -90 && providedLatitude <= 90 ? providedLatitude : null;
     let longitude: number | null =
@@ -97,12 +141,9 @@ export async function POST(req: NextRequest) {
         }
       } catch (geoError) {
         console.error('Worker registration geocoding failed:', geoError);
-        // Non-fatal: worker is created with null coordinates and can set/fix
-        // their location later from their profile (see PATCH /api/workers/[id]).
       }
     }
 
-    // Pick first active cooperative if not provided
     let coopId = cooperativeId;
     if (!coopId) {
       const defaultCoop = await prisma.cooperative.findFirst({ where: { isActive: true } });
@@ -110,6 +151,13 @@ export async function POST(req: NextRequest) {
     }
 
     const userRole = role === 'HELPER' ? 'HELPER' : 'WORKER';
+
+    let dbQuestions: { id: string, question: string }[] = [];
+    if (verificationAnswers && typeof verificationAnswers === 'object') {
+      dbQuestions = await prisma.skillVerificationQuestion.findMany({
+        where: { id: { in: Object.keys(verificationAnswers) } }
+      });
+    }
 
     const user = await prisma.user.create({
       data: {
@@ -125,8 +173,11 @@ export async function POST(req: NextRequest) {
             primaryTrade: primaryTrade.trim(),
             experience: parseInt(experience.toString(), 10) || 1,
             address: address && typeof address === 'string' ? address.trim() : 'Location Not Provided',
-            city,
-            state,
+            city: finalCity,
+            state: finalState,
+            learningMethod,
+            trainingInstitute,
+            learningDetails,
             verificationStatus: 'PENDING', // Real worker starts as PENDING until verified by cooperative admin
             availabilityStatus: 'OFFLINE',
             isEmergencyAvailable: !!isEmergencyAvailable,
@@ -142,7 +193,14 @@ export async function POST(req: NextRequest) {
                 proficiencyLevel: 'INTERMEDIATE',
                 verified: false,
               })) : []
-            }
+            },
+            verificationResponses: dbQuestions.length > 0 ? {
+              create: dbQuestions.map(q => ({
+                questionId: q.id,
+                questionSnapshot: q.question,
+                answer: String(verificationAnswers[q.id]),
+              }))
+            } : undefined
           },
         },
       },
@@ -150,6 +208,36 @@ export async function POST(req: NextRequest) {
         worker: true,
       },
     });
+
+    try {
+      if (file) {
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileName = `worker-profile-photos/${user.id}/profile.${fileExt}`;
+
+        const { supabaseAdmin } = await import('@/lib/supabase-admin');
+        const { error } = await supabaseAdmin.storage
+          .from('private-uploads')
+          .upload(fileName, file, {
+            contentType: file.type,
+            upsert: true,
+          });
+
+        if (error) throw error;
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { avatar: fileName },
+        });
+      }
+    } catch (uploadError) {
+      console.error('Photo upload failed during registration:', uploadError instanceof Error ? uploadError.message : 'Unknown error');
+      // Photo failed but user was created. Not fatal to registration according to standard sequences,
+      // but if the photo was strict-required, we could rollback here. Given the prompt
+      // says "If an upload succeeds but worker creation fails, clean up... Or use another safe sequence"
+      // we'll just log and continue, the user can re-upload later. Or we could rollback the user.
+      await prisma.user.delete({ where: { id: user.id } });
+      return NextResponse.json({ error: 'Failed to upload photo. Please try again.' }, { status: 500 });
+    }
 
     return NextResponse.json(
       {

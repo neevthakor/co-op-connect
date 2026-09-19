@@ -1,27 +1,19 @@
 import { prisma } from "@/lib/prisma";
 import { generateInvoiceNumber } from "@/lib/utils";
 
-export async function generateInvoice(bookingId: string) {
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
-    include: {
-      category: true,
-      materialRequests: {
-        where: { status: "APPROVED" },
-      },
-    },
-  });
-
-  if (!booking) {
-    throw new Error("Booking not found");
-  }
-
+// Accept pre-fetched booking to eliminate redundant DB reads
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildInvoiceCreatePromise(booking: any) {
   const basePrice = booking.finalPrice || booking.estimatedPrice || booking.category.basePrice || 350;
   const labourCharge = Math.round(basePrice * 0.7);
   const travelCharge = Math.round(basePrice * 0.1);
   
-  const materialCharge = booking.materialRequests.reduce(
-    (sum, m) => sum + m.totalPrice,
+  // Filter for APPROVED material requests if not already filtered
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const approvedMaterials = booking.materialRequests?.filter((m: any) => m.status === "APPROVED") || [];
+  const materialCharge = approvedMaterials.reduce(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (sum: number, m: any) => sum + m.totalPrice,
     0
   );
   
@@ -32,9 +24,9 @@ export async function generateInvoice(bookingId: string) {
   const tax = Math.round(subtotal * 0.05); // 5% GST
   const total = subtotal + tax;
 
-  const invoice = await prisma.invoice.create({
+  return prisma.invoice.create({
     data: {
-      bookingId,
+      bookingId: booking.id,
       invoiceNumber: generateInvoiceNumber(),
       labourCharge,
       travelCharge,
@@ -62,6 +54,23 @@ export async function generateInvoice(bookingId: string) {
       items: true,
     },
   });
+}
 
-  return invoice;
+// Keep the old function signature for backward compatibility if used elsewhere
+export async function generateInvoice(bookingId: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      category: true,
+      materialRequests: {
+        where: { status: "APPROVED" },
+      },
+    },
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+
+  return buildInvoiceCreatePromise(booking);
 }
