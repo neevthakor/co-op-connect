@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { createAuditLog } from "./audit";
 
 export async function submitForVerification(workerId: string) {
   return prisma.worker.update({
@@ -10,90 +9,129 @@ export async function submitForVerification(workerId: string) {
   });
 }
 
-export async function approveWorker(workerId: string, adminId: string, note?: string) {
-  const updated = await prisma.worker.update({
-    where: { id: workerId },
-    data: {
-      verificationStatus: "VERIFIED",
-      identityVerified: true,
-      
-    },
-  });
-
-  await createAuditLog(adminId, "APPROVE_WORKER", "WORKER", workerId, {
-    status: "VERIFIED",
-    method: "ADMIN",
-  });
-
-  return updated;
+export async function approveWorker(workerId: string, adminId: string, note?: string, expectedCoopId?: string) {
+  const whereClause: { id: string, cooperativeId?: string } = { id: workerId };
+  if (expectedCoopId) whereClause.cooperativeId = expectedCoopId;
+  
+  const results = await prisma.$transaction([
+    prisma.worker.update({
+      where: whereClause,
+      data: {
+        verificationStatus: "VERIFIED",
+        identityVerified: true,
+      },
+      include: { user: true }
+    }),
+    prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "APPROVE_WORKER",
+        entityType: "WORKER",
+        entityId: workerId,
+        details: JSON.stringify({ status: "VERIFIED", method: "ADMIN", note }),
+      },
+    }),
+  ]);
+  return results[0];
 }
 
-export async function rejectWorker(workerId: string, adminId: string, reason: string) {
-  const updated = await prisma.worker.update({
-    where: { id: workerId },
-    data: {
-      verificationStatus: "REJECTED",
-    },
-  });
-
-  await createAuditLog(adminId, "REJECT_WORKER", "WORKER", workerId, {
-    reason,
-    status: "REJECTED",
-  });
-
-  return updated;
+export async function rejectWorker(workerId: string, adminId: string, reason: string, expectedCoopId?: string) {
+  const whereClause: { id: string, cooperativeId?: string } = { id: workerId };
+  if (expectedCoopId) whereClause.cooperativeId = expectedCoopId;
+  
+  const results = await prisma.$transaction([
+    prisma.worker.update({
+      where: whereClause,
+      data: {
+        verificationStatus: "REJECTED",
+      },
+      include: { user: true }
+    }),
+    prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "REJECT_WORKER",
+        entityType: "WORKER",
+        entityId: workerId,
+        details: JSON.stringify({ reason, status: "REJECTED" }),
+      },
+    }),
+  ]);
+  return results[0];
 }
 
-export async function requestMoreInfo(workerId: string, adminId: string, note: string) {
-  const updated = await prisma.worker.update({
-    where: { id: workerId },
-    data: {
-      verificationStatus: "MORE_INFO_REQUIRED",
-    },
-  });
-
-  await createAuditLog(adminId, "REQUEST_INFO_WORKER", "WORKER", workerId, {
-    note,
-    status: "MORE_INFO_REQUIRED",
-  });
-
-  return updated;
+export async function requestMoreInfo(workerId: string, adminId: string, note: string, expectedCoopId?: string) {
+  const whereClause: { id: string, cooperativeId?: string } = { id: workerId };
+  if (expectedCoopId) whereClause.cooperativeId = expectedCoopId;
+  
+  const results = await prisma.$transaction([
+    prisma.worker.update({
+      where: whereClause,
+      data: {
+        verificationStatus: "MORE_INFO_REQUIRED",
+      },
+      include: { user: true }
+    }),
+    prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "REQUEST_INFO_WORKER",
+        entityType: "WORKER",
+        entityId: workerId,
+        details: JSON.stringify({ note, status: "MORE_INFO_REQUIRED" }),
+      },
+    }),
+  ]);
+  return results[0];
 }
 
-export async function suspendWorker(workerId: string, adminId: string, reason: string) {
-  const updated = await prisma.worker.update({
-    where: { id: workerId },
-    data: {
-      verificationStatus: "SUSPENDED",
-      availabilityStatus: "OFFLINE",
-    },
-  });
-
-  await createAuditLog(adminId, "SUSPEND_WORKER", "WORKER", workerId, {
-    reason,
-    status: "SUSPENDED",
-  });
-
-  return updated;
+export async function suspendWorker(workerId: string, adminId: string, reason: string, expectedCoopId?: string) {
+  const whereClause: { id: string, cooperativeId?: string } = { id: workerId };
+  if (expectedCoopId) whereClause.cooperativeId = expectedCoopId;
+  
+  const results = await prisma.$transaction([
+    prisma.worker.update({
+      where: whereClause,
+      data: {
+        verificationStatus: "SUSPENDED",
+        availabilityStatus: "OFFLINE",
+      },
+      include: { user: true }
+    }),
+    prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "SUSPEND_WORKER",
+        entityType: "WORKER",
+        entityId: workerId,
+        details: JSON.stringify({ reason, status: "SUSPENDED" }),
+      },
+    }),
+  ]);
+  return results[0];
 }
 
 export async function assessWorkerSkill(workerSkillId: string, adminId: string, status: string, notes?: string) {
-  const updatedSkill = await prisma.workerSkill.update({
-    where: { id: workerSkillId },
-    data: {
-      verified: status === "SKILL_ASSESSED",
-      
-    },
-    include: {
-      worker: true,
-      skill: true,
-    }
-  });
-
-  await createAuditLog(adminId, "ASSESS_SKILL", "WORKER_SKILL", workerSkillId, {
-    status,
-    notes,
-  });
-
-  return updatedSkill;
+  const results = await prisma.$transaction([
+    prisma.workerSkill.update({
+      where: { id: workerSkillId },
+      data: {
+        verified: status === "SKILL_ASSESSED",
+      },
+      include: {
+        worker: true,
+        skill: true,
+      },
+    }),
+    prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "ASSESS_SKILL",
+        entityType: "WORKER_SKILL",
+        entityId: workerSkillId,
+        details: JSON.stringify({ status, notes }),
+      },
+    }),
+  ]);
+  return results[0];
 }

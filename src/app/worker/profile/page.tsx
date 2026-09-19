@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Award, Wrench, LogOut, CheckCircle2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { LocationEditor } from '@/components/worker/LocationEditor';
+import { ProfilePhotoEditor } from '@/components/worker/ProfilePhotoEditor';
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -148,6 +150,22 @@ export default async function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Profile Photo Editor */}
+      <ProfilePhotoEditor
+        workerId={String(worker.id)}
+        currentPhotoUrl={worker.user?.avatar || null}
+      />
+
+      {/* Location Editor */}
+      <LocationEditor
+        workerId={String(worker.id)}
+        initialState={String(worker.state || '')}
+        initialCity={String(worker.city || '')}
+        initialAddress={String(worker.address || '')}
+        initialLat={worker.latitude ? Number(worker.latitude) : null}
+        initialLng={worker.longitude ? Number(worker.longitude) : null}
+      />
 
       {/* Skills & Certifications */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

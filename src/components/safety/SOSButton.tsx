@@ -14,9 +14,14 @@ export function SOSButton({ bookingId, className }: SOSButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSOS = async (type: 'POLICE' | 'SAFETY_TEAM' | 'REPORT') => {
+  const handleSOS = async (type: 'POLICE' | 'SAFETY_CALL' | 'SAFETY_TEAM' | 'REPORT') => {
     if (type === 'POLICE') {
       window.location.href = 'tel:112'; // Default emergency number in India
+      return;
+    }
+    
+    if (type === 'SAFETY_CALL') {
+      window.location.href = 'tel:9316154023';
       return;
     }
 
@@ -96,6 +101,13 @@ export function SOSButton({ bookingId, className }: SOSButtonProps) {
           onClick={() => handleSOS('POLICE')}
         >
           <PhoneCall className="w-4 h-4" /> Call Police (112)
+        </Button>
+        <Button
+          variant="secondary"
+          className="w-full flex justify-start gap-3 border-orange-200 hover:bg-orange-100 text-orange-800"
+          onClick={() => handleSOS('SAFETY_CALL')}
+        >
+          <PhoneCall className="w-4 h-4" /> Call Co-opConnect Safety
         </Button>
         <Button
           variant="outline"

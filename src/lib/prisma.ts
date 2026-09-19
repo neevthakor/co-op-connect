@@ -1,22 +1,12 @@
+import "server-only";
 import { PrismaClient } from '@prisma/client';
-
-// Force IPv4 resolution to prevent Supabase IPv6 timeout issues (P1001) in Next.js runtimes
-if (typeof process !== 'undefined' && process.env.NEXT_RUNTIME === 'nodejs') {
-  try {
-    const dns = require('dns');
-    if (typeof dns.setDefaultResultOrder === 'function') {
-      dns.setDefaultResultOrder('ipv4first');
-    }
-  } catch (e) {
-    // Ignore if dns module is not available
-  }
-}
+import '@/lib/server-init';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 
 // Configure connection pool for serverless environments (handles Promise.all concurrency)
 const getOptimizedDbUrl = () => {
-  let url = process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL;
   if (!url) return undefined;
   try {
     const urlObj = new URL(url);

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
 import { getWorkerProfile } from '@/services/worker-profile';
+import { isValidState, isValidCity, ALL_INDIA_STATES_AND_UTS, INDIA_CITIES } from '@/lib/locations/india';
 
 export async function GET(
   req: NextRequest,
@@ -72,6 +73,24 @@ export async function PATCH(
       state,
     } = body;
 
+    let normalizedState = state;
+    if (state && typeof state === 'string' && state !== 'Unspecified') {
+      const match = ALL_INDIA_STATES_AND_UTS.find(s => s.toLowerCase() === state.toLowerCase());
+      if (!match) {
+        return NextResponse.json({ error: 'Invalid state or union territory selected' }, { status: 400 });
+      }
+      normalizedState = match;
+    }
+
+    let normalizedCity = city;
+    if (city && typeof city === 'string' && city !== 'Unspecified' && normalizedState) {
+      const match = INDIA_CITIES[normalizedState]?.find(c => c.toLowerCase() === city.toLowerCase());
+      if (!match) {
+        return NextResponse.json({ error: 'Invalid city selected for the given state' }, { status: 400 });
+      }
+      normalizedCity = match;
+    }
+
     const updated = await prisma.worker.update({
       where: { id: workerId },
       data: {
@@ -84,8 +103,15 @@ export async function PATCH(
         ...(typeof latitude === 'number' && !isNaN(latitude) && latitude >= -90 && latitude <= 90 ? { latitude } : {}),
         ...(typeof longitude === 'number' && !isNaN(longitude) && longitude >= -180 && longitude <= 180 ? { longitude } : {}),
         ...(typeof address === 'string' ? { address: address.trim() } : {}),
-        ...(typeof city === 'string' ? { city: city.trim() } : {}),
-        ...(typeof state === 'string' ? { state: state.trim() } : {}),
+        ...(typeof normalizedCity === 'string' ? { city: normalizedCity.trim() } : {}),
+        ...(typeof normalizedState === 'string' ? { state: normalizedState.trim() } : {}),
+        ...(body.avatar ? {
+          user: {
+            update: {
+              avatar: body.avatar
+            }
+          }
+        } : {})
       },
     });
 

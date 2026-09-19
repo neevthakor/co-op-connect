@@ -26,7 +26,8 @@ export default async function AdminWorkersPage({ searchParams }: { searchParams:
       cooperative: { select: { name: true } },
       skills: { include: { skill: true } }
     },
-    orderBy: { joinedAt: 'desc' }
+    orderBy: { joinedAt: 'desc' },
+    take: 50
   });
 
   return (

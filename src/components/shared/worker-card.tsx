@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarWithAuth } from "@/components/shared/avatar-with-auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Star, MapPin, Briefcase, CheckCircle2 } from "lucide-react";
@@ -35,10 +35,13 @@ export function WorkerCard({
   return (
     <Card className={cn("overflow-hidden flex flex-col bg-card border-border/80 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5", className)}>
       <CardHeader className="flex flex-row gap-4 space-y-0 p-4">
-        <Avatar className="h-14 w-14 border border-border">
-          <AvatarImage src={avatar} alt={name} />
-          <AvatarFallback className="font-bold text-foreground bg-secondary">{name.charAt(0)}</AvatarFallback>
-        </Avatar>
+        <AvatarWithAuth 
+          src={avatar} 
+          alt={name} 
+          fallback={name.charAt(0)} 
+          workerId={worker.id}
+          className="h-14 w-14 border border-border" 
+        />
         <div className="flex flex-1 flex-col justify-between">
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">

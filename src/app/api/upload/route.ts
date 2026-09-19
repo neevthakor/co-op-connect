@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const type = searchParams.get('type');
     const bucket = type === 'private' ? 'private-uploads' : 'public-uploads';
     
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) {
       return NextResponse.json(
         { error: 'Photo upload failed: Supabase storage is not configured on this server.' },
         { status: 500 }
@@ -35,13 +35,11 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Invalid file type. Only images and PDFs are allowed.' }, { status: 400 });
         }
 
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
         const uniqueFileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
 
         const { data, error } = await supabaseAdmin.storage
           .from(bucket)
-          .upload(uniqueFileName, buffer, {
+          .upload(uniqueFileName, file, {
             contentType: file.type,
             upsert: false,
           });

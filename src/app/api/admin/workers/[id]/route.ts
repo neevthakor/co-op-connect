@@ -43,35 +43,25 @@ export async function PATCH(
       return NextResponse.json({ error: `A reason is required when status is ${status}` }, { status: 400 });
     }
 
-    const worker = await prisma.worker.findUnique({
-      where: { id: workerId },
-      include: { user: true }
-    });
-
-    if (!worker) {
-      return NextResponse.json({ error: 'Worker not found' }, { status: 404 });
-    }
-
-    console.log(`[AUTH DEBUG] Worker CoopID: ${worker.cooperativeId}`);
-
-    if (userRole === 'COOPERATIVE_ADMIN' && worker.cooperativeId !== session.user.cooperativeId) {
-      return NextResponse.json({ error: 'Forbidden: Worker belongs to a different cooperative' }, { status: 403 });
-    }
+    const expectedCoopId = userRole === 'COOPERATIVE_ADMIN' ? session.user.cooperativeId as string : undefined;
 
     let updatedWorker;
     
     if (status === 'VERIFIED') {
-      updatedWorker = await approveWorker(workerId, session.user.id as string, reason);
+      updatedWorker = await approveWorker(workerId, session.user.id as string, reason, expectedCoopId);
     } else if (status === 'REJECTED') {
-      updatedWorker = await rejectWorker(workerId, session.user.id as string, reason || 'Rejected by Admin');
+      updatedWorker = await rejectWorker(workerId, session.user.id as string, reason || 'Rejected by Admin', expectedCoopId);
     } else if (status === 'SUSPENDED') {
-      updatedWorker = await suspendWorker(workerId, session.user.id as string, reason || 'Suspended by Admin');
+      updatedWorker = await suspendWorker(workerId, session.user.id as string, reason || 'Suspended by Admin', expectedCoopId);
     } else if (status === 'MORE_INFO_REQUIRED') {
-      updatedWorker = await requestMoreInfo(workerId, session.user.id as string, reason || 'More info required');
+      updatedWorker = await requestMoreInfo(workerId, session.user.id as string, reason || 'More info required', expectedCoopId);
     } else {
+      const whereClause: { id: string, cooperativeId?: string } = { id: workerId };
+      if (expectedCoopId) whereClause.cooperativeId = expectedCoopId;
       updatedWorker = await prisma.worker.update({
-        where: { id: workerId },
-        data: { verificationStatus: status }
+        where: whereClause,
+        data: { verificationStatus: status },
+        include: { user: true }
       });
     }
 
@@ -85,11 +75,14 @@ export async function PATCH(
       msg = `Your profile application was rejected. Reason: ${reason || 'Not specified'}`;
     }
 
-    await sendNotification(worker.user.id, 'WORKER', title, msg, { workerId, status });
+    await sendNotification(updatedWorker.user.id, 'WORKER', title, msg, { workerId, status });
 
     return NextResponse.json({ success: true, worker: updatedWorker });
-  } catch (error) {
+  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error('Admin Worker Update Error:', error);
-    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
+    if (error?.code === 'P2025') {
+      return NextResponse.json({ error: 'Worker not found or forbidden' }, { status: 404 });
+    }
+    return NextResponse.json({ error: (error instanceof Error ? error.message : "Unknown error") }, { status: 500 });
   }
 }

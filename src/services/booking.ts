@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { generatePin } from "@/lib/utils";
 import { sendNotification } from "./notification";
-import { generateInvoice } from "./invoice";
 
 function parseTimeToMinutes(timeStr: string) {
   if (!timeStr) return 0;
@@ -36,24 +35,37 @@ export async function createBooking(params: {
   longitude?: number;
   isEmergency?: boolean;
 }) {
+  const reqId = Math.random().toString(36).substring(7);
+  console.time(`[booking] worker check ${reqId}`);
+  const worker = await prisma.worker.findUnique({
+    where: { id: params.workerId },
+  });
+  console.timeEnd(`[booking] worker check ${reqId}`);
+
+  if (!worker) {
+    throw new Error("Worker not found");
+  }
+
+  if (worker.verificationStatus !== "VERIFIED") {
+    throw new Error("Worker is not currently eligible for new bookings");
+  }
+
+  if (worker.availabilityStatus === "OFFLINE") {
+    throw new Error("Worker is currently offline and cannot accept bookings");
+  }
+
   return await prisma.$transaction(async (tx) => {
-    const reqId = Math.random().toString(36).substring(7);
-    console.time(`[booking] worker and conflict check ${reqId}`);
-    const [worker, activeBookings] = await Promise.all([
-      tx.worker.findUnique({
-        where: { id: params.workerId },
-      }),
-      tx.booking.findMany({
-        where: {
-          workerId: params.workerId,
-          status: {
-            in: ["REQUESTED", "ACCEPTED", "TRAVELLING", "ARRIVED", "IN_PROGRESS"]
-          }
-        },
-        select: { id: true, scheduledDate: true, scheduledTime: true },
-      })
-    ]);
-    console.timeEnd(`[booking] worker and conflict check ${reqId}`);
+    console.time(`[booking] conflict check ${reqId}`);
+    const activeBookings = await tx.booking.findMany({
+      where: {
+        workerId: params.workerId,
+        status: {
+          in: ["REQUESTED", "ACCEPTED", "TRAVELLING", "ARRIVED", "IN_PROGRESS"]
+        }
+      },
+      select: { id: true, scheduledDate: true, scheduledTime: true },
+    });
+    console.timeEnd(`[booking] conflict check ${reqId}`);
 
     let conflicting = false;
     if (params.scheduledDate && params.scheduledTime) {
@@ -68,18 +80,6 @@ export async function createBooking(params: {
         
         return requestedStart < bEnd && bStart < requestedEnd;
       });
-    }
-
-    if (!worker) {
-      throw new Error("Worker not found");
-    }
-
-    if (worker.verificationStatus !== "VERIFIED") {
-      throw new Error("Worker is not currently eligible for new bookings");
-    }
-
-    if (worker.availabilityStatus === "OFFLINE") {
-      throw new Error("Worker is currently offline and cannot accept bookings");
     }
 
     if (conflicting) {
@@ -152,6 +152,10 @@ export async function updateBookingStatus(
       worker: { include: { user: true } },
       customer: { include: { user: true } },
       invoice: true,
+      jobProofs: true,
+      materialRequests: true,
+      payment: true,
+      rating: true,
     },
   });
 
@@ -164,63 +168,52 @@ export async function updateBookingStatus(
     }
   }
 
-  // Use Optimistic Concurrency Control (OCC) to prevent race conditions
-  const updateResult = await prisma.booking.updateMany({
-    where: { 
-      id: bookingId,
-      status: booking.status // Ensure it hasn't changed since we read it
-    },
-    data: {
-      status: newStatus,
-      completedAt: newStatus === "COMPLETED" ? new Date() : undefined,
-    }
-  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const operations: any[] = [];
 
-  if (updateResult.count === 0) {
-    throw new Error("Concurrent update detected. The booking was modified by another process.");
-  }
-
-  const updated = await prisma.booking.findUniqueOrThrow({
-    where: { id: bookingId },
-    include: {
-      category: true,
-      worker: { include: { user: true } },
-      customer: { include: { user: true } },
-      invoice: true,
-      jobProofs: true,
-      materialRequests: true,
-      payment: true,
-      rating: true,
-    },
-  });
-
-  await prisma.bookingStatusHistory.create({
-    data: {
-      bookingId,
-      status: newStatus,
-      note: note || `Status updated to ${newStatus}`,
-    },
-  });
-
-  // Automatically generate invoice upon completion
-  if (newStatus === "COMPLETED" && !booking.invoice) {
-    try {
-      await generateInvoice(bookingId);
-    } catch (e) {
-      console.error("Error auto-generating invoice:", e);
-    }
-
-    // Update worker totalJobs
-    await prisma.worker.update({
-      where: { id: booking.workerId },
-      data: {
-        totalJobs: { increment: 1 },
-        lastAssignedAt: new Date(),
+  // 1. Optimistic Concurrency Control (OCC)
+  operations.push(
+    prisma.booking.updateMany({
+      where: { 
+        id: bookingId,
+        status: booking.status // Ensure it hasn't changed
       },
-    });
+      data: {
+        status: newStatus,
+        completedAt: newStatus === "COMPLETED" ? new Date() : undefined,
+      }
+    })
+  );
+
+  // 2. Status History
+  operations.push(
+    prisma.bookingStatusHistory.create({
+      data: {
+        bookingId,
+        status: newStatus,
+        note: note || `Status updated to ${newStatus}`,
+      },
+    })
+  );
+
+  // 3. Invoice & Worker Updates
+  if (newStatus === "COMPLETED" && !booking.invoice) {
+    // We import buildInvoiceCreatePromise dynamically or assume it's available
+    const { buildInvoiceCreatePromise } = await import("./invoice");
+    operations.push(buildInvoiceCreatePromise(booking));
+
+    operations.push(
+      prisma.worker.update({
+        where: { id: booking.workerId },
+        data: {
+          totalJobs: { increment: 1 },
+          lastAssignedAt: new Date(),
+        },
+      })
+    );
   }
 
-  // Send status notifications
+  // 4. Notifications
   const statusMessages: Record<string, { title: string; body: string }> = {
     ACCEPTED: {
       title: "Worker Accepted Your Booking",
@@ -250,16 +243,46 @@ export async function updateBookingStatus(
 
   const notifyMsg = statusMessages[newStatus];
   if (notifyMsg && booking.customer?.user?.id) {
-    await sendNotification(
-      booking.customer.user.id,
-      "BOOKING",
-      notifyMsg.title,
-      notifyMsg.body,
-      { bookingId, status: newStatus }
+    operations.push(
+      prisma.notification.create({
+        data: {
+          userId: booking.customer.user.id,
+          type: "BOOKING",
+          title: notifyMsg.title,
+          body: notifyMsg.body,
+          data: JSON.stringify({ bookingId, status: newStatus }),
+        }
+      })
     );
   }
 
-  return updated;
+  // 5. Fetch updated booking for the UI
+  operations.push(
+    prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        category: true,
+        worker: { include: { user: true } },
+        customer: { include: { user: true } },
+        invoice: true,
+        jobProofs: true,
+        materialRequests: true,
+        payment: true,
+        rating: true,
+      },
+    })
+  );
+
+  // Execute sequentially but in a single transaction batch over the network
+  const results = await prisma.$transaction(operations);
+
+  // Validate OCC
+  if (results[0].count === 0) {
+    throw new Error("Concurrent update detected. The booking was modified by another process.");
+  }
+
+  // Return the fetched booking (last operation in the array)
+  return results[results.length - 1];
 }
 
 export async function verifyServicePin(bookingId: string, enteredPin: string) {

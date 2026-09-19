@@ -106,6 +106,9 @@ model Worker {
   completionRate       Float        @default(100)
   punctualityScore     Float        @default(100)
   lastAssignedAt       DateTime?
+  learningMethod       String?
+  trainingInstitute    String?
+  learningDetails      String?
   workingHoursStart    String?      @default("08:00")
   workingHoursEnd      String?      @default("20:00")
   joinedAt             DateTime     @default(now())
@@ -121,15 +124,16 @@ model Worker {
   portfolioItems         PortfolioItem[]
   jobProofs              JobProof[]
   materialRequests       MaterialRequest[]
-  helperRequestsAsLead   HelperRequest[]       @relation("LeadWorkerHelperRequests")
-  helperRequestsAsHelper HelperRequest[]       @relation("HelperWorkerRequests")
+  helperRequestsAsLead   HelperRequest[]              @relation("LeadWorkerHelperRequests")
+  helperRequestsAsHelper HelperRequest[]              @relation("HelperWorkerRequests")
   teamsAsLead            JobTeam[]
   teamMemberships        JobTeamMember[]
-  referralsMade          JobReferral[]         @relation("ReferringWorker")
-  referralsReceived      JobReferral[]         @relation("ReferredWorker")
+  referralsMade          JobReferral[]                @relation("ReferringWorker")
+  referralsReceived      JobReferral[]                @relation("ReferredWorker")
   ratings                Rating[]
-  complaints             Complaint[]           @relation("WorkerComplaints")
+  complaints             Complaint[]                  @relation("WorkerComplaints")
   trustedBy              TrustedWorker[]
+  verificationResponses  WorkerVerificationResponse[]
 }
 
 // ============================================================
@@ -259,12 +263,12 @@ model ServiceCategory {
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
 
-  skills          Skill[]
-  serviceRequests ServiceRequest[]
-  bookings        Booking[]
-  demandHistory   DemandHistory[]
-  demandForecasts DemandForecast[]
-  skillGaps       SkillGapRecord[]
+  skills              Skill[]
+  serviceRequests     ServiceRequest[]
+  bookings            Booking[]
+  demandHistory       DemandHistory[]
+  demandForecasts     DemandForecast[]
+  skillGaps           SkillGapRecord[]
   institutionRequests InstitutionServiceRequest[]
   societyRequests     SocietyServiceRequest[]
 }
@@ -861,22 +865,22 @@ model SharedWorkforceRequest {
 // ============================================================
 
 model SocietyServiceRequest {
-  id          String         @id @default(cuid())
+  id          String           @id @default(cuid())
   societyId   String
-  society     HousingSociety @relation(fields: [societyId], references: [id])
+  society     HousingSociety   @relation(fields: [societyId], references: [id])
   categoryId  String?
   category    ServiceCategory? @relation(fields: [categoryId], references: [id])
   title       String
   description String
-  priority    String         @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  priority    String           @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
   area        String? // Common area, Unit, etc.
-  status      String         @default("OPEN") // OPEN, SCHEDULED, IN_PROGRESS, COMPLETED
-  createdAt   DateTime       @default(now())
+  status      String           @default("OPEN") // OPEN, SCHEDULED, IN_PROGRESS, COMPLETED
+  createdAt   DateTime         @default(now())
 
   locationId    String?
   location      OrganizationLocation? @relation(fields: [locationId], references: [id])
   cooperativeId String?
-  cooperative   Cooperative? @relation(fields: [cooperativeId], references: [id])
+  cooperative   Cooperative?          @relation(fields: [cooperativeId], references: [id])
 
   bookings Booking[]
 }
@@ -914,22 +918,22 @@ model InstitutionContract {
 }
 
 model InstitutionServiceRequest {
-  id            String      @id @default(cuid())
+  id            String           @id @default(cuid())
   institutionId String
-  institution   Institution @relation(fields: [institutionId], references: [id])
+  institution   Institution      @relation(fields: [institutionId], references: [id])
   contractId    String?
   categoryId    String?
   category      ServiceCategory? @relation(fields: [categoryId], references: [id])
   title         String
   description   String
-  priority      String      @default("NORMAL")
-  status        String      @default("OPEN") // OPEN, SCHEDULED, IN_PROGRESS, COMPLETED
-  createdAt     DateTime    @default(now())
+  priority      String           @default("NORMAL")
+  status        String           @default("OPEN") // OPEN, SCHEDULED, IN_PROGRESS, COMPLETED
+  createdAt     DateTime         @default(now())
 
   locationId    String?
   location      OrganizationLocation? @relation(fields: [locationId], references: [id])
   cooperativeId String?
-  cooperative   Cooperative? @relation(fields: [cooperativeId], references: [id])
+  cooperative   Cooperative?          @relation(fields: [cooperativeId], references: [id])
 
   bookings Booking[]
 }
@@ -951,21 +955,48 @@ model CustomerLocation {
 }
 
 model OrganizationLocation {
-  id                 String   @id @default(cuid())
+  id                 String          @id @default(cuid())
   societyId          String?
   society            HousingSociety? @relation(fields: [societyId], references: [id])
   institutionId      String?
-  institution        Institution? @relation(fields: [institutionId], references: [id])
+  institution        Institution?    @relation(fields: [institutionId], references: [id])
   name               String
   address            String?
   latitude           Float?
   longitude          Float?
   buildingDetails    String?
   accessInstructions String?
-  isActive           Boolean  @default(true)
-  createdAt          DateTime @default(now())
+  isActive           Boolean         @default(true)
+  createdAt          DateTime        @default(now())
 
   societyRequests     SocietyServiceRequest[]
   institutionRequests InstitutionServiceRequest[]
 }
 
+// ============================================================
+// VERIFICATION
+// ============================================================
+
+model SkillVerificationQuestion {
+  id         String   @id @default(cuid())
+  trade      String
+  question   String
+  answerType String   @default("TEXT")
+  options    String? // JSON array
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  responses WorkerVerificationResponse[]
+}
+
+model WorkerVerificationResponse {
+  id               String                    @id @default(cuid())
+  workerId         String
+  worker           Worker                    @relation(fields: [workerId], references: [id])
+  questionId       String
+  question         SkillVerificationQuestion @relation(fields: [questionId], references: [id])
+  questionSnapshot String
+  answer           String
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+}

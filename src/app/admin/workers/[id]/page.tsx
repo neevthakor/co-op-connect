@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AvatarWithAuth } from '@/components/shared/avatar-with-auth';
 import { AdminWorkerActions } from './actions';
 import { SkillAssessmentActions } from './skill-actions';
 
@@ -19,7 +20,8 @@ export default async function AdminWorkerDetailsPage({ params }: { params: Promi
     include: {
       user: true,
       cooperative: true,
-      skills: { include: { skill: true } }
+      skills: { include: { skill: true } },
+      verificationResponses: { include: { question: true } }
     }
   });
 
@@ -38,9 +40,18 @@ export default async function AdminWorkerDetailsPage({ params }: { params: Promi
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{worker.user.name}</h1>
-          <p className="text-gray-500 text-sm">Worker Profile Details</p>
+        <div className="flex items-center gap-4">
+          <AvatarWithAuth 
+            src={worker.user.avatar} 
+            alt={worker.user.name} 
+            fallback={worker.user.name.charAt(0)}
+            workerId={worker.id}
+            className="w-16 h-16 border border-border"
+          />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{worker.user.name}</h1>
+            <p className="text-gray-500 text-sm">Worker Profile Details</p>
+          </div>
         </div>
         <Badge className="text-sm">
           {worker.verificationStatus}
@@ -73,17 +84,45 @@ export default async function AdminWorkerDetailsPage({ params }: { params: Promi
             <CardTitle>Professional Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <span className="text-xs text-gray-500 uppercase tracking-wider">Cooperative</span>
-              <p className="font-medium">{worker.cooperative?.name || 'None'}</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Primary Trade</span>
+                <p className="font-medium">{worker.primaryTrade || 'Not specified'}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Experience</span>
+                <p className="font-medium">{worker.experience} years</p>
+              </div>
             </div>
+
             <div>
-              <span className="text-xs text-gray-500 uppercase tracking-wider">Primary Trade</span>
-              <p className="font-medium">{worker.primaryTrade || 'Not specified'}</p>
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Service Area</span>
+              <p className="font-medium">{worker.city}, {worker.state}</p>
+              {worker.latitude && worker.longitude && (
+                <p className="text-xs text-green-600 font-medium mt-0.5">✓ GPS Coordinates Available</p>
+              )}
             </div>
-            <div>
-              <span className="text-xs text-gray-500 uppercase tracking-wider">Experience</span>
-              <p className="font-medium">{worker.experience} years</p>
+
+            <div className="border-t pt-3 mt-3">
+              <h4 className="text-sm font-semibold mb-2">Skill Learning Information</h4>
+              <div className="space-y-2">
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wider">How Skill Was Learned</span>
+                  <p className="font-medium text-sm">{worker.learningMethod || 'Not provided'}</p>
+                </div>
+                {worker.trainingInstitute && (
+                  <div>
+                    <span className="text-xs text-gray-500 uppercase tracking-wider">Training Institute</span>
+                    <p className="font-medium text-sm">{worker.trainingInstitute}</p>
+                  </div>
+                )}
+                {worker.learningDetails && (
+                  <div>
+                    <span className="text-xs text-gray-500 uppercase tracking-wider">Additional Details</span>
+                    <p className="font-medium text-sm">{worker.learningDetails}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -125,6 +164,27 @@ export default async function AdminWorkerDetailsPage({ params }: { params: Promi
           )}
         </CardContent>
       </Card>
+      
+      {worker.verificationResponses && worker.verificationResponses.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Skill Verification Answers</CardTitle>
+            <CardDescription>Review the worker's answers to trade-specific questions.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {worker.verificationResponses.map((vr, idx) => (
+                <div key={vr.id} className="bg-gray-50 p-4 rounded-lg border">
+                  <p className="font-medium text-sm text-gray-900 mb-2">Q{idx + 1}: {vr.questionSnapshot}</p>
+                  <div className="pl-4 border-l-2 border-primary/40">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{vr.answer}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <Card>
         <CardHeader>
