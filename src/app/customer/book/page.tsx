@@ -12,9 +12,12 @@ import { VoiceInput } from '@/components/shared/voice-input';
 import { ArrowLeft, Check, Upload, Calendar as CalendarIcon, Clock, ShieldCheck, MapPin, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { useTranslations } from 'next-intl';
+
 function BookServiceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const tBooking = useTranslations('Booking');
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [bookingData, setBookingData] = useState({
@@ -34,8 +37,13 @@ function BookServiceContent() {
 
   useEffect(() => {
     const q = searchParams.get('query');
-    if (q) {
-      setBookingData((prev) => ({ ...prev, description: q }));
+    const isEmerg = searchParams.get('emergency') === 'true';
+    if (q || isEmerg) {
+      setBookingData((prev) => ({ 
+        ...prev, 
+        description: q || prev.description,
+        isEmergency: isEmerg || prev.isEmergency
+      }));
     }
   }, [searchParams]);
 
@@ -655,7 +663,7 @@ function BookServiceContent() {
             >
               {loading ? 'Confirming with Cooperative...' : (
                 <>
-                  CONFIRM BOOKING <Check className="h-5 w-5" />
+                  {tBooking("confirm")} <Check className="h-5 w-5" />
                 </>
               )}
             </Button>
