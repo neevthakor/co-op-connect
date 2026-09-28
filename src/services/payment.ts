@@ -133,6 +133,35 @@ export async function completePaymentTransaction(
     });
   }
 
+  // Create FeeSplit
+  const serviceCost = booking.invoice?.total || amount;
+  const platformCommission = serviceCost * 0.15; // 15% platform commission
+  const workerWelfareFund = platformCommission * 0.40; // 40% of commission
+  const platformOps = platformCommission * 0.35; // 35% of commission
+  const federationOverhead = platformCommission * 0.15; // 15% of commission
+  const growthReserve = platformCommission * 0.10; // 10% of commission
+
+  await prisma.feeSplit.upsert({
+    where: { bookingId },
+    create: {
+      bookingId,
+      serviceCost,
+      platformCommission,
+      workerWelfareFund,
+      platformOps,
+      federationOverhead,
+      growthReserve,
+    },
+    update: {
+      serviceCost,
+      platformCommission,
+      workerWelfareFund,
+      platformOps,
+      federationOverhead,
+      growthReserve,
+    },
+  });
+
   // 4. Create / Activate Warranty (30 days)
   const expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + 30);

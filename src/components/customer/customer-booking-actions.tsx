@@ -12,9 +12,10 @@ interface CustomerBookingActionsProps {
   invoice: any;
   payment: any;
   status: string;
+  complaints?: any[];
 }
 
-export function CustomerBookingActions({ bookingId, invoice, payment, status }: CustomerBookingActionsProps) {
+export function CustomerBookingActions({ bookingId, invoice, payment, status, complaints = [] }: CustomerBookingActionsProps) {
   const router = useRouter();
   const [loadingPay, setLoadingPay] = useState(false);
   const [disputeOpen, setDisputeOpen] = useState(false);
@@ -46,7 +47,7 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
   };
 
   const handlePay = async () => {
-    const totalAmount = invoice?.total || 450;
+    const totalAmount = invoice?.total ? invoice.total + (invoice.total * 0.15) : 450;
     setLoadingPay(true);
     try {
       const res = await fetch('/api/payments', {
@@ -167,15 +168,23 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
 
       {isCompleted && !hasPaid && invoice && (
         <Card className="border-primary bg-primary/5 p-4">
-          <CardContent className="p-0 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
+          <CardContent className="p-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="w-full sm:w-auto flex-1">
               <h4 className="font-bold text-sm text-foreground">Pending Payment</h4>
-              <p className="text-xs text-muted-foreground">Total due: ₹{invoice.total}. Instant digital invoice settlement via Sandbox UPI.</p>
+              <p className="text-xs text-muted-foreground mb-2">Total due: ₹{invoice.total}. Instant digital invoice settlement via Sandbox UPI.</p>
+              
+              <div className="bg-background/80 border rounded-md p-2.5 space-y-1.5 text-xs w-full max-w-sm">
+                <div className="flex justify-between font-medium"><span>Service Cost</span><span>₹{invoice.total}</span></div>
+                <div className="flex justify-between text-muted-foreground"><span>Platform Commission (15%)</span><span>₹{(invoice.total * 0.15).toFixed(2)}</span></div>
+                <div className="pt-1.5 mt-1 border-t border-dashed text-[10px] text-muted-foreground italic leading-tight">
+                  Where your commission goes: 40% Worker Welfare Fund, 35% Platform Ops, 15% Federation Overhead, 10% Growth Reserve
+                </div>
+              </div>
             </div>
             <Button
               onClick={handlePay}
               disabled={loadingPay}
-              className="w-full sm:w-auto bg-primary text-primary-foreground font-bold gap-2"
+              className="w-full sm:w-auto bg-primary text-primary-foreground font-bold gap-2 shrink-0 mt-2 sm:mt-0"
             >
               {loadingPay ? (
                 <>
@@ -183,7 +192,7 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
                 </>
               ) : (
                 <>
-                  <CreditCard className="h-4 w-4" /> Pay ₹{invoice.total} (Sandbox UPI)
+                  <CreditCard className="h-4 w-4" /> Pay ₹{(invoice.total + invoice.total * 0.15).toFixed(2)} (Sandbox UPI)
                 </>
               )}
             </Button>
@@ -218,6 +227,38 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
               </Button>
             </div>
           </CardContent>
+        </Card>
+      )}
+
+      {/* Existing Complaints List */}
+      {complaints.length > 0 && (
+        <Card className="border-border bg-card p-4">
+          <h4 className="font-bold text-sm text-foreground mb-3 flex items-center gap-1.5">
+            <AlertTriangle className="h-4 w-4 text-amber-500" /> Submitted Complaints
+          </h4>
+          <div className="space-y-3">
+            {complaints.map(c => (
+              <div key={c.id} className="text-xs p-3 rounded-lg border bg-muted/20">
+                <div className="flex justify-between items-start mb-1.5">
+                  <span className="font-semibold">{c.category.replace('_', ' ')}</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    c.status === 'OPEN' ? 'bg-red-100 text-red-700' :
+                    c.status === 'UNDER_REVIEW' ? 'bg-amber-100 text-amber-700' :
+                    'bg-green-100 text-green-700'
+                  }`}>
+                    {c.status.replace('_', ' ')}
+                  </span>
+                </div>
+                <p className="text-muted-foreground">{c.description}</p>
+                {c.resolution && (
+                  <div className="mt-2 p-2 bg-background rounded border border-green-500/30">
+                    <span className="font-semibold text-green-700 block mb-0.5">Resolution:</span>
+                    {c.resolution}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </Card>
       )}
 
@@ -271,16 +312,18 @@ export function CustomerBookingActions({ bookingId, invoice, payment, status }: 
           </form>
         </Card>
       ) : (
-        <div className="pt-2 flex justify-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setDisputeOpen(true)}
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive gap-1.5 text-xs"
-          >
-            <AlertTriangle className="h-3.5 w-3.5" /> Report an Issue / Submit Complaint
-          </Button>
-        </div>
+        isCompleted && (
+          <div className="pt-2 flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDisputeOpen(true)}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive gap-1.5 text-xs"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" /> Report an Issue / Submit Complaint
+            </Button>
+          </div>
+        )
       )}
     </div>
   );

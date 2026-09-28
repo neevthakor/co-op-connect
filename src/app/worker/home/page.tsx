@@ -9,8 +9,18 @@ import Link from 'next/link';
 import { Briefcase, CheckCircle2, MapPin, ShieldCheck } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { AvailabilityToggle } from '@/components/worker/availability-toggle';
+import { cookies } from 'next/headers';
 
 export default async function WorkerHomePage() {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('locale')?.value || 'en';
+  let tData: any = {};
+  try {
+    tData = (await import(`../../../../messages/${locale}.json`)).default?.WorkerDashboard || {};
+  } catch(e) {
+    tData = (await import(`../../../../messages/en.json`)).default?.WorkerDashboard || {};
+  }
+  const t = (key: string) => tData[key] || key;
   const session = await auth();
   if (!session?.user) redirect('/login');
   
@@ -110,7 +120,7 @@ export default async function WorkerHomePage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Welcome, {session.user.name || 'Worker'}!
+              {t('welcome')}, {session.user.name || 'Worker'}!
             </h1>
             <Badge className="flex items-center gap-1 border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300">
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -147,8 +157,8 @@ export default async function WorkerHomePage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Today's Net Earnings" value={formatCurrency(todayEarnings)} />
-        <StatCard title="Active Jobs" value={activeBookings.length.toString()} />
+        <StatCard title={t('earnings')} value={formatCurrency(todayEarnings)} />
+        <StatCard title={t('activeJobs')} value={activeBookings.length.toString()} />
         <StatCard title="Overall Rating" value={ratingDisplay} />
         <StatCard title="Completed Jobs" value={completedJobsCount.toString()} />
       </div>

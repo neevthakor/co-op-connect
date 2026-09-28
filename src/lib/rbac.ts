@@ -127,7 +127,7 @@ export function getRoleRedirect(role: string): string {
     case 'HELPER': return '/worker/home';
     case 'ADMIN': return '/admin';
     case 'COOPERATIVE_ADMIN': return '/admin/overview';
-    case 'FEDERATION_ADMIN': return '/admin/overview';
+    case 'FEDERATION_ADMIN': return '/federation/dashboard';
     case 'SOCIETY_ADMIN': return '/society/dashboard';
     case 'INSTITUTIONAL_CUSTOMER': return '/institution/dashboard';
     default: return '/login';

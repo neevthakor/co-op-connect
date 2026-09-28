@@ -134,6 +134,7 @@ model Worker {
   complaints             Complaint[]                  @relation("WorkerComplaints")
   trustedBy              TrustedWorker[]
   verificationResponses  WorkerVerificationResponse[]
+  welfareEligibility     WelfareEligibility?
 }
 
 // ============================================================
@@ -176,6 +177,7 @@ model Federation {
 
   cooperatives Cooperative[]
   admins       FederationAdmin[]
+  welfareFund  WelfareFund?
 }
 
 model HousingSociety {
@@ -413,6 +415,7 @@ model Booking {
   societyRequestId     String?
   institutionRequest   InstitutionServiceRequest? @relation(fields: [institutionRequestId], references: [id])
   institutionRequestId String?
+  feeSplit             FeeSplit?
 
   @@index([workerId, status])
   @@index([workerId, scheduledDate, scheduledTime])
@@ -722,6 +725,56 @@ model TrainingRecord {
   completedAt    DateTime?
   certificateUrl String?
   createdAt      DateTime  @default(now())
+}
+
+model FeeSplit {
+  id                 String   @id @default(cuid())
+  bookingId          String   @unique
+  booking            Booking  @relation(fields: [bookingId], references: [id])
+  serviceCost        Float
+  platformCommission Float
+  workerWelfareFund  Float
+  platformOps        Float
+  federationOverhead Float
+  growthReserve      Float
+  createdAt          DateTime @default(now())
+}
+
+enum WelfareTransactionType {
+  CONTRIBUTION
+  INSURANCE_PREMIUM
+  EMERGENCY_ADVANCE
+  TRAINING_VOUCHER
+}
+
+model WelfareFund {
+  id           String     @id @default(cuid())
+  federationId String     @unique
+  federation   Federation @relation(fields: [federationId], references: [id])
+  balance      Float      @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  transactions WelfareTransaction[]
+}
+
+model WelfareTransaction {
+  id            String                 @id @default(cuid())
+  welfareFundId String
+  welfareFund   WelfareFund            @relation(fields: [welfareFundId], references: [id])
+  type          WelfareTransactionType
+  amount        Float
+  description   String?
+  createdAt     DateTime               @default(now())
+}
+
+model WelfareEligibility {
+  id                  String   @id @default(cuid())
+  workerId            String   @unique
+  worker              Worker   @relation(fields: [workerId], references: [id])
+  tier                String   @default("BASIC") // e.g. BASIC, SILVER, GOLD
+  completedJobsWindow Int      @default(0)
+  lastCalculatedAt    DateTime @default(now())
 }
 
 // ============================================================

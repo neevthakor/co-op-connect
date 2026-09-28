@@ -48,6 +48,9 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       rating: true,
       payment: true,
       warranty: true,
+      complaints: {
+        orderBy: { createdAt: 'desc' }
+      },
       statusHistory: {
         orderBy: { createdAt: 'asc' },
       },
@@ -195,6 +198,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         invoice={booking.invoice}
         payment={booking.payment}
         status={booking.status}
+        complaints={booking.complaints}
       />
     </div>
   );
