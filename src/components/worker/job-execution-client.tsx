@@ -351,6 +351,30 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
             <p className="text-muted-foreground font-semibold">Customer Problem Description</p>
             <p className="mt-1 bg-muted/40 p-2.5 rounded text-foreground">{job.description || 'General maintenance'}</p>
           </div>
+
+          {/* Fairness Indicator */}
+          <div className="pt-3 border-t">
+            <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg flex gap-3 items-start">
+              <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-bold text-primary flex items-center gap-1.5 mb-1">
+                  FairMatch Cooperative Algorithm
+                </h4>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  Why you were matched:
+                  <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                    <li>Service/skill match (35% weight)</li>
+                    <li>Operational-area match</li>
+                    <li>GPS proximity ({job.distanceKm || '...'} km)</li>
+                    <li>Current availability (20% weight)</li>
+                    <li>Reliability — rating ({job.worker?.averageRating || '—'}★) + completion rate</li>
+                    <li>Verified certifications</li>
+                    <li>Workload balance — starvation prevention (Jobs: {job.worker?.totalJobs || 0})</li>
+                  </ul>
+                </p>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
