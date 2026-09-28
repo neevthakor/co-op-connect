@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const portalIconMap = {
   Activity,
@@ -117,6 +118,17 @@ function Brand({ homeHref, roleLabel, accent }: Pick<PortalShellProps, "homeHref
   );
 }
 
+import { useTranslations } from "next-intl";
+
+function TranslatedLabel({ label }: { label: string }) {
+  const t = useTranslations("Nav");
+  const key = label.toLowerCase().replace(" ", "");
+  if (t.has(key as any)) {
+    return <span className="truncate">{t(key as any)}</span>;
+  }
+  return <span className="truncate">{label}</span>;
+}
+
 export function PortalShell({
   children,
   homeHref,
@@ -129,6 +141,7 @@ export function PortalShell({
 }: PortalShellProps) {
   const pathname = usePathname();
   const colors = accents[accent];
+  const tNav = useTranslations("Nav");
 
   return (
     <div className={cn("min-h-screen bg-background text-foreground", colors.selection)}>
@@ -136,6 +149,7 @@ export function PortalShell({
         <div className="flex min-h-14 items-center justify-between gap-3 px-4">
           <Brand homeHref={homeHref} roleLabel={roleLabel} accent={accent} />
           <div className="flex shrink-0 items-center gap-1">
+            <LanguageSwitcher />
             <ThemeToggle compact />
             {notificationHref && (
               <Link
@@ -154,7 +168,7 @@ export function PortalShell({
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: "/login" })}
-                aria-label="Sign out"
+                aria-label={tNav("logout")}
                 className="inline-flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-rose-500/10 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <LogOut className="size-5" />
@@ -182,13 +196,16 @@ export function PortalShell({
                 )}
               >
                 <Icon className={cn("size-4 shrink-0", active ? colors.icon : "text-muted-foreground")} />
-                <span className="truncate">{item.label}</span>
+                <TranslatedLabel label={item.label} />
               </Link>
             );
           })}
         </nav>
         <div className="border-t border-border/70 p-4">
-          <ThemeToggle className="mb-2 w-full justify-start" />
+          <div className="flex items-center gap-2 mb-2">
+            <LanguageSwitcher />
+            <ThemeToggle className="w-full justify-start" />
+          </div>
           {signOutEnabled ? (
             <button
               type="button"
@@ -196,7 +213,7 @@ export function PortalShell({
               className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-rose-500/10 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <LogOut className="size-4" />
-              Sign out
+              {tNav("logout")}
             </button>
           ) : (
             <p className="px-3 text-xs leading-relaxed text-muted-foreground">A cooperative-owned service network built around trust and fair work.</p>
@@ -223,7 +240,7 @@ export function PortalShell({
                 )}
               >
                 <Icon className={cn("size-5", active && "stroke-[2.4]")} />
-                <span className="max-w-full truncate text-[11px] font-semibold">{item.label}</span>
+                <TranslatedLabel label={item.label} />
               </Link>
             );
           })}
