@@ -45,6 +45,11 @@ export async function POST(req: NextRequest) {
       where: {
         isEmergencyAvailable: true,
         verificationStatus: 'VERIFIED',
+        skills: {
+          some: {
+            skill: { categoryId }
+          }
+        }
       },
       select: { userId: true }
     });

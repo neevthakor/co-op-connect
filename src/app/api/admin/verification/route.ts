@@ -76,10 +76,22 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'workerId and action are required' }, { status: 400 });
     }
 
-    if (userRole === 'COOPERATIVE_ADMIN') {
-      const worker = await prisma.worker.findUnique({ where: { id: workerId } });
-      if (!worker || worker.cooperativeId !== session.user.cooperativeId) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (userRole === 'COOPERATIVE_ADMIN' || userRole === 'FEDERATION_ADMIN') {
+      const worker = await prisma.worker.findUnique({ 
+        where: { id: workerId },
+        include: { cooperative: true }
+      });
+      
+      if (!worker) {
+        return NextResponse.json({ error: 'Worker not found' }, { status: 404 });
+      }
+
+      if (userRole === 'COOPERATIVE_ADMIN' && worker.cooperativeId !== session.user.cooperativeId) {
+        return NextResponse.json({ error: 'Forbidden: Worker outside your cooperative' }, { status: 403 });
+      }
+
+      if (userRole === 'FEDERATION_ADMIN' && (!worker.cooperative || worker.cooperative.federationId !== session.user.federationId)) {
+        return NextResponse.json({ error: 'Forbidden: Worker outside your federation' }, { status: 403 });
       }
     }
 
@@ -98,6 +110,12 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: 'skillId and status are required for ASSESS_SKILL' }, { status: 400 });
       }
       
+      // Prevent cross-worker skill assessments bypassing the ownership check
+      const workerSkill = await prisma.workerSkill.findUnique({ where: { id: skillId } });
+      if (!workerSkill || workerSkill.workerId !== workerId) {
+        return NextResponse.json({ error: 'Forbidden: Skill does not belong to this worker' }, { status: 403 });
+      }
+
       const { assessWorkerSkill } = await import('@/services/verification');
       const updatedSkill = await assessWorkerSkill(skillId, adminId, status, notes);
       return NextResponse.json({ success: true, workerSkill: updatedSkill });
