@@ -35,12 +35,13 @@ export default function EmergencyBookingPage() {
         body: JSON.stringify({ category: selectedCategory, address })
       });
       
-      if (!res.ok) throw new Error('Failed to book emergency service');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to book emergency service');
       
-      router.push(`/customer/bookings/${data.id}`);
+      toast.success('Emergency request submitted! We will contact you immediately.');
+      router.push('/customer/home');
     } catch (error) {
-      toast.error('Something went wrong. Please try again.');
+      toast.error(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
       setLoading(false);
     }
   };

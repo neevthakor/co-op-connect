@@ -111,9 +111,6 @@ function FederationLoginForm() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-xs text-muted-foreground">
-        New Federation? <Link href="/federation/register" className="text-primary hover:underline">Register Here</Link>
-      </p>
     </div>
   );
 }

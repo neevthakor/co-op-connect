@@ -4,62 +4,65 @@ import { prisma } from "@/lib/prisma"
 import { BarChart, LineChart } from "@/components/shared/charts"
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
+import { RealtimeBookingListener } from '@/components/shared/realtime-listeners';
 
 export const dynamic = 'force-dynamic'
 
 async function getOverviewData() {
-  const [
-    activeWorkers,
-    pendingVerification,
-    todaysBookings,
-    activeJobs,
-    payments,
-    openComplaints,
-    recentBookings
-  ] = await Promise.all([
+  const start = Date.now();
+  
+  // Group 1: Fast Counts
+  const [activeWorkers, pendingVerification, todaysBookings, activeJobs, openComplaints] = await Promise.all([
     prisma.worker.count({ where: { verificationStatus: 'VERIFIED' } }),
     prisma.worker.count({ where: { verificationStatus: 'PENDING' } }),
     prisma.booking.count({ 
-      where: { 
-        createdAt: { gte: new Date(new Date().setHours(0,0,0,0)) } 
-      } 
+      where: { createdAt: { gte: new Date(new Date().setHours(0,0,0,0)) } } 
     }),
     prisma.booking.count({ where: { status: 'IN_PROGRESS' } }),
-    prisma.payment.findMany({
-      where: { status: 'COMPLETED' },
-      select: { amount: true }
-    }),
     prisma.complaint.count({ where: { status: 'OPEN' } }),
+  ]);
+
+  // Group 2: Payment and recent bookings
+  const [paymentAgg, recentBookings] = await Promise.all([
+    prisma.payment.aggregate({
+      where: { status: 'COMPLETED' },
+      _sum: { amount: true }
+    }),
     prisma.booking.findMany({
       take: 10,
       orderBy: { createdAt: 'desc' },
       include: { 
-        customer: { include: { user: true } }, 
-        worker: { include: { user: true } }, 
-        category: true 
+        customer: { include: { user: { select: { name: true } } } }, 
+        worker: { include: { user: { select: { name: true } } } }, 
+        category: { select: { name: true } } 
       }
     })
-  ])
+  ]);
 
-  const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
+  const totalRevenue = paymentAgg._sum.amount || 0;
 
-  // Chart data
-  const bookings = await prisma.booking.findMany({
-    where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
-    select: { createdAt: true }
-  });
+  // Group 3: Chart data (staggered to protect pool)
+  const [bookings, allPayments] = await Promise.all([
+    prisma.booking.findMany({
+      where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+      select: { createdAt: true }
+    }),
+    prisma.payment.findMany({
+      where: { status: 'COMPLETED', createdAt: { gte: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000) } },
+      select: { amount: true, createdAt: true }
+    })
+  ]);
   
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[DB] admin overview: ${Date.now() - start}ms`);
+  }
+
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const barChartData = days.map(d => ({ name: d, bookings: 0 }));
   bookings.forEach(b => {
     const day = days[new Date(b.createdAt).getDay()];
     const entry = barChartData.find(d => d.name === day);
     if (entry) entry.bookings++;
-  });
-
-  const allPayments = await prisma.payment.findMany({
-    where: { status: 'COMPLETED', createdAt: { gte: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000) } },
-    select: { amount: true, createdAt: true }
   });
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -93,6 +96,7 @@ export default async function OverviewPage() {
 
   return (
     <div className="space-y-6">
+      <RealtimeBookingListener referenceId="admin-global" role="federation" />
       <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">

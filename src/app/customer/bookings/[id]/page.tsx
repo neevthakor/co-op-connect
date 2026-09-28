@@ -66,7 +66,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="flex flex-col gap-6 p-4 pb-20 md:p-8 max-w-3xl mx-auto w-full">
-      <RealtimeBookingListener userId={session.user?.id as string} role="customer" />
+      <RealtimeBookingListener referenceId={session.user?.customerId as string} role="customer" />
       
       <header className="flex justify-between items-start">
         <div>

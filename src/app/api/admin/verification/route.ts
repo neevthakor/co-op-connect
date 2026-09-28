@@ -12,14 +12,23 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get('status') || 'PENDING';
-    const cooperativeId = session.user.cooperativeId;
+    const rawStatus = searchParams.get('status');
+    // If status is empty, null, or 'ALL', we do not filter by status.
+    const status = rawStatus === 'ALL' || !rawStatus ? null : rawStatus;
+
+    const whereClause: any = {};
+    if (status) {
+      whereClause.verificationStatus = status;
+    }
+
+    if (userRole === 'COOPERATIVE_ADMIN' && session.user.cooperativeId) {
+      whereClause.cooperativeId = session.user.cooperativeId;
+    } else if (userRole === 'FEDERATION_ADMIN' && session.user.federationId) {
+      whereClause.cooperative = { federationId: session.user.federationId };
+    }
 
     const workers = await prisma.worker.findMany({
-      where: {
-        ...(status !== 'ALL' ? { verificationStatus: status } : {}),
-        ...(cooperativeId ? { cooperativeId } : {}),
-      },
+      where: whereClause,
       include: {
         user: { select: { id: true, name: true, email: true, phone: true, avatar: true } },
         cooperative: true,

@@ -1,27 +1,50 @@
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
-export function useRealtimeBookings(userId: string, role: 'customer' | 'worker') {
+export function useRealtimeBookings(referenceId: string, role: 'customer' | 'worker' | 'federation') {
   const router = useRouter();
 
   useEffect(() => {
-    if (!userId) return;
+    if (!referenceId || role === 'federation') return; // Federation cannot safely subscribe to all bookings without exposing unrelated data
 
-    const filterColumn = role === 'customer' ? 'customerId' : 'workerId';
+    let filterString = '';
+    if (role === 'customer') filterString = `customerId=eq.${referenceId}`;
+    if (role === 'worker') filterString = `workerId=eq.${referenceId}`;
 
     const channel = supabase
-      .channel(`realtime-bookings-${userId}`)
+      .channel(`realtime-bookings-${referenceId}-${role}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'Booking',
-          filter: `${filterColumn}=eq.${userId}`,
+          ...(filterString ? { filter: filterString } : {}),
         },
-        (payload) => {
+        (payload: any) => {
           console.log('Realtime Booking Update:', payload);
+          
+          if (payload.eventType === 'UPDATE') {
+            const oldStatus = payload.old?.status;
+            // Only alert if old status was provided by Postgres Replica Identity and actually changed
+            if (oldStatus && payload.new.status !== oldStatus) {
+              const status = payload.new.status;
+              if (role === 'customer') {
+                if (status === 'ACCEPTED') toast.success('Your booking was accepted!');
+                else if (status === 'TRAVELLING') toast.info('Worker is on the way!');
+                else if (status === 'ARRIVED') toast.info('Worker has arrived!');
+                else if (status === 'IN_PROGRESS') toast.info('Booking status changed to In Progress.');
+                else if (status === 'COMPLETED') toast.success('Your service was completed!');
+              } else if (role === 'worker') {
+                if (status === 'REQUESTED') toast.info('New booking request received.');
+              }
+            }
+          } else if (payload.eventType === 'INSERT') {
+             if (role === 'worker') toast.info('New booking request received!');
+          }
+          
           router.refresh();
         }
       )
@@ -30,5 +53,5 @@ export function useRealtimeBookings(userId: string, role: 'customer' | 'worker')
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, role, router]);
+  }, [referenceId, role, router]);
 }

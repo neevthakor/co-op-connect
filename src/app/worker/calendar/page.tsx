@@ -81,7 +81,7 @@ export default async function CalendarPage() {
                   </div>
 
                   <div className="pt-3 border-t flex justify-between items-center">
-                    <span className="text-sm font-bold text-primary">₹{b.estimatedPrice || 450}</span>
+                    <span className="text-sm font-bold text-primary">₹{b.finalPrice || b.estimatedPrice || 450}</span>
                     <Link href={`/worker/jobs/${b.id}`}>
                       <Button size="sm" className="gap-1 text-xs">
                         Open Job Console <ChevronRight className="h-3.5 w-3.5" />
@@ -109,7 +109,7 @@ export default async function CalendarPage() {
                 <p className="text-muted-foreground">{b.scheduledDate ? new Date(b.scheduledDate).toLocaleDateString() : 'Completed'} • {b.address || 'Address not provided'}</p>
               </div>
               <div className="text-right">
-                <span className="font-bold text-green-600">₹{b.estimatedPrice || 450}</span>
+                <span className="font-bold text-green-600">₹{b.finalPrice || b.estimatedPrice || 450}</span>
                 <Link href={`/worker/jobs/${b.id}`} className="block text-primary hover:underline mt-0.5">
                   View Details
                 </Link>

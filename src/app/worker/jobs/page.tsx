@@ -29,6 +29,7 @@ export default async function WorkerJobsPage() {
             status: true,
             createdAt: true,
             estimatedPrice: true,
+            finalPrice: true,
             category: { select: { name: true, basePrice: true } },
             customer: { select: { user: { select: { name: true } } } },
           },
@@ -46,6 +47,7 @@ export default async function WorkerJobsPage() {
             status: true,
             createdAt: true,
             estimatedPrice: true,
+            finalPrice: true,
             category: { select: { name: true, basePrice: true } },
             customer: { select: { user: { select: { name: true } } } },
           },
@@ -76,7 +78,7 @@ export default async function WorkerJobsPage() {
           <div className="flex items-center gap-3 pt-1 text-xs text-gray-600">
             <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(b.createdAt)}</span>
             <span className="flex items-center gap-1 font-semibold text-green-700">
-              Est. {formatCurrency(b.estimatedPrice || b.category.basePrice || 350)}
+              Est. {formatCurrency(b.finalPrice || b.estimatedPrice || b.category.basePrice || 350)}
             </span>
           </div>
         </div>

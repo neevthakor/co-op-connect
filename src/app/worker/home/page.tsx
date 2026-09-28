@@ -10,6 +10,7 @@ import { Briefcase, CheckCircle2, MapPin, ShieldCheck } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { AvailabilityToggle } from '@/components/worker/availability-toggle';
 import { cookies } from 'next/headers';
+import { RealtimeBookingListener } from '@/components/shared/realtime-listeners';
 
 export default async function WorkerHomePage() {
   const cookieStore = await cookies();
@@ -51,7 +52,9 @@ export default async function WorkerHomePage() {
   let topRequirements: { name: string; count: number }[] = [];
 
   if (workerId) {
-    const [workerData, bookingsData, earningsAgg, jobsCount, topReqs, allCategories] = await Promise.all([
+    const start = Date.now();
+    // Group 1: Worker state
+    const [workerData, bookingsData] = await Promise.all([
       prisma.worker.findUnique({
         where: { id: workerId },
         select: {
@@ -77,7 +80,11 @@ export default async function WorkerHomePage() {
           customer: { select: { user: { select: { name: true } } } },
         },
         orderBy: { createdAt: 'desc' },
-      }),
+      })
+    ]);
+
+    // Group 2: Stats
+    const [earningsAgg, jobsCount, topReqs] = await Promise.all([
       prisma.workerEarning.aggregate({
         where: {
           workerId,
@@ -93,9 +100,17 @@ export default async function WorkerHomePage() {
         _count: { categoryId: true },
         orderBy: { _count: { categoryId: 'desc' } },
         take: 3,
-      }),
-      prisma.serviceCategory.findMany() // to map category ID to name
+      })
     ]);
+
+    const allCategories = await prisma.serviceCategory.findMany({
+      where: { id: { in: topReqs.map(r => r.categoryId) } },
+      select: { id: true, name: true }
+    });
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DB] worker home: ${Date.now() - start}ms`);
+    }
 
     worker = workerData;
     activeBookings = bookingsData;
@@ -115,6 +130,7 @@ export default async function WorkerHomePage() {
 
   return (
     <div className="page-container space-y-6 py-5 pb-24 md:py-8 lg:pb-8">
+      {workerId && <RealtimeBookingListener referenceId={workerId} role="worker" />}
       {/* Header */}
       <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:flex-row sm:items-center">
         <div>

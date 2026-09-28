@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWelfareFundSummary } from "@/services/welfare";
 import FederationDashboardClient from "./FederationDashboardClient";
+import { RealtimeBookingListener } from '@/components/shared/realtime-listeners';
 
 export default async function FederationDashboardPage() {
   const session = await auth();
@@ -25,45 +26,62 @@ export default async function FederationDashboardPage() {
     return <div>Error: Federation not found.</div>;
   }
 
+  const start = Date.now();
+
   // 1. Welfare Summary (Centerpiece)
   const welfareSummary = await getWelfareFundSummary(federationId);
 
-  // 2. Worker Roster
+  // 2. Worker Roster (limit to 50 for dashboard)
   const workers = await prisma.worker.findMany({
     where: { cooperative: { federationId } },
-    include: {
+    select: { 
+      id: true, joinedAt: true, verificationStatus: true, primaryTrade: true,
       user: { select: { name: true, email: true, phone: true } },
       cooperative: { select: { name: true } }
     },
-    orderBy: { joinedAt: 'desc' }
+    orderBy: { joinedAt: 'desc' },
+    take: 50
   });
 
   // 3. Booking / Demand Overview
-  // Fetch bookings for workers in this federation to aggregate demand
-  const bookings = await prisma.booking.findMany({
+  // Use aggregation to group by category and sum prices
+  const demandAgg = await prisma.booking.groupBy({
+    by: ['categoryId'],
     where: { worker: { cooperative: { federationId } } },
-    include: { category: true }
+    _count: { id: true },
+    _sum: { finalPrice: true, estimatedPrice: true }
   });
 
-  const demandData = bookings.reduce((acc, booking) => {
-    const cat = booking.category.name;
-    if (!acc[cat]) acc[cat] = { category: cat, count: 0, revenue: 0 };
-    acc[cat].count += 1;
-    acc[cat].revenue += booking.finalPrice || booking.estimatedPrice || 0;
-    return acc;
-  }, {} as Record<string, { category: string, count: number, revenue: number }>);
+  const categories = await prisma.serviceCategory.findMany({
+    where: { id: { in: demandAgg.map(d => d.categoryId) } },
+    select: { id: true, name: true }
+  });
+
+  const demandData = demandAgg.map(agg => {
+    const catName = categories.find(c => c.id === agg.categoryId)?.name || 'Unknown';
+    return {
+      category: catName,
+      count: agg._count.id,
+      revenue: agg._sum.finalPrice || agg._sum.estimatedPrice || 0
+    };
+  });
 
   // 4. Dispute Oversight
   const complaints = await prisma.complaint.findMany({
     where: { worker: { cooperative: { federationId } } },
-    include: {
-      customer: { include: { user: true } },
-      worker: { include: { user: true } },
-      booking: true
+    select: {
+      id: true, category: true, status: true, resolution: true, createdAt: true, description: true,
+      customer: { select: { user: { select: { name: true, phone: true } } } },
+      worker: { select: { user: { select: { name: true, phone: true } } } },
+      booking: { select: { id: true } }
     },
     orderBy: { createdAt: 'desc' },
-    take: 20
+    take: 10
   });
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[DB] federation demand: ${Date.now() - start}ms`);
+  }
 
   // 5. Governance Proposals (using CooperativeProposal for now)
   const cooperativeIds = federation.cooperatives.map(c => c.id);
@@ -75,14 +93,17 @@ export default async function FederationDashboardPage() {
   });
 
   return (
-    <FederationDashboardClient 
-      federation={federation}
-      welfareSummary={welfareSummary}
-      workers={workers}
-      demand={Object.values(demandData)}
-      complaints={complaints}
-      proposals={proposals}
-      firstCoopId={cooperativeIds[0] || ""}
-    />
+    <>
+      <RealtimeBookingListener referenceId={federationId} role="federation" />
+      <FederationDashboardClient 
+        federation={federation}
+        welfareSummary={welfareSummary}
+        workers={workers}
+        demand={Object.values(demandData)}
+        complaints={complaints}
+        proposals={proposals}
+        firstCoopId={cooperativeIds[0] || ""}
+      />
+    </>
   );
 }
