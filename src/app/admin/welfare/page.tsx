@@ -3,21 +3,63 @@
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { HeartHandshake, ShieldCheck, AlertTriangle, Activity, UserCheck, Stethoscope } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { HeartHandshake, ShieldCheck, AlertTriangle, Activity, UserCheck, Stethoscope, IndianRupee } from 'lucide-react';
+import { formatDate, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { disburseWelfare } from './actions';
 
 export default function WelfarePage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // Disbursement state
+  const [selectedWorker, setSelectedWorker] = useState<string>('');
+  const [disbursementType, setDisbursementType] = useState<string>('');
+  const [disbursementAmount, setDisbursementAmount] = useState<string>('');
+  const [disbursementDetails, setDisbursementDetails] = useState<string>('');
+  const [isDisbursing, setIsDisbursing] = useState(false);
+
+  const fetchWelfareData = () => {
     fetch('/api/admin/welfare')
       .then((res) => res.json())
       .then((resData) => setData(resData))
       .catch((e) => { console.error('Error:', e); })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchWelfareData();
   }, []);
+
+  const handleDisburse = async () => {
+    if (!selectedWorker || !disbursementType || !disbursementAmount) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    const amt = parseFloat(disbursementAmount);
+    if (isNaN(amt) || amt <= 0) {
+      toast.error('Invalid amount');
+      return;
+    }
+
+    setIsDisbursing(true);
+    try {
+      const res = await disburseWelfare(selectedWorker, disbursementType, amt, disbursementDetails);
+      if (res.success) {
+        toast.success('Funds disbursed successfully');
+        setDisbursementAmount('');
+        setDisbursementDetails('');
+        fetchWelfareData();
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to disburse funds');
+    } finally {
+      setIsDisbursing(false);
+    }
+  };
 
   const metrics = data?.metrics || {
     totalWorkers: 0,
@@ -29,6 +71,8 @@ export default function WelfarePage() {
   };
 
   const welfareRecords = data?.welfareRecords || [];
+  const workerSummaries = data?.workerSummaries || [];
+  const fund = data?.fund || { totalCollected: 0, totalDisbursed: 0, currentBalance: 0 };
 
   return (
     <div className="space-y-6 p-4 md:p-8 max-w-7xl mx-auto w-full pb-20">
@@ -72,6 +116,104 @@ export default function WelfarePage() {
             <p className="text-xs text-muted-foreground font-semibold">Fatigue & Workload Alerts</p>
             <p className="text-2xl font-black text-amber-600 mt-1">{metrics.highWorkloadAlerts}</p>
             <p className="text-xs text-amber-700 mt-1 font-semibold">Requires Schedule Rest</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Fund Balance Panel */}
+        <Card className="border-emerald-500/30 bg-emerald-500/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <IndianRupee className="w-5 h-5 text-emerald-600" />
+              Spendable Welfare Balance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-4xl font-black text-emerald-600">{formatCurrency(fund.currentBalance)}</p>
+                <p className="text-sm text-muted-foreground mt-1">Available for disbursement</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-2 pt-4 border-t border-emerald-500/20">
+                <div>
+                  <p className="text-xs text-muted-foreground font-semibold">Total Collected (2% Deductions)</p>
+                  <p className="text-lg font-bold">{formatCurrency(fund.totalCollected)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-semibold">Total Disbursed</p>
+                  <p className="text-lg font-bold text-amber-600">{formatCurrency(fund.totalDisbursed)}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Disbursement Action Form */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-bold">Issue Worker Benefit Disbursement</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold">Select Eligible Worker</label>
+              <Select value={selectedWorker} onValueChange={setSelectedWorker}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a worker (Min 5 jobs)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {workerSummaries.filter((w: any) => w.isEligibleForDisbursement).map((w: any) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name} ({w.totalJobs} jobs)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-semibold">Benefit Type</label>
+              <Select value={disbursementType} onValueChange={setDisbursementType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INSURANCE_PREMIUM">Insurance Premium Payment</SelectItem>
+                  <SelectItem value="TRAINING_SUBSIDY">Skill Training Subsidy</SelectItem>
+                  <SelectItem value="EMERGENCY_ADVANCE">Emergency Cash Advance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold">Amount (₹)</label>
+                <Input 
+                  type="number" 
+                  min="1" 
+                  value={disbursementAmount}
+                  onChange={(e) => setDisbursementAmount(e.target.value)}
+                  placeholder="e.g. 5000"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold">Details (Optional)</label>
+                <Input 
+                  type="text" 
+                  value={disbursementDetails}
+                  onChange={(e) => setDisbursementDetails(e.target.value)}
+                  placeholder="Provider / Notes"
+                />
+              </div>
+            </div>
+
+            <Button 
+              className="w-full bg-emerald-600 hover:bg-emerald-700" 
+              onClick={handleDisburse}
+              disabled={isDisbursing || fund.currentBalance <= 0}
+            >
+              {isDisbursing ? 'Processing...' : 'Confirm & Disburse Funds'}
+            </Button>
           </CardContent>
         </Card>
       </div>

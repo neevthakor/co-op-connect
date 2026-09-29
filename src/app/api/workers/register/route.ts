@@ -56,6 +56,11 @@ export async function POST(req: NextRequest) {
       verificationAnswers,
     } = body;
 
+    // SECURITY: Prevent admin role registration
+    if (role && ['FEDERATION_ADMIN', 'COOPERATIVE_ADMIN', 'SOCIETY_ADMIN', 'ADMIN'].includes(role)) {
+      return NextResponse.json({ error: 'Admin roles cannot be registered via this endpoint' }, { status: 403 });
+    }
+
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Full legal name is required' }, { status: 400 });
     }

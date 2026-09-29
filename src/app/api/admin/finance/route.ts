@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const cooperativeId = searchParams.get('cooperativeId') || session.user.cooperativeId;
 
-    const [earningsSum, earnings, invoices, payments] = await Promise.all([
+    const [earningsSum, earnings, invoices, payments, pendingPayouts] = await Promise.all([
       prisma.workerEarning.aggregate({
         where: cooperativeId ? { worker: { cooperativeId } } : {},
         _sum: {
@@ -45,21 +45,28 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
         take: 20,
       }),
+      prisma.payout.findMany({
+        where: cooperativeId 
+          ? { status: 'HELD', workerEarning: { worker: { cooperativeId } } }
+          : { status: 'HELD' },
+        include: {
+          workerEarning: {
+            include: { worker: { include: { user: { select: { name: true } } } } }
+          }
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 50,
+      }),
     ]);
 
-    const gross = earningsSum._sum.grossAmount || 520000;
-    const net = earningsSum._sum.netAmount || 483600;
-    const coopFund = earningsSum._sum.cooperativeDeduction || 26000;
-    const welfareFund = earningsSum._sum.welfareDeduction || 10400;
+    const gross = earningsSum._sum.grossAmount || 0;
+    const net = earningsSum._sum.netAmount || 0;
+    const coopFund = earningsSum._sum.cooperativeDeduction || 0;
+    const welfareFund = earningsSum._sum.welfareDeduction || 0;
 
-    // Monthly trends
-    const monthlyData = [
-      { month: 'Jan', revenue: Math.round(gross * 0.12), coopFund: Math.round(coopFund * 0.12), welfareFund: Math.round(welfareFund * 0.12) },
-      { month: 'Feb', revenue: Math.round(gross * 0.14), coopFund: Math.round(coopFund * 0.14), welfareFund: Math.round(welfareFund * 0.14) },
-      { month: 'Mar', revenue: Math.round(gross * 0.18), coopFund: Math.round(coopFund * 0.18), welfareFund: Math.round(welfareFund * 0.18) },
-      { month: 'Apr', revenue: Math.round(gross * 0.22), coopFund: Math.round(coopFund * 0.22), welfareFund: Math.round(welfareFund * 0.22) },
-      { month: 'May', revenue: Math.round(gross * 0.19), coopFund: Math.round(coopFund * 0.19), welfareFund: Math.round(welfareFund * 0.19) },
-      { month: 'Jun', revenue: Math.round(gross * 0.15), coopFund: Math.round(coopFund * 0.15), welfareFund: Math.round(welfareFund * 0.15) },
+    // Honest insufficient historical data state if there are no earnings
+    const monthlyData = gross === 0 ? [] : [
+      { month: 'Latest', revenue: gross, coopFund, welfareFund }
     ];
 
     return NextResponse.json({
@@ -74,6 +81,7 @@ export async function GET(req: NextRequest) {
       recentEarnings: earnings,
       recentInvoices: invoices,
       recentPayments: payments,
+      pendingPayouts,
     });
   } catch (error) {
     console.error('Finance API Error:', error);

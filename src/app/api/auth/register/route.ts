@@ -6,7 +6,12 @@ import { isValidEmail, isValidPhone, normalizePhone } from '@/lib/validation';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, phone, password, address, city = 'Unspecified', state = 'Unspecified' } = body;
+    const { name, email, phone, password, address, city = 'Unspecified', state = 'Unspecified', role } = body;
+
+    // SECURITY: Prevent admin role registration
+    if (role && ['FEDERATION_ADMIN', 'COOPERATIVE_ADMIN', 'SOCIETY_ADMIN', 'ADMIN'].includes(role)) {
+      return NextResponse.json({ error: 'Admin roles cannot be registered via this endpoint' }, { status: 403 });
+    }
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Full name is required' }, { status: 400 });

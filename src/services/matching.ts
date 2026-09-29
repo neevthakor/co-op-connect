@@ -128,6 +128,7 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     where: {
       verificationStatus: "VERIFIED",
       ...(cooperativeId ? { cooperativeId } : {}),
+      ...(urgency === "EMERGENCY" ? { isEmergencyAvailable: true } : {}),
       OR: [
         {
           skills: {

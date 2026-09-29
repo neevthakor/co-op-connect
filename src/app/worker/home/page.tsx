@@ -43,11 +43,19 @@ export default async function WorkerHomePage() {
     category: { name: string };
     customer: { user: { name: string | null } } | null;
   };
+  type Disbursement = {
+    id: string;
+    type: string;
+    amount: number;
+    description: string | null;
+    date: Date;
+  };
 
   let worker: WorkerSummary | null = null;
   let todayEarnings = 0;
   let activeBookings: ActiveBooking[] = [];
   let completedJobsCount = 0;
+  let disbursements: Disbursement[] = [];
 
   let topRequirements: { name: string; count: number }[] = [];
 
@@ -84,7 +92,7 @@ export default async function WorkerHomePage() {
     ]);
 
     // Group 2: Stats
-    const [earningsAgg, jobsCount, topReqs] = await Promise.all([
+    const [earningsAgg, jobsCount, topReqsGroups, workerDisbursements] = await Promise.all([
       prisma.workerEarning.aggregate({
         where: {
           workerId,
@@ -100,11 +108,16 @@ export default async function WorkerHomePage() {
         _count: { categoryId: true },
         orderBy: { _count: { categoryId: 'desc' } },
         take: 3,
+      }),
+      (prisma as any).welfareDisbursement.findMany({
+        where: { workerId },
+        orderBy: { date: 'desc' },
+        take: 10,
       })
     ]);
 
     const allCategories = await prisma.serviceCategory.findMany({
-      where: { id: { in: topReqs.map(r => r.categoryId) } },
+      where: { id: { in: topReqsGroups.map((r: any) => r.categoryId) } },
       select: { id: true, name: true }
     });
     
@@ -116,8 +129,9 @@ export default async function WorkerHomePage() {
     activeBookings = bookingsData;
     todayEarnings = earningsAgg._sum.netAmount || 0;
     completedJobsCount = jobsCount;
+    disbursements = workerDisbursements;
 
-    topRequirements = topReqs.map(req => ({
+    topRequirements = topReqsGroups.map((req: any) => ({
       name: allCategories.find(c => c.id === req.categoryId)?.name || req.categoryId,
       count: req._count.categoryId
     }));
@@ -255,6 +269,45 @@ export default async function WorkerHomePage() {
           </div>
         )}
       </div>
+
+      {/* Welfare Disbursements Section */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <ShieldCheck className="w-5 h-5 text-emerald-600" />
+            My Welfare Benefits
+          </h2>
+        </div>
+        
+        {disbursements.length === 0 ? (
+          <Card className="border-border/80 bg-card p-8 text-center">
+            <h3 className="font-semibold text-foreground">No benefits disbursed yet</h3>
+            <p className="mt-1 text-xs text-muted-foreground">Keep completing jobs to become eligible for insurance and training subsidies.</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {disbursements.map((d) => (
+              <Card key={d.id} className="border-emerald-500/20 bg-emerald-500/5">
+                <CardContent className="flex items-center justify-between p-4">
+                  <div>
+                    <h3 className="font-bold text-emerald-800 dark:text-emerald-300">
+                      {d.type.replace('_', ' ')}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">{d.description || 'Benefit Disbursed'}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{new Date(d.date).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">
+                      {formatCurrency(d.amount)}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

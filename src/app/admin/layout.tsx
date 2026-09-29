@@ -20,6 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ? [
           adminNavItem("/admin/workers", "Workers", "Users"),
           adminNavItem("/admin/verification", "Worker verification", "ShieldCheck"),
+          adminNavItem("/admin/safety-alerts", "Safety Alerts", "ShieldAlert"),
           adminNavItem("/admin/complaints", "Customer issues", "Activity"),
           adminNavItem("/admin/analytics", "Workforce analytics", "Activity"),
           adminNavItem("/admin/bookings", "Bookings", "ClipboardList"),
@@ -47,7 +48,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       accent="blue"
       navItems={navItems}
       mobileNavItems={navItems.slice(0, 4)}
-      signOutEnabled
+      signOutEnabled={true}
     >
       {children}
     </PortalShell>

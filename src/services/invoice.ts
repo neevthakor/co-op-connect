@@ -21,7 +21,12 @@ export function buildInvoiceCreatePromise(booking: any) {
   const subtotal = labourCharge + travelCharge + materialCharge + additionalCharge;
   const cooperativeContribution = Math.round(subtotal * 0.05); // 5%
   const welfareContribution = Math.round(subtotal * 0.02); // 2%
-  const tax = Math.round(subtotal * 0.05); // 5% GST
+  
+  const gstRateEnv = process.env.NEXT_PUBLIC_GST_RATE || process.env.GST_RATE;
+  const gstRate = gstRateEnv ? parseFloat(gstRateEnv) : 5;
+  const gstMultiplier = gstRate / 100;
+  
+  const tax = Math.round(subtotal * gstMultiplier); // Configurable GST
   const total = subtotal + tax;
 
   return prisma.invoice.create({
@@ -46,7 +51,7 @@ export function buildInvoiceCreatePromise(booking: any) {
           ...(materialCharge > 0 ? [{ description: "Approved Replacement Materials", amount: materialCharge, type: "MATERIAL" }] : []),
           { description: "Cooperative Service Fund (5%)", amount: cooperativeContribution, type: "COOPERATIVE" },
           { description: "Worker Welfare Fund (2%)", amount: welfareContribution, type: "WELFARE" },
-          { description: "Applicable Taxes (GST 5%)", amount: tax, type: "TAX" },
+          { description: `Applicable Taxes (GST ${gstRate}%)`, amount: tax, type: "TAX" },
         ],
       },
     },

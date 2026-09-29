@@ -14,6 +14,7 @@ interface Earning {
     welfare: number;
   };
   net: number;
+  payoutStatus?: string;
 }
 
 interface EarningsLedgerProps {
@@ -81,6 +82,7 @@ export function EarningsLedger({ earnings, period, totals, className }: Earnings
                   <TableHead className="text-right">Gross</TableHead>
                   <TableHead className="text-right hidden sm:table-cell">Deductions</TableHead>
                   <TableHead className="text-right font-bold">Net</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -98,6 +100,14 @@ export function EarningsLedger({ earnings, period, totals, className }: Earnings
                     </TableCell>
                     <TableCell className="text-right font-bold text-green-600 dark:text-green-400">
                       {formatCurrency(earning.net)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className={cn(
+                        "px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider",
+                        earning.payoutStatus === "RELEASED" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      )}>
+                        {earning.payoutStatus || "HELD"}
+                      </span>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -8,9 +8,10 @@ import { toast } from 'sonner';
 interface SOSButtonProps {
   bookingId?: string;
   className?: string;
+  coopSafetyPhone?: string | null;
 }
 
-export function SOSButton({ bookingId, className }: SOSButtonProps) {
+export function SOSButton({ bookingId, className, coopSafetyPhone }: SOSButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -21,55 +22,40 @@ export function SOSButton({ bookingId, className }: SOSButtonProps) {
     }
     
     if (type === 'SAFETY_CALL') {
-      window.location.href = 'tel:9316154023';
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Get location if possible
-      let lat: number | undefined;
-      let lng: number | undefined;
-
+      setLoading(true);
       try {
-        if (navigator.geolocation) {
-          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-          });
-          lat = pos.coords.latitude;
-          lng = pos.coords.longitude;
+        let lat: number | undefined;
+        let lng: number | undefined;
+        try {
+          if (navigator.geolocation) {
+            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+            });
+            lat = pos.coords.latitude;
+            lng = pos.coords.longitude;
+          }
+        } catch (e) {
+          console.warn('Could not get location for SOS');
         }
-      } catch (e) {
-        console.warn('Could not get location for SOS');
+
+        // Fire alert in background (non-blocking) before calling
+        fetch('/api/sos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bookingId,
+            latitude: lat,
+            longitude: lng,
+            description: 'Emergency assistance requested via call',
+          }),
+        }).catch(e => console.error('Failed to log SOS', e));
+
+        const phone = coopSafetyPhone || process.env.NEXT_PUBLIC_COOP_SAFETY_PHONE || '9316154023';
+        window.location.href = `tel:${phone}`;
+      } finally {
+        setLoading(false);
       }
-
-      const res = await fetch('/api/sos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId,
-          latitude: lat,
-          longitude: lng,
-          description: type === 'SAFETY_TEAM' ? 'Emergency assistance requested' : 'Safety report filed',
-        }),
-      });
-
-      if (!res.ok) throw new Error('Failed to trigger SOS');
-
-      toast.error(
-        type === 'SAFETY_TEAM'
-          ? 'Safety Team has been alerted. They will contact you immediately.'
-          : 'Incident reported successfully.',
-        {
-          duration: 10000,
-          icon: <ShieldAlert className="w-5 h-5 text-red-500" />,
-        }
-      );
-      setIsOpen(false);
-    } catch (error) {
-      toast.error('Failed to trigger alert. Please call 112 directly.');
-    } finally {
-      setLoading(false);
+      return;
     }
   };
 
@@ -106,17 +92,10 @@ export function SOSButton({ bookingId, className }: SOSButtonProps) {
           variant="secondary"
           className="w-full flex justify-start gap-3 border-orange-200 hover:bg-orange-100 text-orange-800"
           onClick={() => handleSOS('SAFETY_CALL')}
-        >
-          <PhoneCall className="w-4 h-4" /> Call Co-opConnect Safety
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full flex justify-start gap-3 border-red-200 hover:bg-red-100 text-red-800"
-          onClick={() => handleSOS('SAFETY_TEAM')}
           disabled={loading}
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
-          Alert Co-opConnect Safety Team
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <PhoneCall className="w-4 h-4" />}
+          Call Co-opConnect Safety
         </Button>
         <Button
           variant="ghost"

@@ -5,8 +5,9 @@ import { Shield, CheckCircle } from "lucide-react";
 export default async function WorkerPublicProfile({ params }: { params: { publicId: string } }) {
   const { publicId } = params;
   
-  const worker = await prisma.worker.findUnique({
+  const worker: any = await (prisma as any).worker.findUnique({
     where: { id: publicId },
+    include: { platformCertificates: { orderBy: { issuedAt: 'desc' } } }
   });
 
   if (!worker) return notFound();
@@ -51,6 +52,28 @@ export default async function WorkerPublicProfile({ params }: { params: { public
               </div>
             </dl>
           </div>
+
+          {worker.platformCertificates && worker.platformCertificates.length > 0 && (
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Co-opConnect-Issued Skill Certificates</h3>
+              <div className="space-y-3">
+                {worker.platformCertificates.map((cert: any) => (
+                  <div key={cert.id} className="bg-emerald-50 border border-emerald-100 rounded p-3 flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold text-emerald-900 text-sm">{cert.trade}</p>
+                      <p className="text-xs text-emerald-700 font-mono mt-0.5">ID: {cert.certificateNo}</p>
+                    </div>
+                    <a href={`/verify/certificate/${cert.id}`} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-emerald-700 bg-white border border-emerald-200 px-2 py-1 rounded hover:bg-emerald-50">
+                      View
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-400 mt-3 text-center">
+                (Not a government or third-party trade certification)
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

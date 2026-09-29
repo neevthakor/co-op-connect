@@ -47,6 +47,7 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
   const [matItem, setMatItem] = useState('');
   const [matQty, setMatQty] = useState('1');
   const [matPrice, setMatPrice] = useState('');
+  const [matMandatory, setMatMandatory] = useState(false);
 
   // Helper state
   const [showHelperModal, setShowHelperModal] = useState(false);
@@ -98,6 +99,16 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
   }, [params.id]);
 
   const updateStatus = async (status: string, reason?: string) => {
+    if (status === 'COMPLETED') {
+      const hasUnapprovedMandatory = job.materialRequests?.some(
+        (m: any) => m.isMandatory && m.status !== 'APPROVED'
+      );
+      if (hasUnapprovedMandatory) {
+        toast.error('Confirm the required material before finishing this job');
+        return;
+      }
+    }
+
     setActionLoading(true);
     try {
       const res = await fetch(`/api/bookings/${params.id}`, {
@@ -203,6 +214,7 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
           item: matItem,
           quantity: parseInt(matQty) || 1,
           unitPrice: parseFloat(matPrice),
+          isMandatory: matMandatory,
         }),
       });
       const data = await res.json();
@@ -212,6 +224,7 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
       setShowMaterialModal(false);
       setMatItem('');
       setMatPrice('');
+      setMatMandatory(false);
       await fetchJob();
     } catch (err) {
       toast.error((err instanceof Error ? err.message : "Unknown error") || 'Material request failed');
@@ -651,6 +664,18 @@ export function JobExecutionClient({ initialJob }: { initialJob: any }) {
                       placeholder="e.g. 350"
                     />
                   </div>
+                </div>
+                <div className="flex items-center gap-2 pt-1 pb-1">
+                  <input
+                    type="checkbox"
+                    id="mandatory-check"
+                    checked={matMandatory}
+                    onChange={(e) => setMatMandatory(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="mandatory-check" className="font-semibold text-sm cursor-pointer">
+                    This material is required to finish the job
+                  </label>
                 </div>
                 <p className="text-[11px] text-muted-foreground pt-1">
                   Total: ₹{(parseInt(matQty) || 1) * (parseFloat(matPrice) || 0)}. Sent to customer phone for instant approval.

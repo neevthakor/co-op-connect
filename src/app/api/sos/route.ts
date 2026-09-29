@@ -62,6 +62,29 @@ export async function POST(req: NextRequest) {
     }
 
     // A real implementation would also send an SMS/Email to trusted contacts here or Admin
+    // --- MOCK NOTIFICATION ---
+    if (userRole === 'WORKER') {
+      const worker: any = await prisma.worker.findUnique({
+        where: { id: (session.user as any).workerId || session.user.id },
+        include: { cooperative: { include: { admins: { include: { user: true } } } } }
+      });
+      const adminUser = worker?.cooperative?.admins?.[0]?.user;
+      if (adminUser) {
+        console.log(`[MOCK SMS] Sending emergency alert to Cooperative Admin (${adminUser.phone || 'N/A'}): URGENT: Worker ${session.user.name} has triggered an SOS alert at location: ${latitude}, ${longitude}. Please review immediately.`);
+        console.log(`[MOCK EMAIL] Sending emergency alert to Cooperative Admin (${adminUser.email}): URGENT: Worker ${session.user.name} has triggered an SOS alert at location: ${latitude}, ${longitude}. Please review immediately.`);
+      }
+    } else if (userRole === 'CUSTOMER' && bookingId) {
+      const booking: any = await prisma.booking.findUnique({
+        where: { id: bookingId },
+        include: { worker: { include: { cooperative: { include: { admins: { include: { user: true } } } } } } }
+      });
+      const adminUser = booking?.worker?.cooperative?.admins?.[0]?.user;
+      if (adminUser) {
+        console.log(`[MOCK SMS] Sending emergency alert to Cooperative Admin (${adminUser.phone || 'N/A'}): URGENT: Customer ${session.user.name} has triggered an SOS alert for booking ${bookingId} at location: ${latitude}, ${longitude}. Please review immediately.`);
+        console.log(`[MOCK EMAIL] Sending emergency alert to Cooperative Admin (${adminUser.email}): URGENT: Customer ${session.user.name} has triggered an SOS alert for booking ${bookingId} at location: ${latitude}, ${longitude}. Please review immediately.`);
+      }
+    }
+    // -------------------------
     
     return NextResponse.json({ success: true, incidentId: incident.id });
   } catch (error) {

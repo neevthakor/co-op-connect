@@ -4,8 +4,9 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { 
   Building, Users, ShieldAlert, FileText, IndianRupee,
-  Activity, CheckCircle, XCircle, Clock
+  Activity, CheckCircle, XCircle, Clock, LogOut
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { updateWorkerStatus, submitProposal, updateComplaintStatus } from "./actions";
 
 export default function FederationDashboardClient({
@@ -53,6 +54,13 @@ export default function FederationDashboardClient({
               Federation Administration Dashboard
             </p>
           </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/federation/login" })}
+            className="flex items-center gap-2 px-4 py-2 bg-card text-card-foreground shadow-sm rounded-xl hover:bg-secondary transition-colors text-sm font-semibold border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
         </div>
 
         {/* WELFARE FUND CENTERPIECE */}

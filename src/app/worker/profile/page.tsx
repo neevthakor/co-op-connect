@@ -231,6 +231,30 @@ export default async function ProfilePage() {
             )}
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Award className="h-4 w-4 text-primary" /> Co-opConnect-Issued Skill Certificates
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {!profileData.platformCertificates || profileData.platformCertificates.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No platform certificates issued yet.</p>
+            ) : (
+              profileData.platformCertificates.map((c) => (
+                <div key={c.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs p-3 bg-emerald-50 rounded border border-emerald-100">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-bold text-emerald-900">{c.trade}</span>
+                    <span className="text-emerald-700 font-mono text-[10px]">ID: {c.certificateNo}</span>
+                  </div>
+                  <a href={`/verify/certificate/${c.id}`} target="_blank" rel="noopener noreferrer" className="mt-2 sm:mt-0 text-emerald-600 hover:text-emerald-800 font-semibold flex items-center gap-1 bg-white px-2 py-1 rounded shadow-sm border border-emerald-200 hover:bg-emerald-50 transition-colors">
+                    View / Download
+                  </a>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recent Reviews */}

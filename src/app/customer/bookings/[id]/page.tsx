@@ -80,7 +80,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         </div>
         <div className="flex gap-2">
           {isCancellable && (
-            <SOSButton bookingId={booking.id} />
+            <SOSButton bookingId={booking.id} coopSafetyPhone={booking.worker?.cooperative?.emergencyPhone} />
           )}
           {isCompleted && (
             <Link href={`/customer/book?query=${encodeURIComponent(booking.category.name)}`}>

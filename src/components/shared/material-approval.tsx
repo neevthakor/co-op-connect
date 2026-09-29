@@ -16,6 +16,7 @@ interface Material {
   totalPrice: number;
   receiptUrl?: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
+  isMandatory?: boolean;
 }
 
 interface MaterialApprovalProps {
@@ -64,6 +65,9 @@ export function MaterialApproval({ material, bookingId, onApprove, onReject, cla
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-muted-foreground" />
             <h4 className="font-medium leading-none">{material.item}</h4>
+            {material.isMandatory && (
+              <Badge variant="destructive" className="text-[10px] uppercase h-5 ml-1">Required</Badge>
+            )}
           </div>
           <Badge className={getStatusColor(currentStatus)}>
             {currentStatus}

@@ -95,7 +95,7 @@ export async function completePaymentTransaction(
       const welfareFee = Math.round(gross * 0.02);
       const net = gross - coOpFee - welfareFee;
 
-      await prisma.workerEarning.create({
+      const earning = await prisma.workerEarning.create({
         data: {
           workerId: member.workerId,
           bookingId,
@@ -109,6 +109,16 @@ export async function completePaymentTransaction(
           description: `Team (${member.role} ${share}%) - Booking #${booking.id.slice(0, 8)}`,
         },
       });
+
+      await prisma.payout.create({
+        data: {
+          workerEarningId: earning.id,
+          amountCollected: gross,
+          cooperativeHeld: coOpFee + welfareFee,
+          amountReleased: net,
+          status: "HELD",
+        },
+      });
     }
   } else {
     // Single worker
@@ -117,7 +127,7 @@ export async function completePaymentTransaction(
     const welfareFee = Math.round(gross * 0.02);
     const net = gross - coOpFee - welfareFee;
 
-    await prisma.workerEarning.create({
+    const earning = await prisma.workerEarning.create({
       data: {
         workerId: booking.workerId,
         bookingId,
@@ -129,6 +139,16 @@ export async function completePaymentTransaction(
         welfareDeduction: welfareFee,
         netAmount: net,
         description: `Service Earning - Booking #${booking.id.slice(0, 8)}`,
+      },
+    });
+
+    await prisma.payout.create({
+      data: {
+        workerEarningId: earning.id,
+        amountCollected: gross,
+        cooperativeHeld: coOpFee + welfareFee,
+        amountReleased: net,
+        status: "HELD",
       },
     });
   }

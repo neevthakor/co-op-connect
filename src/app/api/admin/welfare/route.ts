@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const cooperativeId = searchParams.get('cooperativeId') || session.user.cooperativeId;
 
-    const [welfareRecords, insuranceCount, trainingCount, workers] = await Promise.all([
+    const [welfareRecords, insuranceCount, trainingCount, workers, earningsSum, disbursementSum] = await Promise.all([
       prisma.welfareRecord.findMany({
         where: cooperativeId ? { worker: { cooperativeId } } : {},
         include: {
@@ -38,32 +38,51 @@ export async function GET(req: NextRequest) {
           welfareRecords: true,
           insuranceRecords: true,
           trainingRecords: true,
+          bookings: { where: { status: 'COMPLETED' }, select: { id: true } }
         },
       }),
+      prisma.workerEarning.aggregate({
+        where: cooperativeId ? { worker: { cooperativeId } } : {},
+        _sum: { welfareDeduction: true }
+      }),
+      (prisma as any).welfareDisbursement.aggregate({
+        where: cooperativeId ? { worker: { cooperativeId } } : {},
+        _sum: { amount: true }
+      })
     ]);
 
     const totalWorkers = workers.length;
-    const insuredWorkers = workers.filter((w) => w.insuranceRecords.length > 0).length;
-    const trainedWorkers = workers.filter((w) => w.trainingRecords.length > 0).length;
-    const highWorkloadWorkers = workers.filter((w) => w.totalJobs > 30).length;
+    const insuredWorkers = workers.filter((w: any) => w.insuranceRecords.length > 0).length;
+    const trainedWorkers = workers.filter((w: any) => w.trainingRecords.length > 0).length;
+    const highWorkloadWorkers = workers.filter((w: any) => w.totalJobs > 30).length;
+
+    const totalCollected = earningsSum._sum.welfareDeduction || 0;
+    const totalDisbursed = disbursementSum._sum.amount || 0;
+    const currentBalance = totalCollected - totalDisbursed;
 
     return NextResponse.json({
       metrics: {
         totalWorkers,
         insuredWorkers,
-        insuranceCoveragePercent: totalWorkers > 0 ? Math.round((insuredWorkers / totalWorkers) * 100) : 85,
+        insuranceCoveragePercent: totalWorkers > 0 ? Math.round((insuredWorkers / totalWorkers) * 100) : 0,
         trainedWorkers,
-        trainingCoveragePercent: totalWorkers > 0 ? Math.round((trainedWorkers / totalWorkers) * 100) : 75,
+        trainingCoveragePercent: totalWorkers > 0 ? Math.round((trainedWorkers / totalWorkers) * 100) : 0,
         highWorkloadAlerts: highWorkloadWorkers,
       },
+      fund: {
+        totalCollected,
+        totalDisbursed,
+        currentBalance
+      },
       welfareRecords,
-      workerSummaries: workers.map((w) => ({
+      workerSummaries: workers.map((w: any) => ({
         id: w.id,
         name: w.user.name,
-        totalJobs: w.totalJobs,
+        totalJobs: w.bookings.length || w.totalJobs,
         hasInsurance: w.insuranceRecords.length > 0,
         hasTraining: w.trainingRecords.length > 0,
         recentAlerts: w.welfareRecords.length,
+        isEligibleForDisbursement: (w.bookings.length || w.totalJobs) >= 5
       })),
     });
   } catch (error) {
