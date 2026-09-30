@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export function useRealtimeNotifications(userId: string) {
   const router = useRouter();
@@ -18,8 +19,11 @@ export function useRealtimeNotifications(userId: string) {
           table: 'Notification',
           filter: `userId=eq.${userId}`,
         },
-        (payload) => {
+        (payload: any) => {
           console.log('New Realtime Notification:', payload);
+          if (payload.new && payload.new.title) {
+            toast(payload.new.title, { description: payload.new.body });
+          }
           router.refresh();
         }
       )

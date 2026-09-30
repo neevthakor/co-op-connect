@@ -109,7 +109,7 @@ export default function VerificationPage() {
                 ) : workers.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                      No workers found for status: {statusFilter}
+                      No workers found for status: {statusFilter || 'ALL'}
                     </td>
                   </tr>
                 ) : (

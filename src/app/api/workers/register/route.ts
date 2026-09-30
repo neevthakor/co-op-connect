@@ -56,6 +56,11 @@ export async function POST(req: NextRequest) {
       verificationAnswers,
     } = body;
 
+    // SECURITY: Prevent admin role registration
+    if (role && ['FEDERATION_ADMIN', 'COOPERATIVE_ADMIN', 'SOCIETY_ADMIN', 'ADMIN'].includes(role)) {
+      return NextResponse.json({ error: 'Admin roles cannot be registered via this endpoint' }, { status: 403 });
+    }
+
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Full legal name is required' }, { status: 400 });
     }
@@ -230,12 +235,20 @@ export async function POST(req: NextRequest) {
         });
       }
     } catch (uploadError) {
-      console.error('Photo upload failed during registration:', uploadError instanceof Error ? uploadError.message : 'Unknown error');
-      // Photo failed but user was created. Not fatal to registration according to standard sequences,
-      // but if the photo was strict-required, we could rollback here. Given the prompt
-      // says "If an upload succeeds but worker creation fails, clean up... Or use another safe sequence"
-      // we'll just log and continue, the user can re-upload later. Or we could rollback the user.
-      await prisma.user.delete({ where: { id: user.id } });
+      console.error('Photo upload failed during registration. Supabase Error:', uploadError);
+      
+      // Proper cleanup transaction
+      if (user.worker?.id) {
+        await prisma.$transaction([
+          prisma.workerSkill.deleteMany({ where: { workerId: user.worker.id } }),
+          prisma.workerVerificationResponse.deleteMany({ where: { workerId: user.worker.id } }),
+          prisma.worker.delete({ where: { id: user.worker.id } }),
+          prisma.user.delete({ where: { id: user.id } })
+        ]);
+      } else {
+        await prisma.user.delete({ where: { id: user.id } });
+      }
+      
       return NextResponse.json({ error: 'Failed to upload photo. Please try again.' }, { status: 500 });
     }
 

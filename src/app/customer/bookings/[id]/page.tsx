@@ -48,6 +48,9 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       rating: true,
       payment: true,
       warranty: true,
+      complaints: {
+        orderBy: { createdAt: 'desc' }
+      },
       statusHistory: {
         orderBy: { createdAt: 'asc' },
       },
@@ -63,7 +66,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="flex flex-col gap-6 p-4 pb-20 md:p-8 max-w-3xl mx-auto w-full">
-      <RealtimeBookingListener userId={session.user?.id as string} role="customer" />
+      <RealtimeBookingListener referenceId={session.user?.customerId as string} role="customer" />
       
       <header className="flex justify-between items-start">
         <div>
@@ -77,7 +80,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         </div>
         <div className="flex gap-2">
           {isCancellable && (
-            <SOSButton bookingId={booking.id} />
+            <SOSButton bookingId={booking.id} coopSafetyPhone={booking.worker?.cooperative?.emergencyPhone} />
           )}
           {isCompleted && (
             <Link href={`/customer/book?query=${encodeURIComponent(booking.category.name)}`}>
@@ -195,6 +198,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         invoice={booking.invoice}
         payment={booking.payment}
         status={booking.status}
+        complaints={booking.complaints}
       />
     </div>
   );

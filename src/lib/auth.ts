@@ -17,17 +17,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = (credentials.email as string).trim().toLowerCase();
         const password = credentials.password as string;
 
-        const user = await prisma.user.findUnique({
-          where: { email },
-          include: {
-            worker: { select: { id: true, cooperativeId: true, verificationStatus: true } },
-            customer: { select: { id: true } },
-            cooperativeAdmin: { select: { id: true, cooperativeId: true } },
-            federationAdmin: { select: { id: true, federationId: true } },
-            societyAdmin: { select: { id: true, societyId: true } },
-            institutionalCustomer: { select: { id: true, institutionId: true } },
-          },
-        });
+        let user;
+        try {
+          // Fetch ONLY the user first (1 query)
+          user = await prisma.user.findUnique({
+            where: { email },
+          });
+        } catch (error) {
+          console.error("Auth DB Error:", error);
+          throw new Error("Database temporarily unreachable");
+        }
 
         if (!user || !user.passwordHash || !user.isActive) {
           return null;
@@ -38,19 +37,47 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
+        // Fetch exactly ONE relation based on role (1 query)
+        let worker, customer, cooperativeAdmin, federationAdmin, societyAdmin, institutionalCustomer;
+        
+        try {
+          if (user.role === 'WORKER' || user.role === 'HELPER') {
+            worker = await prisma.worker.findUnique({ where: { userId: user.id }, select: { id: true, cooperativeId: true, verificationStatus: true } });
+            if (!worker) return null;
+          } else if (user.role === 'CUSTOMER') {
+            customer = await prisma.customer.findUnique({ where: { userId: user.id }, select: { id: true } });
+            if (!customer) return null;
+          } else if (user.role === 'COOPERATIVE_ADMIN') {
+            cooperativeAdmin = await prisma.cooperativeAdmin.findUnique({ where: { userId: user.id }, select: { id: true, cooperativeId: true } });
+            if (!cooperativeAdmin) return null;
+          } else if (user.role === 'FEDERATION_ADMIN') {
+            federationAdmin = await prisma.federationAdmin.findUnique({ where: { userId: user.id }, select: { id: true, federationId: true } });
+            if (!federationAdmin) return null;
+          } else if (user.role === 'SOCIETY_ADMIN') {
+            societyAdmin = await prisma.societyAdmin.findUnique({ where: { userId: user.id }, select: { id: true, societyId: true } });
+            if (!societyAdmin) return null;
+          } else if (user.role === 'INSTITUTIONAL_CUSTOMER') {
+            institutionalCustomer = await prisma.institutionalCustomer.findUnique({ where: { userId: user.id }, select: { id: true, institutionId: true } });
+            if (!institutionalCustomer) return null;
+          }
+        } catch (e) {
+           console.error("Role lookup error", e);
+           throw new Error("Database temporarily unreachable");
+        }
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           image: user.avatar,
           role: user.role,
-          workerId: user.worker?.id,
-          customerId: user.customer?.id,
-          cooperativeId: user.cooperativeAdmin?.cooperativeId || user.worker?.cooperativeId,
-          federationId: user.federationAdmin?.federationId,
-          societyId: user.societyAdmin?.societyId,
-          institutionId: user.institutionalCustomer?.institutionId,
-          verificationStatus: user.worker?.verificationStatus,
+          workerId: worker?.id,
+          customerId: customer?.id,
+          cooperativeId: cooperativeAdmin?.cooperativeId || worker?.cooperativeId,
+          federationId: federationAdmin?.federationId,
+          societyId: societyAdmin?.societyId,
+          institutionId: institutionalCustomer?.institutionId,
+          verificationStatus: worker?.verificationStatus,
         };
       },
     }),

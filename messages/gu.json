@@ -1,0 +1,27 @@
+{
+  "Nav": {
+    "dashboard": "ડેશબોર્ડ",
+    "home": "હોમ",
+    "bookings": "બુકિંગ્સ",
+    "profile": "પ્રોફાઇલ",
+    "logout": "લૉગઆઉટ",
+    "services": "સેવાઓ"
+  },
+  "Booking": {
+    "bookService": "સેવા બુક કરો",
+    "needItNow": "હમણાં જ જોઈએ (ઇમરજન્સી)",
+    "selectCategory": "શ્રેણી પસંદ કરો",
+    "continue": "ચાલુ રાખો",
+    "confirm": "બુકિંગ કન્ફર્મ કરો",
+    "price": "અંદાજિત કિંમત",
+    "checkout": "ચેકઆઉટ",
+    "pay": "હવે ચૂકવો"
+  },
+  "WorkerDashboard": {
+    "welcome": "ફરી સ્વાગત છે",
+    "earnings": "તમારી કમાણી",
+    "activeJobs": "સક્રિય કામ",
+    "newRequests": "નવી વિનંતીઓ",
+    "fairness": "મેચિંગ નિષ્પક્ષતા"
+  }
+}

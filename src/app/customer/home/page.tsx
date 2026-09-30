@@ -10,6 +10,7 @@ import { WorkerCard } from '@/components/shared/worker-card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { AlertTriangle, Sparkles } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { RealtimeBookingListener } from '@/components/shared/realtime-listeners';
 
 export default async function CustomerHomePage() {
   const session = await auth();
@@ -20,7 +21,25 @@ export default async function CustomerHomePage() {
 
   const customerId = session.user.customerId;
 
-  const [activeBookings, popularServices, nearbyWorkers, recentBookings, latestLocation] = await Promise.all([
+  // Sequence queries to prevent pool exhaustion (limit is 5)
+  const start = Date.now();
+
+  const [popularServices, latestLocation] = await Promise.all([
+    prisma.serviceCategory.findMany({
+      where: { isActive: true, isEmergency: false },
+      take: 6,
+      orderBy: { sortOrder: 'asc' },
+    }),
+    customerId 
+      ? prisma.customerLocation.findFirst({
+          where: { customerId },
+          orderBy: { createdAt: 'desc' },
+          select: { city: true } // only need city
+        })
+      : null,
+  ]);
+
+  const [activeBookings, recentBookings, nearbyWorkers] = await Promise.all([
     customerId
       ? prisma.booking.findMany({
           where: {
@@ -28,48 +47,43 @@ export default async function CustomerHomePage() {
             status: { in: ['REQUESTED', 'ACCEPTED', 'TRAVELLING', 'ARRIVED', 'IN_PROGRESS'] },
           },
           include: {
-            category: true,
-            worker: { include: { user: true } },
+            category: { select: { name: true, basePrice: true, id: true, icon: true } },
+            worker: { include: { user: { select: { name: true, phone: true, avatar: true } } } },
           },
           orderBy: { createdAt: 'desc' },
           take: 3,
         })
       : [],
-    prisma.serviceCategory.findMany({
-      where: { isActive: true, isEmergency: false },
-      take: 6,
-      orderBy: { sortOrder: 'asc' },
-    }),
-    prisma.worker.findMany({
-      where: { verificationStatus: 'VERIFIED' },
-      include: {
-        user: true,
-        cooperative: true,
-      },
-      take: 6,
-      orderBy: { averageRating: 'desc' },
-    }),
     customerId
       ? prisma.booking.findMany({
-          where: {
-            customerId,
-            status: 'COMPLETED',
-          },
+          where: { customerId, status: 'COMPLETED' },
           include: {
-            category: true,
-            worker: { include: { user: true } },
+            category: { select: { name: true, basePrice: true, id: true, icon: true } },
+            worker: { include: { user: { select: { name: true, phone: true, avatar: true } } } },
           },
           orderBy: { completedAt: 'desc' },
           take: 3,
         })
       : [],
-    customerId 
-      ? prisma.customerLocation.findFirst({
-          where: { customerId },
-          orderBy: { createdAt: 'desc' }
-        })
-      : null,
+    prisma.worker.findMany({
+      where: { verificationStatus: 'VERIFIED' },
+      select: {
+        id: true,
+        averageRating: true,
+        totalJobs: true,
+        skills: true,
+        isEmergencyAvailable: true,
+        user: { select: { name: true, avatar: true } },
+        cooperative: { select: { name: true } },
+      },
+      take: 6,
+      orderBy: { averageRating: 'desc' },
+    }),
   ]);
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[DB] customer home: ${Date.now() - start}ms`);
+  }
 
   const workersAvailableCount = await prisma.worker.count({
     where: {
@@ -81,6 +95,7 @@ export default async function CustomerHomePage() {
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-6xl mx-auto w-full">
+      <RealtimeBookingListener referenceId={customerId as string} role="customer" />
       {/* Personalized Greeting Header */}
       <header className="flex justify-between items-center">
         <div>

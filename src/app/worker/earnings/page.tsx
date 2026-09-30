@@ -16,6 +16,7 @@ export default async function EarningsPage() {
 
   const earnings = await prisma.workerEarning.findMany({
     where: workerId ? { workerId } : {},
+    include: { payout: true },
     orderBy: { date: 'desc' },
     take: 50,
   });
@@ -40,6 +41,7 @@ export default async function EarningsPage() {
       welfare: e.welfareDeduction,
     },
     net: e.netAmount,
+    payoutStatus: e.payout?.status || 'HELD',
   }));
 
   return (

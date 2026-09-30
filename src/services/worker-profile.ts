@@ -25,6 +25,7 @@ export interface WorkerProfileData {
     welfareTotal: number;
     netTotal: number;
   };
+  platformCertificates?: any[];
 }
 
 export async function getWorkerProfile(workerId: string): Promise<WorkerProfileData | null> {
@@ -38,6 +39,7 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfileD
       skills: { include: { skill: true }, orderBy: { createdAt: 'asc' } },
       certifications: { include: { certification: true }, orderBy: { createdAt: 'asc' } },
       availability: { orderBy: { dayOfWeek: 'asc' } },
+      platformCertificates: { orderBy: { issuedAt: 'desc' } },
     },
   });
 
@@ -120,6 +122,7 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfileD
     skills: worker.skills,
     certifications: worker.certifications,
     recentReviews: canonicalReviews,
+    platformCertificates: (worker as any).platformCertificates,
     availability: worker.availability,
     earningsSummary,
   };

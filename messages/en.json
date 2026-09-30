@@ -1,0 +1,27 @@
+{
+  "Nav": {
+    "dashboard": "Dashboard",
+    "home": "Home",
+    "bookings": "Bookings",
+    "profile": "Profile",
+    "logout": "Logout",
+    "services": "Services"
+  },
+  "Booking": {
+    "bookService": "Book a Service",
+    "needItNow": "Need it now (Emergency)",
+    "selectCategory": "Select Category",
+    "continue": "Continue",
+    "confirm": "Confirm Booking",
+    "price": "Estimated Price",
+    "checkout": "Checkout",
+    "pay": "Pay Now"
+  },
+  "WorkerDashboard": {
+    "welcome": "Welcome back",
+    "earnings": "Your Earnings",
+    "activeJobs": "Active Jobs",
+    "newRequests": "New Requests",
+    "fairness": "Matching Fairness"
+  }
+}

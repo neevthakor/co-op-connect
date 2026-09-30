@@ -4,8 +4,8 @@ import { useRealtimeBookings } from '@/hooks/use-realtime-bookings';
 import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications';
 import { useRealtimeMessages } from '@/hooks/use-realtime-messages';
 
-export function RealtimeBookingListener({ userId, role }: { userId: string, role: 'customer' | 'worker' }) {
-  useRealtimeBookings(userId, role);
+export function RealtimeBookingListener({ referenceId, role }: { referenceId: string, role: 'customer' | 'worker' | 'federation' }) {
+  useRealtimeBookings(referenceId, role);
   return null;
 }
 

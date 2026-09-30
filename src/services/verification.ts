@@ -112,16 +112,20 @@ export async function suspendWorker(workerId: string, adminId: string, reason: s
 }
 
 export async function assessWorkerSkill(workerSkillId: string, adminId: string, status: string, notes?: string) {
-  const results = await prisma.$transaction([
+  const isVerified = status === "SKILL_ASSESSED";
+
+  const existingSkill = await prisma.workerSkill.findUnique({
+    where: { id: workerSkillId },
+    include: { worker: true, skill: true }
+  });
+
+  if (!existingSkill) throw new Error("Worker skill not found");
+
+  const ops: any[] = [
     prisma.workerSkill.update({
       where: { id: workerSkillId },
-      data: {
-        verified: status === "SKILL_ASSESSED",
-      },
-      include: {
-        worker: true,
-        skill: true,
-      },
+      data: { verified: isVerified },
+      include: { worker: true, skill: true },
     }),
     prisma.auditLog.create({
       data: {
@@ -132,6 +136,22 @@ export async function assessWorkerSkill(workerSkillId: string, adminId: string, 
         details: JSON.stringify({ status, notes }),
       },
     }),
-  ]);
+  ];
+
+  if (isVerified) {
+    const certNo = `CERT-${existingSkill.workerId.slice(-6).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+    ops.push(
+      prisma.platformCertificate.create({
+        data: {
+          certificateNo: certNo,
+          workerId: existingSkill.workerId,
+          trade: existingSkill.skill.name,
+          cooperativeId: existingSkill.worker.cooperativeId,
+        }
+      })
+    );
+  }
+
+  const results = await prisma.$transaction(ops);
   return results[0];
 }

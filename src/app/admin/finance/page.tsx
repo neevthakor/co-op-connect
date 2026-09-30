@@ -8,18 +8,38 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { IndianRupee, ShieldCheck, HeartHandshake, TrendingUp, Building2 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { releasePayout } from './actions';
 
 export default function FinancePage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [releasing, setReleasing] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchFinanceData = () => {
     fetch('/api/admin/finance')
       .then((res) => res.json())
       .then((resData) => setData(resData))
       .catch((e) => { console.error('Error:', e); })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchFinanceData();
   }, []);
+
+  const handleRelease = async (payoutId: string) => {
+    setReleasing(payoutId);
+    try {
+      await releasePayout(payoutId);
+      toast.success('Payout released successfully');
+      fetchFinanceData();
+    } catch (e) {
+      toast.error('Failed to release payout');
+    } finally {
+      setReleasing(null);
+    }
+  };
 
   const summary = data?.summary || {
     grossRevenue: 520000,
@@ -96,6 +116,60 @@ export default function FinancePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Worker Pending Payouts */}
+      {data?.pendingPayouts && data.pendingPayouts.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-base font-bold text-amber-900 dark:text-amber-500">
+              Pending Worker Payouts (Settlement)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-amber-100/50 dark:bg-amber-900/30 border-y text-amber-900 dark:text-amber-500 uppercase text-[10px] font-bold">
+                  <tr>
+                    <th className="px-5 py-3">Job Completed</th>
+                    <th className="px-5 py-3">Worker</th>
+                    <th className="px-5 py-3 text-right">Gross Collected</th>
+                    <th className="px-5 py-3 text-right">Co-op / Welfare Held</th>
+                    <th className="px-5 py-3 text-right font-bold text-green-700">Net To Release</th>
+                    <th className="px-5 py-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-amber-200/50 dark:divide-amber-900/50">
+                  {data.pendingPayouts.map((p: any) => (
+                    <tr key={p.id} className="hover:bg-amber-100/30 dark:hover:bg-amber-900/10">
+                      <td className="px-5 py-3 text-muted-foreground">{formatDate(new Date(p.createdAt))}</td>
+                      <td className="px-5 py-3 font-semibold text-foreground">
+                        {p.workerEarning?.worker?.user?.name || 'Worker'}
+                      </td>
+                      <td className="px-5 py-3 text-right font-medium">{formatCurrency(p.amountCollected)}</td>
+                      <td className="px-5 py-3 text-right text-amber-600">-{formatCurrency(p.cooperativeHeld)}</td>
+                      <td className="px-5 py-3 text-right font-bold text-green-600">{formatCurrency(p.amountReleased)}</td>
+                      <td className="px-5 py-3 text-center">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                          disabled={releasing === p.id}
+                          onClick={() => handleRelease(p.id)}
+                        >
+                          {releasing === p.id ? 'Releasing...' : 'Release Payout'}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="p-3 text-[10px] text-muted-foreground text-center bg-muted/20 border-t">
+              * Note: "Release Payout" simulates a direct UPI/Bank transfer to the worker for the hackathon demo.
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Earning Transactions */}
       {data?.recentEarnings && data.recentEarnings.length > 0 && (

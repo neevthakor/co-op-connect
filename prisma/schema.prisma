@@ -134,6 +134,9 @@ model Worker {
   complaints             Complaint[]                  @relation("WorkerComplaints")
   trustedBy              TrustedWorker[]
   verificationResponses  WorkerVerificationResponse[]
+  welfareEligibility     WelfareEligibility?
+  welfareDisbursements   WelfareDisbursement[]
+  platformCertificates   PlatformCertificate[]
 }
 
 // ============================================================
@@ -151,6 +154,7 @@ model Cooperative {
   longitude      Float?
   established    DateTime?
   description    String?
+  emergencyPhone String?
   totalMembers   Int         @default(0)
   isActive       Boolean     @default(true)
   federationId   String?
@@ -166,6 +170,7 @@ model Cooperative {
 
   societyRequests     SocietyServiceRequest[]
   institutionRequests InstitutionServiceRequest[]
+  issuedPlatformCertificates PlatformCertificate[]
 }
 
 model Federation {
@@ -176,6 +181,7 @@ model Federation {
 
   cooperatives Cooperative[]
   admins       FederationAdmin[]
+  welfareFund  WelfareFund?
 }
 
 model HousingSociety {
@@ -413,6 +419,7 @@ model Booking {
   societyRequestId     String?
   institutionRequest   InstitutionServiceRequest? @relation(fields: [institutionRequestId], references: [id])
   institutionRequestId String?
+  feeSplit             FeeSplit?
 
   @@index([workerId, status])
   @@index([workerId, scheduledDate, scheduledTime])
@@ -487,6 +494,7 @@ model MaterialRequest {
   totalPrice Float
   receiptUrl String?
   status     String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  isMandatory Boolean   @default(false)
   approvedAt DateTime?
   createdAt  DateTime  @default(now())
 }
@@ -688,6 +696,8 @@ model WorkerEarning {
   netAmount            Float    @default(0)
   description          String?
 
+  payout               Payout?
+
   @@index([workerId, date])
 }
 
@@ -708,6 +718,7 @@ model InsuranceRecord {
   policyNo   String?
   validUntil DateTime?
   type       String? // HEALTH, ACCIDENT, LIFE
+  premium    Float?    @default(0) // ADDITIVE
   createdAt  DateTime  @default(now())
 }
 
@@ -722,6 +733,81 @@ model TrainingRecord {
   completedAt    DateTime?
   certificateUrl String?
   createdAt      DateTime  @default(now())
+  cost           Float?    @default(0) // ADDITIVE
+}
+
+model WelfareDisbursement {
+  id          String   @id @default(cuid())
+  workerId    String
+  worker      Worker   @relation(fields: [workerId], references: [id])
+  type        String   // INSURANCE_PREMIUM, EMERGENCY_ADVANCE, TRAINING_SUBSIDY
+  amount      Float
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model FeeSplit {
+  id                 String   @id @default(cuid())
+  bookingId          String   @unique
+  booking            Booking  @relation(fields: [bookingId], references: [id])
+  serviceCost        Float
+  platformCommission Float
+  workerWelfareFund  Float
+  platformOps        Float
+  federationOverhead Float
+  growthReserve      Float
+  createdAt          DateTime @default(now())
+}
+
+model Payout {
+  id              String        @id @default(cuid())
+  workerEarningId String        @unique
+  workerEarning   WorkerEarning @relation(fields: [workerEarningId], references: [id])
+  amountCollected Float         @default(0)
+  cooperativeHeld Float         @default(0)
+  amountReleased  Float         @default(0)
+  status          String        @default("HELD") // HELD, RELEASED
+  releasedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum WelfareTransactionType {
+  CONTRIBUTION
+  INSURANCE_PREMIUM
+  EMERGENCY_ADVANCE
+  TRAINING_VOUCHER
+}
+
+model WelfareFund {
+  id           String     @id @default(cuid())
+  federationId String     @unique
+  federation   Federation @relation(fields: [federationId], references: [id])
+  balance      Float      @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  transactions WelfareTransaction[]
+}
+
+model WelfareTransaction {
+  id            String                 @id @default(cuid())
+  welfareFundId String
+  welfareFund   WelfareFund            @relation(fields: [welfareFundId], references: [id])
+  type          WelfareTransactionType
+  amount        Float
+  description   String?
+  createdAt     DateTime               @default(now())
+}
+
+model WelfareEligibility {
+  id                  String   @id @default(cuid())
+  workerId            String   @unique
+  worker              Worker   @relation(fields: [workerId], references: [id])
+  tier                String   @default("BASIC") // e.g. BASIC, SILVER, GOLD
+  completedJobsWindow Int      @default(0)
+  lastCalculatedAt    DateTime @default(now())
 }
 
 // ============================================================
@@ -999,4 +1085,16 @@ model WorkerVerificationResponse {
   answer           String
   createdAt        DateTime                  @default(now())
   updatedAt        DateTime                  @updatedAt
+}
+
+model PlatformCertificate {
+  id             String       @id @default(cuid())
+  certificateNo  String       @unique
+  workerId       String
+  worker         Worker       @relation(fields: [workerId], references: [id])
+  trade          String
+  cooperativeId  String?
+  cooperative    Cooperative? @relation(fields: [cooperativeId], references: [id])
+  issuedAt       DateTime     @default(now())
+  status         String       @default("ACTIVE") // ACTIVE, REVOKED
 }

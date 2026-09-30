@@ -38,7 +38,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Payment already completed for this booking' }, { status: 400 });
     }
 
-    const finalAmount = booking.invoice.total;
+    const serviceCost = booking.invoice.total;
+    const finalAmount = serviceCost + (serviceCost * 0.15);
     if (typeof finalAmount !== 'number' || finalAmount <= 0) {
       return NextResponse.json({ error: 'Invalid invoice amount' }, { status: 400 });
     }

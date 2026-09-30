@@ -28,19 +28,19 @@ export default function ComplaintsPage() {
     fetchComplaints();
   }, []);
 
-  const handleResolve = async (id: string) => {
+  const handleStatusChange = async (id: string, newStatus: string, resolution?: string) => {
     try {
       const res = await fetch('/api/admin/complaints', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: 'RESOLVED', resolution: 'Resolved by Admin' })
+        body: JSON.stringify({ id, status: newStatus, resolution: resolution || undefined })
       });
       if (res.ok) {
-        toast.success('Complaint resolved');
+        toast.success(`Complaint status updated to ${newStatus.replace('_', ' ')}`);
         fetchComplaints();
       }
     } catch (e) {
-      toast.error('Failed to resolve complaint');
+      toast.error('Failed to update complaint status');
     }
   };
 
@@ -71,9 +71,14 @@ export default function ComplaintsPage() {
                   <span>Customer: {c.customer?.user?.name || 'Unknown'}</span>
                   <span>Worker: {c.worker?.user?.name || 'Unknown'}</span>
                 </div>
-                {c.status !== 'RESOLVED' && (
-                  <Button size="sm" onClick={() => handleResolve(c.id)}>Mark as Resolved</Button>
-                )}
+                <div className="flex gap-2">
+                  {c.status === 'OPEN' && (
+                    <Button size="sm" variant="outline" onClick={() => handleStatusChange(c.id, 'UNDER_REVIEW')}>Mark Under Review</Button>
+                  )}
+                  {(c.status === 'OPEN' || c.status === 'UNDER_REVIEW') && (
+                    <Button size="sm" onClick={() => handleStatusChange(c.id, 'RESOLVED', 'Resolved by Admin')}>Mark as Resolved</Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}

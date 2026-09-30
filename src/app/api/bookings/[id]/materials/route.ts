@@ -56,7 +56,7 @@ export async function POST(
     const resolvedParams = await params;
     const bookingId = resolvedParams.id;
     const body = await req.json();
-    const { item, quantity = 1, unitPrice, receiptUrl } = body;
+    const { item, quantity = 1, unitPrice, receiptUrl, isMandatory = false } = body;
 
     if (!item || !unitPrice) {
       return NextResponse.json({ error: 'item name and unitPrice are required' }, { status: 400 });
@@ -83,7 +83,7 @@ export async function POST(
     const price = parseFloat(unitPrice.toString());
     const totalPrice = qty * price;
 
-    const material = await prisma.materialRequest.create({
+    const material = await (prisma as any).materialRequest.create({
       data: {
         bookingId,
         workerId,
@@ -92,6 +92,7 @@ export async function POST(
         unitPrice: price,
         totalPrice,
         receiptUrl: receiptUrl || null,
+        isMandatory: Boolean(isMandatory),
         status: 'PENDING',
       },
     });

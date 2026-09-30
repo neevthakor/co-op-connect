@@ -1,26 +1,29 @@
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
-export function useRealtimeBookings(userId: string, role: 'customer' | 'worker') {
+export function useRealtimeBookings(referenceId: string, role: 'customer' | 'worker' | 'federation') {
   const router = useRouter();
 
   useEffect(() => {
-    if (!userId) return;
+    if (!referenceId || role === 'federation') return; // Federation cannot safely subscribe to all bookings without exposing unrelated data
 
-    const filterColumn = role === 'customer' ? 'customerId' : 'workerId';
+    let filterString = '';
+    if (role === 'customer') filterString = `customerId=eq.${referenceId}`;
+    if (role === 'worker') filterString = `workerId=eq.${referenceId}`;
 
     const channel = supabase
-      .channel(`realtime-bookings-${userId}`)
+      .channel(`realtime-bookings-${referenceId}-${role}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'Booking',
-          filter: `${filterColumn}=eq.${userId}`,
+          ...(filterString ? { filter: filterString } : {}),
         },
-        (payload) => {
+        (payload: any) => {
           console.log('Realtime Booking Update:', payload);
           router.refresh();
         }
@@ -30,5 +33,5 @@ export function useRealtimeBookings(userId: string, role: 'customer' | 'worker')
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, role, router]);
+  }, [referenceId, role, router]);
 }

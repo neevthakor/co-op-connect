@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PortalShell, type PortalNavItem } from "@/components/layout/portal-shell";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const userRole = (session?.user as { role?: string } | undefined)?.role ?? "";
@@ -18,6 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ? [
           adminNavItem("/admin/workers", "Workers", "Users"),
           adminNavItem("/admin/verification", "Worker verification", "ShieldCheck"),
+          adminNavItem("/admin/safety-alerts", "Safety Alerts", "ShieldAlert"),
           adminNavItem("/admin/complaints", "Customer issues", "Activity"),
           adminNavItem("/admin/analytics", "Workforce analytics", "Activity"),
           adminNavItem("/admin/bookings", "Bookings", "ClipboardList"),
@@ -45,7 +48,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       accent="blue"
       navItems={navItems}
       mobileNavItems={navItems.slice(0, 4)}
-      signOutEnabled
+      signOutEnabled={true}
     >
       {children}
     </PortalShell>

@@ -95,6 +95,12 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     }
   }
 
+  // MINIMUM ADDITIVE BACKEND CHANGE FOR EMERGENCY
+  // Preserve existing matching factors but prioritize near-term availability
+  if (urgency === "EMERGENCY") {
+    weights.availabilityWeight += 0.50;
+  }
+
   const categoryData = await prisma.serviceCategory.findUnique({
     where: { id: categoryId },
     include: { skills: true }
@@ -122,6 +128,7 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     where: {
       verificationStatus: "VERIFIED",
       ...(cooperativeId ? { cooperativeId } : {}),
+      ...(urgency === "EMERGENCY" ? { isEmergencyAvailable: true } : {}),
       OR: [
         {
           skills: {
@@ -186,9 +193,6 @@ export async function matchWorkers(params: MatchParams): Promise<WorkerMatchResu
     if (worker.availabilityStatus === "AVAILABLE") availabilityScore = 100;
     else if (worker.availabilityStatus === "BUSY") availabilityScore = 40;
     else if (worker.availabilityStatus === "OFFLINE") availabilityScore = 20;
-    if (urgency === "EMERGENCY" && worker.isEmergencyAvailable) {
-      availabilityScore = 100;
-    }
 
     // 3. Distance (0 - 100)
     // FIX: if a worker has no coordinates on file, don't guess "5km" (that fabricates

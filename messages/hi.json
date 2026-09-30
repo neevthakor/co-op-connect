@@ -1,0 +1,27 @@
+{
+  "Nav": {
+    "dashboard": "डैशबोर्ड",
+    "home": "होम",
+    "bookings": "बुकिंग",
+    "profile": "प्रोफ़ाइल",
+    "logout": "लॉग आउट",
+    "services": "सेवाएं"
+  },
+  "Booking": {
+    "bookService": "सेवा बुक करें",
+    "needItNow": "अभी चाहिए (आपातकालीन)",
+    "selectCategory": "श्रेणी चुनें",
+    "continue": "जारी रखें",
+    "confirm": "बुकिंग पक्की करें",
+    "price": "अनुमानित कीमत",
+    "checkout": "चेकआउट",
+    "pay": "अभी भुगतान करें"
+  },
+  "WorkerDashboard": {
+    "welcome": "वापसी पर स्वागत है",
+    "earnings": "आपकी कमाई",
+    "activeJobs": "सक्रिय कार्य",
+    "newRequests": "नए अनुरोध",
+    "fairness": "मैचिंग निष्पक्षता"
+  }
+}

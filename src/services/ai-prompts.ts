@@ -103,4 +103,39 @@ Examples (English, Hindi, Hinglish, Gujarati):
 - "Hello" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.20}
 - "Are you there" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.20}
 - "I need help with my house" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.45}
+- "mera certificate kaise milega" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.95}
+- "how to download my skill certificate" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.96}
+- "મારું સર્ટિફિકેટ ક્યાં છે" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.95}
+- "is the material request mandatory?" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.96}
+- "required material kaha se lau" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.95}
+- "welfare fund kya hai" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.97}
+- "insurance benefits for workers" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.95}
+- "welfare fund thi faydo" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.95}
+- "invoice mein GST kyun hai" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.98}
+- "GST bill chahiye" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.95}
+- "mera payout kab aayega" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.97}
+- "cooperative settlement balance check karna hai" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.96}
+- "need AC" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-ac", "confidence": 0.85}
+- "paani tapak raha" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-plumber", "confidence": 0.90}
+- "light issue" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-electrician", "confidence": 0.88}
+- "saaf safai karni hai" -> {"intent":"SERVICE_REQUEST", "categoryId":"cat-cleaner", "confidence": 0.92}
+- "bichchu kat liya" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.98, "urgency": "CRITICAL"}
+- "bahut blood nikal raha hai" -> {"intent":"MEDICAL_EMERGENCY", "categoryId":null, "confidence": 0.99, "urgency": "CRITICAL"}
+- "aag" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.90, "urgency": "CRITICAL"}
+- "help" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.60}
+- "mujhe kaam karwana hai" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.55}
+- "I want to hire someone" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.60}
+- "kuch toot gaya hai" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.50}
+- "કોઈ ને મોકલો" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.45}
+- "jaldi aao" -> {"intent":"CLARIFICATION_REQUIRED", "categoryId":null, "confidence": 0.35}
+- "pipe phat gaya jaldi plumber bhejo" -> {"intent":"EMERGENCY", "categoryId":"cat-plumber", "confidence": 0.95, "urgency": "EMERGENCY"}
+- "short circuit, spark aa raha hai" -> {"intent":"EMERGENCY", "categoryId":"cat-electrician", "confidence": 0.96, "urgency": "EMERGENCY"}
+- "AC is sparking" -> {"intent":"EMERGENCY", "categoryId":"cat-ac", "confidence": 0.95, "urgency": "EMERGENCY"}
+- "chor ghus aaya" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.98, "urgency": "CRITICAL"}
+- "police" -> {"intent":"EMERGENCY", "categoryId":null, "confidence": 0.95, "urgency": "CRITICAL"}
+- "i need a loan" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.98}
+- "bank jaana hai" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.98}
+- "cook for dinner" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.96}
+- "driving sikhni hai" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.95}
+- "delivery boy" -> {"intent":"OUT_OF_SCOPE", "categoryId":null, "confidence": 0.94}
 `;

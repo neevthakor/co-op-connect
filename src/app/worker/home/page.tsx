@@ -9,8 +9,19 @@ import Link from 'next/link';
 import { Briefcase, CheckCircle2, MapPin, ShieldCheck } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { AvailabilityToggle } from '@/components/worker/availability-toggle';
+import { cookies } from 'next/headers';
+import { RealtimeBookingListener } from '@/components/shared/realtime-listeners';
 
 export default async function WorkerHomePage() {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('locale')?.value || 'en';
+  let tData: any = {};
+  try {
+    tData = (await import(`../../../../messages/${locale}.json`)).default?.WorkerDashboard || {};
+  } catch(e) {
+    tData = (await import(`../../../../messages/en.json`)).default?.WorkerDashboard || {};
+  }
+  const t = (key: string) => tData[key] || key;
   const session = await auth();
   if (!session?.user) redirect('/login');
   
@@ -32,16 +43,26 @@ export default async function WorkerHomePage() {
     category: { name: string };
     customer: { user: { name: string | null } } | null;
   };
+  type Disbursement = {
+    id: string;
+    type: string;
+    amount: number;
+    description: string | null;
+    date: Date;
+  };
 
   let worker: WorkerSummary | null = null;
   let todayEarnings = 0;
   let activeBookings: ActiveBooking[] = [];
   let completedJobsCount = 0;
+  let disbursements: Disbursement[] = [];
 
   let topRequirements: { name: string; count: number }[] = [];
 
   if (workerId) {
-    const [workerData, bookingsData, earningsAgg, jobsCount, topReqs, allCategories] = await Promise.all([
+    const start = Date.now();
+    // Group 1: Worker state
+    const [workerData, bookingsData] = await Promise.all([
       prisma.worker.findUnique({
         where: { id: workerId },
         select: {
@@ -67,7 +88,11 @@ export default async function WorkerHomePage() {
           customer: { select: { user: { select: { name: true } } } },
         },
         orderBy: { createdAt: 'desc' },
-      }),
+      })
+    ]);
+
+    // Group 2: Stats
+    const [earningsAgg, jobsCount, topReqsGroups, workerDisbursements] = await Promise.all([
       prisma.workerEarning.aggregate({
         where: {
           workerId,
@@ -84,15 +109,29 @@ export default async function WorkerHomePage() {
         orderBy: { _count: { categoryId: 'desc' } },
         take: 3,
       }),
-      prisma.serviceCategory.findMany() // to map category ID to name
+      (prisma as any).welfareDisbursement.findMany({
+        where: { workerId },
+        orderBy: { date: 'desc' },
+        take: 10,
+      })
     ]);
+
+    const allCategories = await prisma.serviceCategory.findMany({
+      where: { id: { in: topReqsGroups.map((r: any) => r.categoryId) } },
+      select: { id: true, name: true }
+    });
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DB] worker home: ${Date.now() - start}ms`);
+    }
 
     worker = workerData;
     activeBookings = bookingsData;
     todayEarnings = earningsAgg._sum.netAmount || 0;
     completedJobsCount = jobsCount;
+    disbursements = workerDisbursements;
 
-    topRequirements = topReqs.map(req => ({
+    topRequirements = topReqsGroups.map((req: any) => ({
       name: allCategories.find(c => c.id === req.categoryId)?.name || req.categoryId,
       count: req._count.categoryId
     }));
@@ -105,12 +144,13 @@ export default async function WorkerHomePage() {
 
   return (
     <div className="page-container space-y-6 py-5 pb-24 md:py-8 lg:pb-8">
+      {workerId && <RealtimeBookingListener referenceId={workerId} role="worker" />}
       {/* Header */}
       <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Welcome, {session.user.name || 'Worker'}!
+              {t('welcome')}, {session.user.name || 'Worker'}!
             </h1>
             <Badge className="flex items-center gap-1 border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300">
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -147,8 +187,8 @@ export default async function WorkerHomePage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Today's Net Earnings" value={formatCurrency(todayEarnings)} />
-        <StatCard title="Active Jobs" value={activeBookings.length.toString()} />
+        <StatCard title={t('earnings')} value={formatCurrency(todayEarnings)} />
+        <StatCard title={t('activeJobs')} value={activeBookings.length.toString()} />
         <StatCard title="Overall Rating" value={ratingDisplay} />
         <StatCard title="Completed Jobs" value={completedJobsCount.toString()} />
       </div>
@@ -229,6 +269,45 @@ export default async function WorkerHomePage() {
           </div>
         )}
       </div>
+
+      {/* Welfare Disbursements Section */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <ShieldCheck className="w-5 h-5 text-emerald-600" />
+            My Welfare Benefits
+          </h2>
+        </div>
+        
+        {disbursements.length === 0 ? (
+          <Card className="border-border/80 bg-card p-8 text-center">
+            <h3 className="font-semibold text-foreground">No benefits disbursed yet</h3>
+            <p className="mt-1 text-xs text-muted-foreground">Keep completing jobs to become eligible for insurance and training subsidies.</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {disbursements.map((d) => (
+              <Card key={d.id} className="border-emerald-500/20 bg-emerald-500/5">
+                <CardContent className="flex items-center justify-between p-4">
+                  <div>
+                    <h3 className="font-bold text-emerald-800 dark:text-emerald-300">
+                      {d.type.replace('_', ' ')}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">{d.description || 'Benefit Disbursed'}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{new Date(d.date).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">
+                      {formatCurrency(d.amount)}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
