@@ -1,10 +1,15 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { getRoleRedirect } from "@/lib/rbac";
 
 const ROUTE_PERMISSIONS: { prefix: string; roles: string[] }[] = [
   { prefix: "/customer", roles: ["CUSTOMER"] },
   { prefix: "/worker", roles: ["WORKER", "HELPER"] },
-  { prefix: "/admin", roles: ["ADMIN", "COOPERATIVE_ADMIN", "FEDERATION_ADMIN"] },
+  { prefix: "/admin/organization-requests", roles: ["ADMIN", "FEDERATION_ADMIN"] },
+  { prefix: "/admin/workers", roles: ["ADMIN", "COOPERATIVE_ADMIN", "FEDERATION_ADMIN"] },
+  { prefix: "/admin", roles: ["ADMIN"] },
+  { prefix: "/cooperative", roles: ["COOPERATIVE_ADMIN"] },
+  { prefix: "/federation", roles: ["FEDERATION_ADMIN"] },
   { prefix: "/society", roles: ["SOCIETY_ADMIN"] },
   { prefix: "/institution", roles: ["INSTITUTIONAL_CUSTOMER"] },
 ];
@@ -20,6 +25,7 @@ export default auth((req) => {
     nextUrl.pathname === "/login" ||
     nextUrl.pathname === "/register" ||
     nextUrl.pathname === "/worker/register" ||
+    nextUrl.pathname === "/federation/login" ||
     nextUrl.pathname === "/customer/register" ||
     nextUrl.pathname === "/society/register" ||
     nextUrl.pathname === "/institution/register" ||
@@ -45,17 +51,8 @@ export default auth((req) => {
 
     if (userRole && !matchedRoute.roles.includes(userRole)) {
       // Redirect to their appropriate dashboard
-      const roleRedirects: Record<string, string> = {
-        CUSTOMER: "/customer/home",
-        WORKER: "/worker/home",
-        ADMIN: "/admin",
-        COOPERATIVE_ADMIN: "/admin",
-        FEDERATION_ADMIN: "/admin",
-        SOCIETY_ADMIN: "/society/dashboard",
-        INSTITUTIONAL_CUSTOMER: "/institution/dashboard",
-      };
-      const redirect = (userRole && roleRedirects[userRole]) || "/login";
-      return NextResponse.redirect(new URL(redirect, nextUrl));
+      const redirectPath = getRoleRedirect(userRole);
+      return NextResponse.redirect(new URL(redirectPath, nextUrl));
     }
   }
 

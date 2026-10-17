@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     // --- MOCK NOTIFICATION ---
     if (userRole === 'WORKER') {
       const worker: any = await prisma.worker.findUnique({
-        where: { id: (session.user as any).workerId || session.user.id },
+        where: { id: session.user.workerId || session.user.id },
         include: { cooperative: { include: { admins: { include: { user: true } } } } }
       });
       const adminUser = worker?.cooperative?.admins?.[0]?.user;

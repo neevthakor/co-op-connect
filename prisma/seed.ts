@@ -23,7 +23,7 @@ async function main() {
 
   const tablesToTruncate = [
     "Vote", "CooperativeProposal", "FraudAlert", "AuditLog", "SkillGapRecord",
-    "DemandForecast", "DemandHistory", "WelfareRecord", "InsuranceRecord",
+    "DemandForecast", "DemandHistory", "WelfareTransaction", "WelfareFund", "WelfareRecord", "InsuranceRecord",
     "TrainingRecord", "WorkerEarning", "JobTeamMember", "JobTeam", "HelperRequest",
     "JobReferral", "JobProof", "MaterialRequest", "InvoiceItem", "Invoice",
     "Payment", "Warranty", "Complaint", "Rating", "TrustedWorker",
@@ -58,6 +58,8 @@ async function main() {
   const societyAdminsData: any[] = [];
   const housingSocietiesData: any[] = [];
   const institutionsData: any[] = [];
+  const welfareFundsData: any[] = [];
+  const welfareTransactionsData: any[] = [];
   const institutionalCustomersData: any[] = [];
   const bookingsData: any[] = [];
   const bookingStatusHistoriesData: any[] = [];
@@ -904,6 +906,43 @@ async function main() {
     });
 
   // ============================================================
+  // WELFARE FUND
+  // ============================================================
+  welfareFundsData.push({
+    id: 'demo-welfare-fund-1',
+    federationId: 'demo-fed-1',
+    balance: 500000,
+  });
+
+  welfareTransactionsData.push({
+    welfareFundId: 'demo-welfare-fund-1',
+    type: 'CONTRIBUTION',
+    amount: 550000,
+    description: 'Initial Federation Seed Fund',
+  });
+
+  welfareTransactionsData.push({
+    welfareFundId: 'demo-welfare-fund-1',
+    type: 'INSURANCE_PREMIUM',
+    amount: 12000,
+    description: 'Group Medical Insurance Premium Q3',
+  });
+
+  welfareTransactionsData.push({
+    welfareFundId: 'demo-welfare-fund-1',
+    type: 'EMERGENCY_ADVANCE',
+    amount: 25000,
+    description: 'Medical Advance for Ramesh (demo-worker-1)',
+  });
+
+  welfareTransactionsData.push({
+    welfareFundId: 'demo-welfare-fund-1',
+    type: 'TRAINING_VOUCHER',
+    amount: 13000,
+    description: 'Safety Certification Training for 10 workers',
+  });
+
+  // ============================================================
   // INSTITUTION CONTRACTS
   // ============================================================
   institutionContractsData.push({
@@ -967,6 +1006,9 @@ async function main() {
     if (votesData.length) await prisma.vote.createMany({ data: votesData });
     if (notificationsData.length) await prisma.notification.createMany({ data: notificationsData });
     if (matchingWeightsData.length) await prisma.matchingWeights.createMany({ data: matchingWeightsData });
+
+    if (welfareFundsData.length) await prisma.welfareFund.createMany({ data: welfareFundsData });
+    if (welfareTransactionsData.length) await prisma.welfareTransaction.createMany({ data: welfareTransactionsData });
 
     console.log('✅ Seed database writes completed successfully!');
   } catch (error) {

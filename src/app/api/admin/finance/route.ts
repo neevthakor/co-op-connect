@@ -1,21 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { requireRole, handleApiError, getScope, validateClientCooperativeId } from '@/lib/scope';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
 
     const { searchParams } = new URL(req.url);
-    const cooperativeId = searchParams.get('cooperativeId') || session.user.cooperativeId;
+    const clientCoopId = searchParams.get('cooperativeId');
+    let cooperativeId: string | undefined;
+    
+    try {
+      cooperativeId = validateClientCooperativeId(scope, clientCoopId);
+    } catch (error: any) {
+    return handleApiError(error);
+  }
+
+    const workerFilter = cooperativeId ? { cooperativeId } : (
+      scope.role === 'ADMIN' ? {} : 
+      (scope.role === 'COOPERATIVE_ADMIN' ? { cooperativeId: scope.cooperativeId } : { cooperativeId: { in: scope.cooperativeIds } })
+    );
 
     const [earningsSum, earnings, invoices, payments, pendingPayouts] = await Promise.all([
       prisma.workerEarning.aggregate({
-        where: cooperativeId ? { worker: { cooperativeId } } : {},
+        where: { worker: workerFilter },
         _sum: {
           grossAmount: true,
           labourAmount: true,
@@ -27,7 +36,7 @@ export async function GET(req: NextRequest) {
         },
       }),
       prisma.workerEarning.findMany({
-        where: cooperativeId ? { worker: { cooperativeId } } : {},
+        where: { worker: workerFilter },
         include: {
           worker: { include: { user: { select: { name: true } } } },
         },
@@ -35,20 +44,18 @@ export async function GET(req: NextRequest) {
         take: 30,
       }),
       prisma.invoice.findMany({
-        where: cooperativeId ? { booking: { worker: { cooperativeId } } } : {},
+        where: { booking: { worker: workerFilter } },
         include: { booking: { include: { category: true } } },
         orderBy: { createdAt: 'desc' },
         take: 20,
       }),
       prisma.payment.findMany({
-        where: cooperativeId ? { booking: { worker: { cooperativeId } } } : {},
+        where: { booking: { worker: workerFilter } },
         orderBy: { createdAt: 'desc' },
         take: 20,
       }),
       prisma.payout.findMany({
-        where: cooperativeId 
-          ? { status: 'HELD', workerEarning: { worker: { cooperativeId } } }
-          : { status: 'HELD' },
+        where: { status: 'HELD', workerEarning: { worker: workerFilter } },
         include: {
           workerEarning: {
             include: { worker: { include: { user: { select: { name: true } } } } }
@@ -83,9 +90,8 @@ export async function GET(req: NextRequest) {
       recentPayments: payments,
       pendingPayouts,
     });
-  } catch (error) {
-    console.error('Finance API Error:', error);
-    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 

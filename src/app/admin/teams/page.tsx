@@ -1,6 +1,9 @@
+import { requireRolePage } from '@/lib/scope';
 import { prisma } from '@/lib/prisma'
 
 export default async function TeamsPage() {
+  await requireRolePage('ADMIN', 'COOPERATIVE_ADMIN');
+
   const teams = await prisma.jobTeam.findMany({
     include: {
       booking: {

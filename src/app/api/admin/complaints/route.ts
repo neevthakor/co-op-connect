@@ -1,21 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { requireRole, handleApiError, getScope, workerWhere } from '@/lib/scope';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const cooperativeId = session.user.cooperativeId;
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
 
     const complaints = await prisma.complaint.findMany({
-      where: cooperativeId ? {
-        worker: { cooperativeId }
-      } : {},
+      where: {
+        worker: workerWhere(scope),
+      },
       include: {
         customer: { include: { user: true } },
         worker: { include: { user: true } },
@@ -25,19 +20,15 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(complaints);
-  } catch (error) {
-    console.error('Admin Complaints GET Error:', error);
-    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
 
     const { id, status, resolution } = await req.json();
     if (!id || !status) {
@@ -51,8 +42,11 @@ export async function PATCH(req: NextRequest) {
 
     if (!complaint) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    const cooperativeId = session.user.cooperativeId;
-    if (cooperativeId && complaint.worker && complaint.worker.cooperativeId !== cooperativeId) {
+    // Validate scope
+    if (scope.role === 'COOPERATIVE_ADMIN' && complaint.worker?.cooperativeId !== scope.cooperativeId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (scope.role === 'FEDERATION_ADMIN' && (!complaint.worker?.cooperativeId || !scope.cooperativeIds?.includes(complaint.worker.cooperativeId))) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

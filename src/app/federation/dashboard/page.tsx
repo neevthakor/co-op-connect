@@ -9,7 +9,7 @@ export default async function FederationDashboardPage() {
   const session = await auth();
 
   if (!session?.user || session.user.role !== 'FEDERATION_ADMIN') {
-    redirect("/federation/login");
+    redirect("/login");
   }
 
   const federationId = session.user.federationId;

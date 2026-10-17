@@ -11,8 +11,9 @@ import { revalidatePath } from "next/cache";
 export default async function CooperativeRequestMatchPage({ 
   params 
 }: { 
-  params: { type: string, id: string } 
+  params: Promise<{ type: string, id: string }> 
 }) {
+  const { type: paramType, id: paramId } = await params;
   const session = await auth();
 
   if (!session?.user || session.user.role !== "COOPERATIVE_ADMIN") {
@@ -25,8 +26,8 @@ export default async function CooperativeRequestMatchPage({
 
   if (!admin) redirect("/login");
 
-  const type = params.type.toUpperCase() as "SOCIETY" | "INSTITUTION";
-  const requestId = params.id;
+  const type = paramType.toUpperCase() as "SOCIETY" | "INSTITUTION";
+  const requestId = paramId;
 
   let request: any;
 

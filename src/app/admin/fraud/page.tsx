@@ -1,7 +1,10 @@
+import { requireRolePage } from '@/lib/scope';
 import { Button } from '@/components/ui/button'
 import { prisma } from '@/lib/prisma'
 
 export default async function FraudPage() {
+  await requireRolePage('ADMIN', 'FEDERATION_ADMIN');
+
   const alerts = await prisma.fraudAlert.findMany({
     orderBy: { createdAt: 'desc' }
   });

@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid invoice amount' }, { status: 400 });
     }
 
-    const isCustomer = session.user.customerId === booking.customerId;
-    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(session.user.role);
+    const isCustomer = (session.user.customerId || '') === booking.customerId;
+    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(session.user.role || '');
 
     if (!isCustomer && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -88,9 +88,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const isCustomer = session.user.customerId === booking.customerId;
-    const isWorker = session.user.workerId === booking.workerId;
-    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(session.user.role);
+    const isCustomer = (session.user.customerId || '') === booking.customerId;
+    const isWorker = (session.user.workerId || '') === booking.workerId;
+    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(session.user.role || '');
 
     if (!isCustomer && !isWorker && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

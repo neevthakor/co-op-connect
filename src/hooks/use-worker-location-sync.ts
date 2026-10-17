@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export function useWorkerLocationSync(workerId: string, isTrackingActive: boolean) {
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    if (typeof window !== 'undefined' && !navigator.geolocation) {
+      return 'Geolocation is not supported by your browser';
+    }
+    return null;
+  });
   const watchId = useRef<number | null>(null);
 
   useEffect(() => {
@@ -17,10 +22,7 @@ export function useWorkerLocationSync(workerId: string, isTrackingActive: boolea
     }
 
     if (!navigator.geolocation) {
-      const timeoutId = setTimeout(() => {
-        setError('Geolocation is not supported by your browser');
-      }, 0);
-      return () => clearTimeout(timeoutId);
+      return;
     }
 
     let lastSyncTime = 0;

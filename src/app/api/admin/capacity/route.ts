@@ -1,23 +1,29 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { requireRole, handleApiError, getScope, workerWhere, validateClientCooperativeId } from '@/lib/scope';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
 
     const { searchParams } = new URL(req.url);
-    const cooperativeId = searchParams.get('cooperativeId') || session.user.cooperativeId;
+    const clientCoopId = searchParams.get('cooperativeId');
+    let cooperativeId: string | undefined;
+    
+    try {
+      cooperativeId = validateClientCooperativeId(scope, clientCoopId);
+    } catch (error: any) {
+    return handleApiError(error);
+  }
+
+    const wWhere = cooperativeId ? { cooperativeId } : workerWhere(scope);
 
     const [workers, categories, activeBookings] = await Promise.all([
       prisma.worker.findMany({
         where: {
           verificationStatus: 'VERIFIED',
-          ...(cooperativeId ? { cooperativeId } : {}),
+          ...wWhere,
         },
         include: {
           skills: { include: { skill: { include: { category: true } } } },
@@ -30,7 +36,7 @@ export async function GET(req: NextRequest) {
       prisma.booking.count({
         where: {
           status: { in: ['IN_PROGRESS', 'TRAVELLING', 'ARRIVED'] },
-          ...(cooperativeId ? { worker: { cooperativeId } } : {}),
+          worker: wWhere,
         },
       }),
     ]);
@@ -62,9 +68,8 @@ export async function GET(req: NextRequest) {
         'Consider apprentice helper training in carpentry to meet commercial demand.',
       ],
     });
-  } catch (error) {
-    console.error('Capacity API Error:', error);
-    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const certificate = await (prisma as any).platformCertificate.findUnique({
+    const certificate = await prisma.platformCertificate.findUnique({
       where: { id },
       include: {
         worker: { include: { user: true } },

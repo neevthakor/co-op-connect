@@ -65,7 +65,7 @@ export async function POST(
     const u = session.user;
     const isCustomer = u.customerId === booking.customerId;
     const isWorker = u.workerId === booking.workerId;
-    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN'].includes(u.role);
+    const isAdmin = ['ADMIN', 'COOPERATIVE_ADMIN'].includes(u.role || '');
 
     const isBefore = type.toUpperCase() === 'BEFORE';
     const isAfter = type.toUpperCase() === 'AFTER';

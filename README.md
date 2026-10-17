@@ -683,3 +683,35 @@ The implementation focuses on real application workflows backed by PostgreSQL/Pr
 # 📄 License
 
 This project is currently developed as an academic and hackathon project.
+
+---
+
+# 🚀 Setup Instructions
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/co-op-connect.git
+   cd co-op-connect
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables:**
+   - Copy `.env.example` to `.env`.
+   - Update the variables with your own credentials (e.g., Supabase, Gemini, NextAuth secret, Razorpay).
+
+4. **Initialize Database:**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   npm run seed
+   ```
+
+5. **Start Development Server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.

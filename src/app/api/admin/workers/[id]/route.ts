@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { requireRole, handleApiError, getScope } from '@/lib/scope';
 import { sendNotification } from '@/services/notification';
 import { approveWorker, rejectWorker, suspendWorker, requestMoreInfo } from '@/services/verification';
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    console.log(`[AUTH DEBUG] PATCH /api/admin/workers/[id] - UserID: ${session?.user?.id}, Role: ${userRole}, CoopID: ${session?.user?.cooperativeId}`);
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
+    const userRole = scope.role;
 
     const resolvedParams = await params;
     const workerId = resolvedParams.id;
@@ -25,9 +23,9 @@ export async function PATCH(
     let body;
     try {
       body = await req.json();
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid or empty JSON body' }, { status: 400 });
-    }
+    } catch (error: any) {
+    return handleApiError(error);
+  }
 
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'JSON body must be an object' }, { status: 400 });
@@ -43,18 +41,26 @@ export async function PATCH(
       return NextResponse.json({ error: `A reason is required when status is ${status}` }, { status: 400 });
     }
 
-    const expectedCoopId = userRole === 'COOPERATIVE_ADMIN' ? session.user.cooperativeId as string : undefined;
-
+    const expectedCoopId = userRole === 'COOPERATIVE_ADMIN' ? scope.cooperativeId as string : undefined;
+    
+    // Check federation admin permission before mutation
+    if (userRole === 'FEDERATION_ADMIN') {
+      const existingWorker = await prisma.worker.findUnique({ where: { id: workerId } });
+      if (!existingWorker || !existingWorker.cooperativeId || !scope.cooperativeIds?.includes(existingWorker.cooperativeId)) {
+        return NextResponse.json({ error: 'Worker not found or forbidden' }, { status: 404 });
+      }
+    }
+    
     let updatedWorker;
     
     if (status === 'VERIFIED') {
-      updatedWorker = await approveWorker(workerId, session.user.id as string, reason, expectedCoopId);
+      updatedWorker = await approveWorker(workerId, sessionUser.id as string, reason, expectedCoopId);
     } else if (status === 'REJECTED') {
-      updatedWorker = await rejectWorker(workerId, session.user.id as string, reason || 'Rejected by Admin', expectedCoopId);
+      updatedWorker = await rejectWorker(workerId, sessionUser.id as string, reason || 'Rejected by Admin', expectedCoopId);
     } else if (status === 'SUSPENDED') {
-      updatedWorker = await suspendWorker(workerId, session.user.id as string, reason || 'Suspended by Admin', expectedCoopId);
+      updatedWorker = await suspendWorker(workerId, sessionUser.id as string, reason || 'Suspended by Admin', expectedCoopId);
     } else if (status === 'MORE_INFO_REQUIRED') {
-      updatedWorker = await requestMoreInfo(workerId, session.user.id as string, reason || 'More info required', expectedCoopId);
+      updatedWorker = await requestMoreInfo(workerId, sessionUser.id as string, reason || 'More info required', expectedCoopId);
     } else {
       const whereClause: { id: string, cooperativeId?: string } = { id: workerId };
       if (expectedCoopId) whereClause.cooperativeId = expectedCoopId;

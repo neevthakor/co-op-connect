@@ -1,7 +1,10 @@
+import { requireRolePage } from '@/lib/scope';
 import { prisma } from '@/lib/prisma'
 import ImpactClient from './impact-client'
 
 export default async function ImpactPage() {
+  await requireRolePage('ADMIN', 'FEDERATION_ADMIN');
+
   const workersSupported = await prisma.worker.count()
   const jobsCompleted = await prisma.booking.count({ where: { status: 'COMPLETED' } })
   
