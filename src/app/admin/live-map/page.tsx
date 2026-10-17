@@ -1,7 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { LiveMap } from '@/components/shared/live-map';
+import { requireRolePage } from '@/lib/scope';
 
 export default async function LiveMapPage() {
+  await requireRolePage('ADMIN', 'FEDERATION_ADMIN');
+
   const [workers, bookings] = await Promise.all([
     prisma.worker.findMany({
       where: { latitude: { not: null }, longitude: { not: null }, availabilityStatus: 'AVAILABLE' },

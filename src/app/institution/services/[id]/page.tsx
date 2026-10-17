@@ -11,15 +11,16 @@ import { revalidatePath } from "next/cache";
 export default async function InstitutionRequestDetailsPage({ 
   params 
 }: { 
-  params: { id: string } 
+  params: Promise<{ id: string }> 
 }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const institutionId = session.user.institutionId;
   if (!institutionId) redirect("/login");
 
-  const requestId = params.id;
+  const requestId = id;
 
   const request = await prisma.institutionServiceRequest.findUnique({
     where: { id: requestId, institutionId },

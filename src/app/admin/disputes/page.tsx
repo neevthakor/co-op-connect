@@ -3,10 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import { AlertCircle, BrainCircuit, CheckCircle2 } from 'lucide-react';
+import { requireRolePage } from '@/lib/scope';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DisputesPage() {
+  await requireRolePage('ADMIN', 'FEDERATION_ADMIN');
+
   const complaints = await prisma.complaint.findMany({
     include: {
       booking: {

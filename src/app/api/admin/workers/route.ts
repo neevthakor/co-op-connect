@@ -1,22 +1,28 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { requireRole, handleApiError, getScope, workerWhere, validateClientCooperativeId } from '@/lib/scope';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
 
     const { searchParams } = new URL(req.url);
-    const cooperativeId = searchParams.get('cooperativeId') || session.user.cooperativeId;
+    const clientCoopId = searchParams.get('cooperativeId');
+    let cooperativeId: string | undefined;
+    
+    try {
+      cooperativeId = validateClientCooperativeId(scope, clientCoopId);
+    } catch (error: any) {
+    return handleApiError(error);
+  }
+
+    const workerFilter = cooperativeId ? { cooperativeId } : workerWhere(scope);
     const status = searchParams.get('status');
 
     const workers = await prisma.worker.findMany({
       where: {
-        ...(cooperativeId ? { cooperativeId } : {}),
+        ...workerFilter,
         ...(status && status !== 'ALL' ? { verificationStatus: status } : {}),
       },
       include: {
@@ -29,9 +35,8 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(workers);
-  } catch (error) {
-    console.error('Admin Workers GET Error:', error);
-    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 

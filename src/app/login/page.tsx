@@ -180,38 +180,40 @@ function LoginForm() {
       </div>
 
       {/* Collapsible Development Profiles */}
-      <div className="mt-6">
-        <button
-          type="button"
-          onClick={() => setShowDevAccounts(!showDevAccounts)}
-          className="flex items-center justify-between w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1 cursor-pointer"
-        >
-          <span>Development / Test Profiles</span>
-          {showDevAccounts ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-        </button>
-
-        {showDevAccounts && (
-          <div className="mt-3 p-3 bg-secondary/50 rounded-xl border border-border/80">
-            <p className="text-[11px] text-muted-foreground mb-2">
-              Click any role to load seeded local test profile:
-            </p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {DEMO_ACCOUNTS.map((account) => (
-                <button
-                  key={account.email}
-                  type="button"
-                  onClick={() => handleDevAccountLogin(account.email)}
-                  disabled={loading}
-                  className="flex items-center gap-2 p-2 bg-card border border-border/80 rounded-lg text-left hover:bg-secondary transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  <div className={`w-2 h-2 rounded-full ${account.color}`} />
-                  <span className="text-[11px] font-medium text-foreground truncate">{account.role}</span>
-                </button>
-              ))}
+      {process.env.NODE_ENV !== "production" && (
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={() => setShowDevAccounts(!showDevAccounts)}
+            className="flex items-center justify-between w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1 cursor-pointer"
+          >
+            <span>Development / Test Profiles</span>
+            {showDevAccounts ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+  
+          {showDevAccounts && (
+            <div className="mt-3 p-3 bg-secondary/50 rounded-xl border border-border/80">
+              <p className="text-[11px] text-muted-foreground mb-2">
+                Click any role to load seeded local test profile:
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    onClick={() => handleDevAccountLogin(account.email)}
+                    disabled={loading}
+                    className="flex items-center gap-2 p-2 bg-card border border-border/80 rounded-lg text-left hover:bg-secondary transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    <div className={`w-2 h-2 rounded-full ${account.color}`} />
+                    <span className="text-[11px] font-medium text-foreground truncate">{account.role}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
         <Link href="/" className="text-primary hover:underline">← Back to home</Link>

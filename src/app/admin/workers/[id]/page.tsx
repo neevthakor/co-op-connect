@@ -7,10 +7,11 @@ import { AvatarWithAuth } from '@/components/shared/avatar-with-auth';
 import { AdminWorkerActions } from './actions';
 import { SkillAssessmentActions } from './skill-actions';
 
+import { requireRolePage, getScope } from '@/lib/scope';
+
 export default async function AdminWorkerDetailsPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
-  const session = await auth();
-  const userRole = session?.user?.role;
-  if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
+  const sessionUser = await requireRolePage('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+  const scope = await getScope(sessionUser);
 
   const resolvedParams = await params;
   const workerId = resolvedParams?.id;
@@ -27,11 +28,20 @@ export default async function AdminWorkerDetailsPage({ params }: { params: Promi
 
   if (!worker) return <div>Worker not found</div>;
 
-  if (userRole === 'COOPERATIVE_ADMIN' && worker.cooperativeId !== session.user.cooperativeId) {
+  if (scope.role === 'COOPERATIVE_ADMIN' && worker.cooperativeId !== scope.cooperativeId) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <div className="bg-red-50 text-red-600 p-4 rounded-lg">
           Forbidden: This worker belongs to a different cooperative.
+        </div>
+      </div>
+    );
+  }
+  if (scope.role === 'FEDERATION_ADMIN' && (!worker.cooperativeId || !scope.cooperativeIds?.includes(worker.cooperativeId))) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+          Forbidden: This worker belongs to a different federation.
         </div>
       </div>
     );

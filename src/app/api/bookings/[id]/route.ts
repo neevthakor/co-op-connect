@@ -15,9 +15,9 @@ export async function GET(
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const userRole = session.user.role;
-    const workerId = session.user.workerId;
-    const customerId = session.user.customerId;
+    const userRole = session.user.role || '';
+    const workerId = session.user.workerId || '';
+    const customerId = session.user.customerId || '';
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
@@ -102,9 +102,9 @@ export async function PATCH(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const userRole = session.user.role;
-    const workerId = session.user.workerId;
-    const customerId = session.user.customerId;
+    const userRole = session.user.role || '';
+    const workerId = session.user.workerId || '';
+    const customerId = session.user.customerId || '';
 
     const isCustomer = userRole === 'CUSTOMER' && booking.customerId === customerId;
     const isWorker = userRole === 'WORKER' && booking.workerId === workerId;

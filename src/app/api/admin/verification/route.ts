@@ -1,30 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { requireRole, handleApiError, getScope, workerWhere } from '@/lib/scope';
 import { approveWorker, rejectWorker, requestMoreInfo, suspendWorker } from '@/services/verification';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
 
     const { searchParams } = new URL(req.url);
     const rawStatus = searchParams.get('status');
     // If status is empty, null, or 'ALL', we do not filter by status.
     const status = rawStatus === 'ALL' || !rawStatus ? null : rawStatus;
 
-    const whereClause: any = {};
+    const whereClause: any = workerWhere(scope);
     if (status) {
       whereClause.verificationStatus = status;
-    }
-
-    if (userRole === 'COOPERATIVE_ADMIN' && session.user.cooperativeId) {
-      whereClause.cooperativeId = session.user.cooperativeId;
-    } else if (userRole === 'FEDERATION_ADMIN' && session.user.federationId) {
-      whereClause.cooperative = { federationId: session.user.federationId };
     }
 
     const workers = await prisma.worker.findMany({
@@ -39,19 +30,16 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(workers);
-  } catch (error) {
-    console.error('Admin Verification GET Error:', error);
-    return NextResponse.json({ error: error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : 'Unknown error' }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
+    const userRole = scope.role;
 
     const contentType = req.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
@@ -61,16 +49,16 @@ export async function PATCH(req: NextRequest) {
     let body;
     try {
       body = await req.json();
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid or empty JSON body' }, { status: 400 });
-    }
+    } catch (error: any) {
+    return handleApiError(error);
+  }
 
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'JSON body must be an object' }, { status: 400 });
     }
 
     const { workerId, action, reason, note } = body;
-    const adminId = session.user.id as string;
+    const adminId = sessionUser.id as string;
 
     if (!workerId || !action) {
       return NextResponse.json({ error: 'workerId and action are required' }, { status: 400 });
@@ -86,11 +74,11 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: 'Worker not found' }, { status: 404 });
       }
 
-      if (userRole === 'COOPERATIVE_ADMIN' && worker.cooperativeId !== session.user.cooperativeId) {
+      if (userRole === 'COOPERATIVE_ADMIN' && worker.cooperativeId !== scope.cooperativeId) {
         return NextResponse.json({ error: 'Forbidden: Worker outside your cooperative' }, { status: 403 });
       }
 
-      if (userRole === 'FEDERATION_ADMIN' && (!worker.cooperative || worker.cooperative.federationId !== session.user.federationId)) {
+      if (userRole === 'FEDERATION_ADMIN' && (!worker.cooperativeId || !scope.cooperativeIds?.includes(worker.cooperativeId))) {
         return NextResponse.json({ error: 'Forbidden: Worker outside your federation' }, { status: 403 });
       }
     }
@@ -124,9 +112,8 @@ export async function PATCH(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, worker: updatedWorker });
-  } catch (error) {
-    console.error('Admin Verification PATCH Error:', error);
-    return NextResponse.json({ error: error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : 'Unknown error' }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 

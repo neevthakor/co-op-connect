@@ -109,7 +109,7 @@ export default async function WorkerHomePage() {
         orderBy: { _count: { categoryId: 'desc' } },
         take: 3,
       }),
-      (prisma as any).welfareDisbursement.findMany({
+      prisma.welfareDisbursement.findMany({
         where: { workerId },
         orderBy: { date: 'desc' },
         take: 10,

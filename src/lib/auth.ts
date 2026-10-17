@@ -85,29 +85,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role as string;
+        token.role = user.role;
         token.userId = user.id;
-        token.workerId = user.workerId as string;
-        token.customerId = user.customerId as string;
-        token.cooperativeId = user.cooperativeId as string;
-        token.federationId = user.federationId as string;
-        token.societyId = user.societyId as string;
-        token.institutionId = user.institutionId as string;
-        token.verificationStatus = user.verificationStatus as string;
+        token.workerId = user.workerId;
+        token.customerId = user.customerId;
+        token.cooperativeId = user.cooperativeId;
+        token.federationId = user.federationId;
+        token.societyId = user.societyId;
+        token.institutionId = user.institutionId;
+        token.verificationStatus = user.verificationStatus;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.userId as string;
-        session.user.role = token.role as string;
-        session.user.workerId = token.workerId as string;
-        session.user.customerId = token.customerId as string;
-        session.user.cooperativeId = token.cooperativeId as string;
-        session.user.federationId = token.federationId as string;
-        session.user.societyId = token.societyId as string;
-        session.user.institutionId = token.institutionId as string;
-        session.user.verificationStatus = token.verificationStatus as string;
+        session.user.role = token.role;
+        session.user.workerId = token.workerId;
+        session.user.customerId = token.customerId;
+        session.user.cooperativeId = token.cooperativeId;
+        session.user.federationId = token.federationId;
+        session.user.societyId = token.societyId;
+        session.user.institutionId = token.institutionId;
+        session.user.verificationStatus = token.verificationStatus;
       }
       return session;
     },

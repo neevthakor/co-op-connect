@@ -1,6 +1,9 @@
+import { requireRolePage } from '@/lib/scope';
 import { prisma } from '@/lib/prisma'
 
 export default async function HelpersPage() {
+  await requireRolePage('ADMIN', 'COOPERATIVE_ADMIN');
+
   const activeRequests = await prisma.helperRequest.findMany({
     where: { status: 'PENDING' },
     include: {

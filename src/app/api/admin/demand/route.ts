@@ -1,43 +1,52 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { requireRole, handleApiError, getScope, cooperativeWhere } from '@/lib/scope';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
 
     const { searchParams } = new URL(req.url);
     const area = searchParams.get('area') || 'Ahmedabad';
     const categoryId = searchParams.get('categoryId');
 
+    let allowedAreas: string[] | undefined;
+    if (scope.role !== 'ADMIN') {
+      const coops = await prisma.cooperative.findMany({
+        where: cooperativeWhere(scope),
+        select: { city: true }
+      });
+      allowedAreas = Array.from(new Set(coops.map(c => c.city).filter(Boolean))) as string[];
+      if (allowedAreas.length === 0) allowedAreas = ['NONE'];
+      if (area !== 'ALL' && area !== 'Ahmedabad') {
+         if (!allowedAreas.map(a => a.toLowerCase()).includes(area.toLowerCase())) {
+           return NextResponse.json({ error: 'Forbidden area for your scope' }, { status: 403 });
+         }
+         allowedAreas = [area]; // restrict to their queried area if they have access
+      }
+    }
+
+    const demandWhere = {
+      ...(allowedAreas ? { area: { in: allowedAreas, mode: 'insensitive' as const } } : (area !== 'ALL' && area !== 'Ahmedabad' ? { area: { contains: area, mode: 'insensitive' as const } } : {})),
+      ...(categoryId ? { categoryId } : {}),
+    };
+
     const [demandHistory, forecasts, skillGaps, categories] = await Promise.all([
       prisma.demandHistory.findMany({
-        where: {
-          ...(area !== 'ALL' && area !== 'Ahmedabad' ? { area: { contains: area, mode: 'insensitive' } } : {}),
-          ...(categoryId ? { categoryId } : {}),
-        },
+        where: demandWhere,
         include: { category: true },
         orderBy: { date: 'desc' },
         take: 50,
       }),
       prisma.demandForecast.findMany({
-        where: {
-          ...(area !== 'ALL' && area !== 'Ahmedabad' ? { area: { contains: area, mode: 'insensitive' } } : {}),
-          ...(categoryId ? { categoryId } : {}),
-        },
+        where: demandWhere,
         include: { category: true },
         orderBy: { date: 'asc' },
         take: 30,
       }),
       prisma.skillGapRecord.findMany({
-        where: {
-          ...(area !== 'ALL' && area !== 'Ahmedabad' ? { area: { contains: area, mode: 'insensitive' } } : {}),
-          ...(categoryId ? { categoryId } : {}),
-        },
+        where: demandWhere,
         include: { category: true },
         orderBy: { gap: 'desc' },
       }),
@@ -63,8 +72,7 @@ export async function GET(req: NextRequest) {
       categoryDemand,
     });
   } catch (error) {
-    console.error('Demand API Error:', error);
-    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
+    return handleApiError(error);
   }
 }
 

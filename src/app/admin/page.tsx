@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, ShieldCheck, Clock, CheckCircle2, AlertTriangle, AlertCircle, Activity } from 'lucide-react';
 import Link from 'next/link';
 
+import { requireRolePage, getScope, workerWhere } from '@/lib/scope';
+
 export default async function AdminDashboardPage() {
-  const session = await auth();
-  const userRole = session?.user?.role;
-  if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
+  const sessionUser = await requireRolePage('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+  const scope = await getScope(sessionUser);
 
   const [
     totalCustomers,
@@ -19,13 +20,13 @@ export default async function AdminDashboardPage() {
     completedBookings,
     openComplaints
   ] = await Promise.all([
-    prisma.customer.count(),
-    prisma.worker.count(),
-    prisma.worker.count({ where: { verificationStatus: 'PENDING' } }),
-    prisma.worker.count({ where: { verificationStatus: 'VERIFIED' } }),
-    prisma.booking.count({ where: { status: { in: ['REQUESTED', 'ACCEPTED', 'TRAVELLING', 'ARRIVED', 'IN_PROGRESS'] } } }),
-    prisma.booking.count({ where: { status: 'COMPLETED' } }),
-    prisma.complaint.count({ where: { status: 'OPEN' } }),
+    prisma.customer.count(), // global
+    prisma.worker.count({ where: workerWhere(scope) }),
+    prisma.worker.count({ where: { verificationStatus: 'PENDING', ...workerWhere(scope) } }),
+    prisma.worker.count({ where: { verificationStatus: 'VERIFIED', ...workerWhere(scope) } }),
+    prisma.booking.count({ where: { status: { in: ['REQUESTED', 'ACCEPTED', 'TRAVELLING', 'ARRIVED', 'IN_PROGRESS'] }, worker: workerWhere(scope) } }),
+    prisma.booking.count({ where: { status: 'COMPLETED', worker: workerWhere(scope) } }),
+    prisma.complaint.count({ where: { status: 'OPEN', worker: workerWhere(scope) } }),
   ]);
 
   return (

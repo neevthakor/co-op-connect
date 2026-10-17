@@ -4,15 +4,13 @@ import { redirect } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart3, Users, MapPin } from 'lucide-react';
 
-export default async function AnalyticsPage() {
-  const session = await auth();
-  const userRole = session?.user?.role;
-  if (!session?.user || !['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN'].includes(userRole || '')) {
-    redirect('/login');
-  }
+import { requireRolePage, getScope, workerWhere } from '@/lib/scope';
 
-  const cooperativeId = session.user.cooperativeId;
-  const whereClause = userRole === 'COOPERATIVE_ADMIN' && cooperativeId ? { cooperativeId } : {};
+export default async function AnalyticsPage() {
+  const sessionUser = await requireRolePage('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+  const scope = await getScope(sessionUser);
+
+  const whereClause = workerWhere(scope);
 
   const [cityAvailabilityStats, stateStats, verificationStats] = await Promise.all([
     prisma.worker.groupBy({

@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { requireRole, handleApiError, getScope, cooperativeWhere, validateClientCooperativeId } from '@/lib/scope';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
 
     const { searchParams } = new URL(req.url);
-    const cooperativeId = searchParams.get('cooperativeId') || (session.user.cooperativeId as string);
+    const clientCoopId = searchParams.get('cooperativeId');
+    let cooperativeId: string | undefined;
+    try {
+      cooperativeId = validateClientCooperativeId(scope, clientCoopId);
+    } catch (error: any) {
+    return handleApiError(error);
+  }
 
     const proposals = await prisma.cooperativeProposal.findMany({
-      where: cooperativeId ? { cooperativeId } : {},
+      where: cooperativeId ? { cooperativeId } : cooperativeWhere(scope),
       include: {
         cooperative: true,
         createdBy: { select: { id: true, name: true } },
@@ -32,7 +35,7 @@ export async function GET(req: NextRequest) {
       const noVotes = p.votes.filter((v) => v.vote === 'NO').length;
       const abstainVotes = p.votes.filter((v) => v.vote === 'ABSTAIN').length;
       const totalVotes = p.votes.length;
-      const currentUserId = session?.user?.id;
+      const currentUserId = sessionUser.id;
       const userVote = currentUserId ? p.votes.find((v) => v.userId === currentUserId)?.vote || null : null;
 
       return {
@@ -50,20 +53,16 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(formatted);
-  } catch (error) {
-    console.error('Voting GET Error:', error);
-    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    
-    if (!session?.user?.id || !['ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN', 'WORKER'].includes(userRole as string)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN', 'WORKER');
+    const scope = await getScope(sessionUser);
+    const userRole = scope.role;
 
     const body = await req.json();
     const { action = 'VOTE', proposalId, vote, title, description, cooperativeId } = body;
@@ -77,7 +76,19 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Title and description are required' }, { status: 400 });
       }
 
-      const coopId = cooperativeId || (session.user.cooperativeId as string);
+      let coopId = cooperativeId;
+      if (!coopId && scope.role === 'COOPERATIVE_ADMIN') {
+        coopId = scope.cooperativeId;
+      }
+      if (scope.role !== 'ADMIN' && scope.role !== 'COOPERATIVE_ADMIN' && scope.role !== 'FEDERATION_ADMIN') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      }
+      try {
+        coopId = validateClientCooperativeId(scope, coopId) || coopId;
+      } catch (error: any) {
+    return handleApiError(error);
+  }
+
       if (!coopId) {
         return NextResponse.json({ error: 'cooperativeId is required' }, { status: 400 });
       }
@@ -85,7 +96,7 @@ export async function POST(req: NextRequest) {
       const proposal = await prisma.cooperativeProposal.create({
         data: {
           cooperativeId: coopId as string,
-          createdById: session.user.id,
+          createdById: sessionUser.id,
           title,
           description,
           status: 'OPEN',
@@ -104,12 +115,12 @@ export async function POST(req: NextRequest) {
         where: {
           proposalId_userId: {
             proposalId,
-            userId: session.user.id,
+            userId: sessionUser.id,
           },
         },
         create: {
           proposalId,
-          userId: session.user.id,
+          userId: sessionUser.id,
           vote: vote.toUpperCase(),
         },
         update: {
@@ -121,9 +132,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    console.error('Voting POST Error:', error);
-    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 

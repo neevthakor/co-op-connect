@@ -1,21 +1,28 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { requireRole, handleApiError, getScope, workerWhere, validateClientCooperativeId } from '@/lib/scope';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    const userRole = session?.user?.role;
-    if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireRole('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+    const scope = await getScope(sessionUser);
 
     const { searchParams } = new URL(req.url);
-    const cooperativeId = searchParams.get('cooperativeId') || session.user.cooperativeId;
+    const clientCoopId = searchParams.get('cooperativeId');
+    let cooperativeId: string | undefined;
+    
+    try {
+      cooperativeId = validateClientCooperativeId(scope, clientCoopId);
+    } catch (error) {
+      return handleApiError(error);
+    }
 
-    const [welfareRecords, insuranceCount, trainingCount, workers, earningsSum, disbursementSum] = await Promise.all([
+    const workerFilter = cooperativeId ? { cooperativeId } : workerWhere(scope);
+
+    const [welfareRecords, , , workers, earningsSum, disbursementSum] = await Promise.all([
       prisma.welfareRecord.findMany({
-        where: cooperativeId ? { worker: { cooperativeId } } : {},
+        where: { worker: workerFilter },
         include: {
           worker: { include: { user: { select: { name: true, phone: true } } } },
         },
@@ -23,15 +30,15 @@ export async function GET(req: NextRequest) {
         take: 30,
       }),
       prisma.insuranceRecord.count({
-        where: cooperativeId ? { worker: { cooperativeId } } : {},
+        where: { worker: workerFilter },
       }),
       prisma.trainingRecord.count({
-        where: cooperativeId ? { worker: { cooperativeId } } : {},
+        where: { worker: workerFilter },
       }),
       prisma.worker.findMany({
         where: {
           verificationStatus: 'VERIFIED',
-          ...(cooperativeId ? { cooperativeId } : {}),
+          ...workerFilter,
         },
         include: {
           user: { select: { name: true } },
@@ -42,19 +49,19 @@ export async function GET(req: NextRequest) {
         },
       }),
       prisma.workerEarning.aggregate({
-        where: cooperativeId ? { worker: { cooperativeId } } : {},
+        where: { worker: workerFilter },
         _sum: { welfareDeduction: true }
       }),
-      (prisma as any).welfareDisbursement.aggregate({
-        where: cooperativeId ? { worker: { cooperativeId } } : {},
+      prisma.welfareDisbursement.aggregate({
+        where: { worker: workerFilter },
         _sum: { amount: true }
       })
     ]);
 
     const totalWorkers = workers.length;
-    const insuredWorkers = workers.filter((w: any) => w.insuranceRecords.length > 0).length;
-    const trainedWorkers = workers.filter((w: any) => w.trainingRecords.length > 0).length;
-    const highWorkloadWorkers = workers.filter((w: any) => w.totalJobs > 30).length;
+    const insuredWorkers = workers.filter((w) => w.insuranceRecords.length > 0).length;
+    const trainedWorkers = workers.filter((w) => w.trainingRecords.length > 0).length;
+    const highWorkloadWorkers = workers.filter((w) => w.bookings.length > 30).length;
 
     const totalCollected = earningsSum._sum.welfareDeduction || 0;
     const totalDisbursed = disbursementSum._sum.amount || 0;
@@ -75,7 +82,7 @@ export async function GET(req: NextRequest) {
         currentBalance
       },
       welfareRecords,
-      workerSummaries: workers.map((w: any) => ({
+      workerSummaries: workers.map((w) => ({
         id: w.id,
         name: w.user.name,
         totalJobs: w.bookings.length || w.totalJobs,
@@ -86,8 +93,7 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error('Welfare API Error:', error);
-    return NextResponse.json({ error: (error instanceof Error ? (error instanceof Error ? error.message : "Unknown error") : "Unknown error") }, { status: 500 });
+    return handleApiError(error);
   }
 }
 

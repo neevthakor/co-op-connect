@@ -1,5 +1,4 @@
 
-import type { UserRole } from "@/lib/utils";
 
 type Permission =
   | 'booking:create' | 'booking:read' | 'booking:update' | 'booking:cancel'
@@ -126,7 +125,7 @@ export function getRoleRedirect(role: string): string {
     case 'WORKER':
     case 'HELPER': return '/worker/home';
     case 'ADMIN': return '/admin';
-    case 'COOPERATIVE_ADMIN': return '/admin/overview';
+    case 'COOPERATIVE_ADMIN': return '/cooperative/dashboard';
     case 'FEDERATION_ADMIN': return '/federation/dashboard';
     case 'SOCIETY_ADMIN': return '/society/dashboard';
     case 'INSTITUTIONAL_CUSTOMER': return '/institution/dashboard';

@@ -55,7 +55,7 @@ export default function FederationDashboardClient({
             </p>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: "/federation/login" })}
+            onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex items-center gap-2 px-4 py-2 bg-card text-card-foreground shadow-sm rounded-xl hover:bg-secondary transition-colors text-sm font-semibold border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <LogOut className="w-4 h-4" />

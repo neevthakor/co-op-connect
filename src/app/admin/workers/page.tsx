@@ -5,18 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
+import { requireRolePage, getScope, workerWhere } from '@/lib/scope';
+
 export default async function AdminWorkersPage({ searchParams }: { searchParams: Promise<{ status?: string }> | { status?: string } }) {
-  const session = await auth();
-  const userRole = session?.user?.role;
-  if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'COOPERATIVE_ADMIN' && userRole !== 'FEDERATION_ADMIN')) redirect('/login');
+  const sessionUser = await requireRolePage('ADMIN', 'COOPERATIVE_ADMIN', 'FEDERATION_ADMIN');
+  const scope = await getScope(sessionUser);
 
   const resolvedParams = await searchParams;
   const statusFilter = resolvedParams?.status || 'ALL';
 
-  const whereClause: any = {};
-  if (statusFilter !== 'ALL') whereClause.verificationStatus = statusFilter;
-  if (userRole === 'COOPERATIVE_ADMIN' && session.user.cooperativeId) {
-    whereClause.cooperativeId = session.user.cooperativeId;
+  const whereClause: any = workerWhere(scope);
+  if (statusFilter !== 'ALL') {
+    whereClause.verificationStatus = statusFilter;
   }
 
   const workers = await prisma.worker.findMany({

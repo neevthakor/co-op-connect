@@ -2,10 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Shield, CheckCircle } from "lucide-react";
 
-export default async function WorkerPublicProfile({ params }: { params: { publicId: string } }) {
-  const { publicId } = params;
+export default async function WorkerPublicProfile({ params }: { params: Promise<{ publicId: string }> }) {
+  const { publicId } = await params;
   
-  const worker: any = await (prisma as any).worker.findUnique({
+  const worker = await prisma.worker.findUnique({
     where: { id: publicId },
     include: { platformCertificates: { orderBy: { issuedAt: 'desc' } } }
   });

@@ -7,15 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, CheckCircle2, ShieldCheck, Clock, Award } from 'lucide-react';
 
-export default async function AssignWorkerPage({ params, searchParams }: { params: { id: string }, searchParams: { type?: string } }) {
+export default async function AssignWorkerPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ type?: string }> }) {
   const session = await auth();
   const userRole = session?.user?.role;
   if (!session?.user || userRole !== 'FEDERATION_ADMIN') {
     redirect('/login');
   }
 
-  const { id } = params;
-  const type = searchParams.type as "SOCIETY" | "INSTITUTION";
+  const { id } = await params;
+  const resolvedSearchParams = await searchParams;
+  const type = resolvedSearchParams.type as "SOCIETY" | "INSTITUTION";
 
   if (type !== 'SOCIETY' && type !== 'INSTITUTION') {
     return <div>Invalid type</div>;
